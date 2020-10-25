@@ -39,7 +39,7 @@ func AssertNoErrors(t *testing.T, errs []error) {
     }
 }
 
-func AssertErrors(t *testing.T, got []error, want []error) {
+func AssertErrors(t *testing.T, got, want []error) {
     t.Helper()
 
     if len(got) != len(want) {
@@ -53,6 +53,20 @@ func AssertErrors(t *testing.T, got []error, want []error) {
 
         if !errors.Is(err, want[i]) {
             t.Errorf("got error #%d '%v', want '%v'", i + 1, errors.Unwrap(err), want[i])
+        }
+    }
+}
+
+func AssertVerdicts(t *testing.T, got, want map[int]Verdict) {
+    t.Helper()
+
+    if len(got) != len(want) {
+        t.Fatalf("got %d verdicts, want %d", len(got), len(want))
+    }
+
+    for testId, got := range got {
+        if got != want[testId] {
+            t.Errorf("for test %d got verdict %v, want %v", testId, got, want)
         }
     }
 }
