@@ -43,6 +43,7 @@ func TestTestingBatch(t *testing.T) {
         batch.Run()
 
         cptest.AssertVerdicts(t, batch.Stat, want)
+        cptest.AssertCompleted(t, proc, 1)
     })
 
     t.Run("all WA",
@@ -72,5 +73,6 @@ func TestTestingBatch(t *testing.T) {
         }
 
         cptest.AssertVerdicts(t, batch.Stat, want)
+        cptest.AssertCompleted(t, proc, 1, 2)
     })
 }
