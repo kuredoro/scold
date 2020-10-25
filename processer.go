@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"strings"
+	"sync"
 )
 
 type Processer interface {
@@ -19,13 +20,19 @@ type IOFunc func(io.Reader, io.Writer)
 type ProcessFunc struct {
     f IOFunc
 
+    complete chan int
+
+    mu sync.Mutex
     errs map[int]error
     outs map[int]string
+
+    Completed []int
 }
 
 func NewProcessFunc(f IOFunc) *ProcessFunc {
     return &ProcessFunc{
         f: f,
+        complete: make(chan int),
         errs: make(map[int]error),
         outs: make(map[int]string),
     }
@@ -40,19 +47,23 @@ func (p *ProcessFunc) GetOutput(id int) string {
 }
 
 func (p *ProcessFunc) Run(id int, in string) error {
-    buf := &bytes.Buffer{}
-    p.f(strings.NewReader(in), buf)
-    
-    p.errs[id] = nil
-    p.outs[id] = strings.TrimSpace(buf.String())
+    go func() {
+        buf := &bytes.Buffer{}
+        p.f(strings.NewReader(in), buf)
+
+        p.mu.Lock()
+        defer p.mu.Unlock()
+
+        p.outs[id] = strings.TrimSpace(buf.String())
+        p.errs[id] = nil
+        p.Completed = append(p.Completed, id)
+
+        p.complete<-id
+    }()
 
     return nil
 }
 
 func (p *ProcessFunc) WaitCompleted() int {
-    for id := range p.errs {
-        return id
-    }
-
-    return 0
+    return <-p.complete
 }
