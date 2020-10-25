@@ -30,9 +30,10 @@ func TestScanInputs(t *testing.T) {
   
         `
 
-        inputs := cptest.ScanInputs(strings.NewReader(text))
-        
+        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+
         cptest.AssertTests(t, inputs, testsWant)
+        cptest.AssertNoErrors(t, errs)
     })
 
     t.Run("IO delimeter is alone on its own line",
@@ -52,8 +53,29 @@ func TestScanInputs(t *testing.T) {
                 cptest.IODelim + "\n" +
                 "correct"
 
-        inputs := cptest.ScanInputs(strings.NewReader(text))
+        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
 
         cptest.AssertTests(t, inputs, testsWant)
+        cptest.AssertNoErrors(t, errs)
+    })
+
+    t.Run("There should be only one IO delimeter",
+    func(t *testing.T) {
+        text := `
+a
+---
+b
+---
+c
+        `
+
+        errsWant := []error{
+            cptest.TooManySections,
+        }
+
+        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+
+        cptest.AssertTests(t, inputs, nil)
+        cptest.AssertErrors(t, errs, errsWant)
     })
 }
