@@ -14,7 +14,7 @@ func (e InputsError) Error() string {
 }
 
 const (
-    TooManySections = InputsError("too many sections")
+    NoSections = InputsError("no io separator found")
 )
 
 const IODelim = "---"
@@ -32,15 +32,16 @@ func ScanInputs(r io.Reader) (Inputs, []error) {
     buf := &bytes.Buffer{}
     io.Copy(buf, r)
 
-    parts := strings.Split(buf.String(), "\n" + IODelim + "\n")
+    trueDelim := "\n" + IODelim + "\n"
+    parts := strings.Split(buf.String(), trueDelim)
 
-    if len(parts) > 2 {
-        return Inputs{}, []error{fmt.Errorf("%w", TooManySections)}
+    if len(parts) < 2 {
+        return Inputs{}, []error{fmt.Errorf("%w", NoSections)}
     }
 
     test := Test{
         Input: strings.TrimSpace(parts[0]),
-        Output: strings.TrimSpace(parts[1]),
+        Output: strings.TrimSpace(strings.Join(parts[1:], trueDelim)),
     }
 
     return Inputs{

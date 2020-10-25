@@ -59,7 +59,7 @@ func TestScanInputs(t *testing.T) {
         cptest.AssertNoErrors(t, errs)
     })
 
-    t.Run("There should be only one IO delimeter",
+    t.Run("many IO delimeters",
     func(t *testing.T) {
         text := `
 a
@@ -69,8 +69,28 @@ b
 c
         `
 
+        testsWant := []cptest.Test{
+            {
+                Input: "a",
+                Output: "b\n---\nc",
+            },
+        }
+
+        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+
+        cptest.AssertTests(t, inputs, testsWant)
+        cptest.AssertNoErrors(t, errs)
+    })
+
+    t.Run("no IO delimeters",
+    func(t *testing.T) {
+        text := `
+abcd
+dcba
+        `
+
         errsWant := []error{
-            cptest.TooManySections,
+            cptest.NoSections,
         }
 
         inputs, errs := cptest.ScanInputs(strings.NewReader(text))
