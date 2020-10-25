@@ -9,6 +9,7 @@ import (
 
 	"github.com/sanity-io/litter"
 )
+
 func AssertTest(t *testing.T, got Test, want Test) {
     t.Helper()
     if !reflect.DeepEqual(got, want) {

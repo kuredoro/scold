@@ -14,7 +14,7 @@ func (e InputsError) Error() string {
 }
 
 const (
-    NoSections = InputsError("no io separator found")
+    NoSections = InputsError("IO separator missing")
 )
 
 const (
