@@ -29,6 +29,20 @@ func VerboseResultPrinter(b *TestingBatch, test Test, id int) {
     verdict := b.Stat[id]
 
     fmt.Printf("--- %s:\tTest %d\n", verdictStr[verdict], id)
+
+    if verdict != OK {
+        fmt.Printf("Test:\n%s\n\n", test.Input)
+        fmt.Printf("Answer:\n%s\n\n", test.Output)
+
+        switch verdict {
+        case RE:
+            fmt.Println("Stderr:")
+        case WA:
+            fmt.Println("Program's output:")
+        }
+
+        fmt.Printf("%s\n\n", b.proc.GetOutput(id))
+    }
 }
 
 
@@ -57,8 +71,9 @@ func (b *TestingBatch) Run() {
         fmt.Printf("=== RUN\tTest %d\n", i + 1)
     }
 
-    for _, test := range b.inputs.Tests {
+    for range b.inputs.Tests {
         id := b.proc.WaitCompleted()
+        test := b.inputs.Tests[id - 1]
         defer b.ResultPrinter(b, test, id)
 
         if err := b.proc.GetError(id); err != nil {

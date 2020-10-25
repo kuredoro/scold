@@ -66,7 +66,7 @@ func AssertVerdicts(t *testing.T, got, want map[int]Verdict) {
 
     for testId, got := range got {
         if got != want[testId] {
-            t.Errorf("for test %d got verdict %v, want %v", testId, got, want)
+            t.Errorf("for test %d got verdict %v, want %v", testId, got, want[testId])
         }
     }
 }

@@ -2,6 +2,7 @@ package cptest
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -59,17 +60,27 @@ func (p *ProcessFunc) GetOutput(id int) string {
 
 func (p *ProcessFunc) Run(id int, in string) {
     go func() {
+        defer func() {
+            p.mu.Lock()
+            defer p.mu.Unlock()
+
+            if e := recover(); e != nil {
+                p.errs[id] = errors.New("paniced")
+                p.outs[id] = e.(string)
+            }
+
+            p.Completed = append(p.Completed, id)
+            p.complete<-id
+        }()
+
         buf := &bytes.Buffer{}
         p.f(strings.NewReader(in), buf)
 
         p.mu.Lock()
         defer p.mu.Unlock()
 
-        p.outs[id] = strings.TrimSpace(buf.String())
         p.errs[id] = nil
-        p.Completed = append(p.Completed, id)
-
-        p.complete<-id
+        p.outs[id] = strings.TrimSpace(buf.String())
     }()
 }
 
