@@ -95,3 +95,24 @@ dcba
         cptest.AssertErrors(t, errs, errsWant)
     })
 }
+
+func TestScanInputs(t *testing.T) {
+
+    t.Run("single",
+    func(t *testing.T) {
+
+        testsWant := []cptest.Test{
+            {
+                Input: "foo",
+                Output: "bar",
+            },
+        }
+        text := "foo\n---\nbar\n"
+        text = strings.ReplaceAll(text, "---", cptest.IODelim)
+
+        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        
+        cptest.AssertTests(t, inputs.Tests, testsWant)
+        cptest.AssertNoErrors(t, errs)
+    })
+}
