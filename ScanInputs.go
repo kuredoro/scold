@@ -1,9 +1,7 @@
 package cptest
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"strings"
 )
 
@@ -28,15 +26,12 @@ type Inputs struct {
     Tests []Test
 }
 
-func ScanInputs(r io.Reader) (Inputs, []error) {
-    buf := &bytes.Buffer{}
-    io.Copy(buf, r)
-
+func ScanTest(str string) (Test, []error) {
     trueDelim := "\n" + IODelim + "\n"
-    parts := strings.Split(buf.String(), trueDelim)
+    parts := strings.Split(str, trueDelim)
 
     if len(parts) < 2 {
-        return Inputs{}, []error{fmt.Errorf("%w", NoSections)}
+        return Test{}, []error{fmt.Errorf("%w", NoSections)}
     }
 
     test := Test{
@@ -44,7 +39,5 @@ func ScanInputs(r io.Reader) (Inputs, []error) {
         Output: strings.TrimSpace(strings.Join(parts[1:], trueDelim)),
     }
 
-    return Inputs{
-        Tests: []Test{test},
-    }, nil
+    return test, nil
 }

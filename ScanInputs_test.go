@@ -8,15 +8,13 @@ import (
 	"github.com/kureduro/cptest"
 )
 
-func TestScanInputs(t *testing.T) {
+func TestScanTest(t *testing.T) {
 
     t.Run("trim spaces",
     func(t *testing.T) {
-        testsWant := []cptest.Test{
-            {
-                Input: "5\n1 2 3 4 5",
-                Output: "5 4 3 2 1",
-            },
+        want := cptest.Test{
+            Input: "5\n1 2 3 4 5",
+            Output: "5 4 3 2 1",
         }
 
         text := `
@@ -31,9 +29,9 @@ func TestScanInputs(t *testing.T) {
   
         `
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        test, errs := cptest.ScanTest(text)
 
-        cptest.AssertTests(t, inputs, testsWant)
+        cptest.AssertTest(t, test, want)
         cptest.AssertNoErrors(t, errs)
     })
 
@@ -46,18 +44,16 @@ trash%and%trash`
 
         inputText = strings.ReplaceAll(inputText, "%", cptest.IODelim)
 
-        testsWant := []cptest.Test{
-            {
-                Input: inputText,
-                Output: "correct",
-            },
+        want := cptest.Test{
+            Input: inputText,
+            Output: "correct",
         }
 
         text := fmt.Sprintf("%s\n%s\ncorrect", inputText, cptest.IODelim)
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        test, errs := cptest.ScanTest(text)
 
-        cptest.AssertTests(t, inputs, testsWant)
+        cptest.AssertTest(t, test, want)
         cptest.AssertNoErrors(t, errs)
     })
 
@@ -71,16 +67,14 @@ b
 c
         `
 
-        testsWant := []cptest.Test{
-            {
-                Input: "a",
-                Output: "b\n---\nc",
-            },
+        want := cptest.Test{
+            Input: "a",
+            Output: "b\n---\nc",
         }
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        test, errs := cptest.ScanTest(text)
 
-        cptest.AssertTests(t, inputs, testsWant)
+        cptest.AssertTest(t, test, want)
         cptest.AssertNoErrors(t, errs)
     })
 
@@ -95,9 +89,9 @@ dcba
             cptest.NoSections,
         }
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        test, errs := cptest.ScanTest(text)
 
-        cptest.AssertTests(t, inputs, nil)
+        cptest.AssertTest(t, test, cptest.Test{})
         cptest.AssertErrors(t, errs, errsWant)
     })
 }
