@@ -77,4 +77,54 @@ func TestTestingBatch(t *testing.T) {
         cptest.AssertVerdicts(t, batch.Stat, want)
         cptest.AssertCompleted(t, proc, 1, 2)
     })
+
+    t.Run("multiple with a runtime error",
+    func(t *testing.T) {
+        inputs := cptest.Inputs{
+            Tests: []cptest.Test{
+                {
+                    Input: "1",
+                    Output: "1",
+                },
+                {
+                    Input: "2",
+                    Output: "2",
+                },
+                {
+                    Input: "3",
+                    Output: "3",
+                },
+                {
+                    Input: "4",
+                    Output: "4",
+                },
+            },
+        }
+
+        proc := cptest.NewProcessFunc(func(r io.Reader, w io.Writer) {
+            var num int
+            fmt.Fscan(r, &num)
+
+            if num == 3 {
+                panic("brrrrrr")
+            }
+
+            fmt.Fprintln(w, 1)
+        })
+
+        batch := cptest.NewTestingBatch(inputs, proc)
+        batch.ResultPrinter = cptest.BlankResultPrinter
+
+        batch.Run()
+
+        want := map[int]cptest.Verdict{
+            1: cptest.OK,
+            2: cptest.WA,
+            3: cptest.RE,
+            4: cptest.WA,
+        }
+
+        cptest.AssertVerdicts(t, batch.Stat, want)
+        cptest.AssertCompleted(t, proc, 1, 2, 3, 4)
+    })
 }
