@@ -1,9 +1,11 @@
 package cptest
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
-    "errors"
 
 	"github.com/sanity-io/litter"
 )
@@ -25,7 +27,14 @@ func AssertNoErrors(t *testing.T, errs []error) {
     t.Helper()
 
     if errs != nil && len(errs) != 0 {
-        t.Errorf("expected no errors, but got %d:%v", len(errs), litter.Sdump(errs))
+        var msg strings.Builder
+        msg.WriteString(fmt.Sprintf("expected no errors, but got %d:\n", len(errs)))
+
+        for _, err := range errs {
+            msg.WriteString(fmt.Sprintf("\t%v\n", err))
+        }
+
+        t.Error(msg.String())
     }
 }
 
