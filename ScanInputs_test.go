@@ -1,6 +1,7 @@
 package cptest_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -38,9 +39,12 @@ func TestScanInputs(t *testing.T) {
 
     t.Run("IO delimeter is alone on its own line",
     func(t *testing.T) {
-        inputText := "3\nabc" + cptest.IODelim + "\n" + 
-                     cptest.IODelim + cptest.IODelim + "\n" +
-                     "trash" + cptest.IODelim + "and" + cptest.IODelim
+        inputText := `3
+abc%
+%%
+trash%and%trash`
+
+        inputText = strings.ReplaceAll(inputText, "%", cptest.IODelim)
 
         testsWant := []cptest.Test{
             {
@@ -49,9 +53,7 @@ func TestScanInputs(t *testing.T) {
             },
         }
 
-        text := inputText + "\n" +
-                cptest.IODelim + "\n" +
-                "correct"
+        text := fmt.Sprintf("%s\n%s\ncorrect", inputText, cptest.IODelim)
 
         inputs, errs := cptest.ScanInputs(strings.NewReader(text))
 
