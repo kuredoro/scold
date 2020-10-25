@@ -39,6 +39,7 @@ func TestTestingBatch(t *testing.T) {
         }
 
         batch := cptest.NewTestingBatch(inputs, proc)
+        batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
 
@@ -64,6 +65,7 @@ func TestTestingBatch(t *testing.T) {
         proc := cptest.NewProcessFunc(ProcFuncAnswer)
 
         batch := cptest.NewTestingBatch(inputs, proc)
+        batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
 

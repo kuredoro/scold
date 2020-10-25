@@ -28,7 +28,7 @@ func BlankResultPrinter(b *TestingBatch, test Test, id int) {}
 func VerboseResultPrinter(b *TestingBatch, test Test, id int) {
     verdict := b.Stat[id]
 
-    fmt.Printf("--- %s: Test %d\n", verdictStr[verdict], id)
+    fmt.Printf("--- %s:\tTest %d\n", verdictStr[verdict], id)
 }
 
 
@@ -54,7 +54,7 @@ func (b *TestingBatch) Run() {
     for i, test := range b.inputs.Tests {
         b.proc.Run(i + 1, test.Input)
 
-        fmt.Printf("=== RUN: Test %d\n", i + 1)
+        fmt.Printf("=== RUN\tTest %d\n", i + 1)
     }
 
     for _, test := range b.inputs.Tests {
