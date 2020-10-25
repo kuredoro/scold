@@ -8,39 +8,69 @@ import (
 	"github.com/kureduro/cptest"
 )
 
+func ProcFuncMultiply(in io.Reader, out io.Writer) {
+    var a, b int
+    fmt.Fscan(in, &a, &b)
+
+    fmt.Fprintln(out, a * b)
+}
+
+func ProcFuncAnswer(in io.Reader, out io.Writer) {
+    fmt.Fprintln(out, 42)
+}
+
+// IDEA: Add support for presentation errors...
 func TestTestingBatch(t *testing.T) {
-    inputs := cptest.Inputs{
-        Tests: []cptest.Test{
-            {
-                Input: "2 2",
-                Output: "4",
+    t.Run("all OK", 
+    func(t *testing.T) {
+        inputs := cptest.Inputs{
+            Tests: []cptest.Test{
+                {
+                    Input: "2 2",
+                    Output: "4",
+                },
             },
-        },
-    }
+        }
 
-    proc := cptest.NewProcessFunc(
-    func(in io.Reader, out io.Writer) {
-        var a, b int
-        fmt.Fscan(in, &a, &b)
+        proc := cptest.NewProcessFunc(ProcFuncMultiply)
 
-        fmt.Fprintln(out, a * b)
+        want := map[int]cptest.Verdict{
+            1: cptest.OK,
+        }
+
+        batch := cptest.NewTestingBatch(inputs, proc)
+
+        batch.Run()
+
+        cptest.AssertVerdicts(t, batch.Stat, want)
     })
 
-    want := map[int]cptest.Verdict{
-        1: cptest.OK,
-    }
-
-    batch := cptest.NewTestingBatch(inputs, proc)
-
-    batch.Run()
-
-    if len(batch.Stat) != len(want) {
-        t.Fatalf("got batch of size %d, want of size %d", len(batch.Stat), len(want))
-    }
-
-    for testId, got := range batch.Stat {
-        if got != want[testId] {
-            t.Errorf("for test %d got verdict %v, want %v", testId, got, want)
+    t.Run("all WA",
+    func(t *testing.T) {
+        inputs := cptest.Inputs{
+            Tests: []cptest.Test{
+                {
+                    Input: "4\n1 2 3 4",
+                    Output: "2 3 4 5",
+                },
+                {
+                    Input: "2\n-2 -1",
+                    Output: "-1 0",
+                },
+            },
         }
-    }
+
+        proc := cptest.NewProcessFunc(ProcFuncAnswer)
+
+        batch := cptest.NewTestingBatch(inputs, proc)
+
+        batch.Run()
+
+        want := map[int]cptest.Verdict{
+            1: cptest.WA,
+            2: cptest.WA,
+        }
+
+        cptest.AssertVerdicts(t, batch.Stat, want)
+    })
 }
