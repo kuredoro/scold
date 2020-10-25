@@ -88,7 +88,7 @@ type Process struct {
     outs map[int]string
 }
 
-func (p *Process) NewProcess(execPath string) *Process {
+func NewProcess(execPath string) *Process {
     return &Process{
         path: execPath,
         complete: make(chan int),

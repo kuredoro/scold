@@ -7,7 +7,6 @@ import (
 	"path"
 
 	"github.com/kureduro/cptest"
-	"github.com/sanity-io/litter"
 )
 
 var wd = "."
@@ -54,7 +53,7 @@ func main() {
         return
     }
 
-    proc, err := cptest.NewProcess(execPath)
+    proc := cptest.NewProcess(execPath)
     if err != nil {
         fmt.Printf("error: %v\n", err)
         return
@@ -65,7 +64,7 @@ func main() {
     batch.Run()
 
     passCount := 0
-    for k, v := range batch.Stat {
+    for _, v := range batch.Stat {
         if v == cptest.OK {
             passCount++
         }
