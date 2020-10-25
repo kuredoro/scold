@@ -1,7 +1,9 @@
 package cptest
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -40,4 +42,24 @@ func ScanTest(str string) (Test, []error) {
     }
 
     return test, nil
+}
+
+func ScanInputs(r io.Reader) (Inputs, []error) {
+    buf := &bytes.Buffer{}
+    io.Copy(buf, r)
+
+    test, errs := ScanTest(buf.String())
+
+    if errs != nil {
+        for i, err := range errs {
+            errs[i] = fmt.Errorf("test 1: %w", err)
+        }
+
+        return Inputs{}, errs
+    }
+
+    var inputs Inputs
+    inputs.Tests = []Test{test}
+
+    return inputs, nil
 }
