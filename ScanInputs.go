@@ -2,6 +2,7 @@ package cptest
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -117,8 +118,26 @@ func splitByString(data []byte, atEOF bool, delim string) (advance int, token []
 func ScanKeyValuePair(line string) (string, string, error) {
     parts := strings.Split(line, "=")
 
-    if len(parts) == 1 && strings.TrimSpace(line) != "" {
-        return "", "", fmt.Errorf("no equality sign")
+    if len(parts) == 1 {
+        cleanLine := strings.TrimSpace(line)
+
+        if cleanLine == "" {
+            return "", "", nil
+        }
+
+        if cleanLine == "=" {
+            return "", "", errors.New("key and value are missing")
+        }
+
+        return "", "", errors.New("no equality sign")
+    }
+
+    if parts[0] == "" {
+        return "", "", errors.New("key cannot be empty")
+    }
+
+    if parts[1] == "" {
+        return "", "", errors.New("value cannot be empty")
     }
 
     key := strings.TrimSpace(parts[0])
