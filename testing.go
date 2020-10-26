@@ -86,3 +86,23 @@ func AssertConfig(t *testing.T, got, want map[string]string) {
         t.Errorf("\ngot config %v\nwant %v", litter.Sdump(got), litter.Sdump(want))
     }
 }
+
+func AssertErrorLines(t *testing.T, errs []error, lines []int) {
+    t.Helper()
+
+    if len(errs) != len(lines) {
+        t.Fatalf("got %d errors, want %d", len(errs), len(lines))
+    }
+
+    for i, err := range errs {
+        var e *LinedError
+        if !errors.As(err, &e) {
+            t.Errorf("got error without line info, want one with line %d. Error: %v", lines[i], err)
+            continue
+        }
+
+        if e.Line != lines[i] {
+            t.Errorf("got error #%d at line %d, want at line %d", i + 1, e.Line, lines[i])
+        }
+    }
+}

@@ -17,6 +17,22 @@ const (
     NoSections = InputsError("IO separator missing")
 )
 
+
+type LinedError struct {
+    Header string
+    Line int
+    Err error
+}
+
+func (e *LinedError) Error() string {
+    return fmt.Sprintf("%s: line %d: %v", e.Header, e.Line, e.Err)
+}
+
+func (e *LinedError) Unwrap() error {
+    return e.Err
+}
+
+
 const (
     IODelim = "---"
     TestDelim = "==="
@@ -97,12 +113,44 @@ func splitByString(data []byte, atEOF bool, delim string) (advance int, token []
     return 0, nil, nil
 }
 
-func ScanConfig(text string) (map[string]string, []error) {
-    return map[string]string{
-        "hello": "world",
-        "foo": "bar",
-        "two words": "is   true",
-    }, nil
+
+func ScanKeyValuePair(line string) (string, string, error) {
+    parts := strings.Split(line, "=")
+
+    if len(parts) == 1 && strings.TrimSpace(line) != "" {
+        return "", "", fmt.Errorf("no equality sign")
+    }
+
+    key := strings.TrimSpace(parts[0])
+    val := strings.TrimSpace(strings.Join(parts[1:], "="))
+
+    return key, val, nil
+}
+
+func ScanConfig(text string) (m map[string]string, errs []error) {
+    s := bufio.NewScanner(strings.NewReader(text))
+
+    m = make(map[string]string)
+    for lineNum := 1; s.Scan(); lineNum++ {
+        key, val, err := ScanKeyValuePair(s.Text())
+
+        if err != nil {
+            errs = append(errs, &LinedError{
+                Header: "scan config",
+                Line: lineNum,
+                Err: err,
+            })
+            continue
+        }
+
+        if key == "" && val == "" {
+            continue
+        }
+
+        m[key] = val
+    }
+    
+    return
 }
 
 func ScanInputs(r io.Reader) (input Inputs, errs []error) {
