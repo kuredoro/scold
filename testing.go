@@ -78,3 +78,11 @@ func AssertCallCount(t *testing.T, got, want int) {
         t.Errorf("test was called %d times, want %d", got, want)
     }
 }
+
+func AssertConfig(t *testing.T, got, want map[string]string) {
+    t.Helper()
+
+    if !reflect.DeepEqual(got, want) {
+        t.Errorf("\ngot config %v\nwant %v", litter.Sdump(got), litter.Sdump(want))
+    }
+}
