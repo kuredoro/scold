@@ -71,25 +71,10 @@ func AssertVerdicts(t *testing.T, got, want map[int]Verdict) {
     }
 }
 
-func AssertCompleted(t *testing.T, proc *ProcessFunc, ids ...int) {
+func AssertCallCount(t *testing.T, got, want int) {
     t.Helper()
 
-    union := make(map[int]int)
-    for _, id := range ids {
-        union[id]++
-    }
-
-    for _, id := range proc.Completed {
-        union[id]--
-    }
-
-    for id, bal := range union {
-        if bal == 1 {
-            t.Errorf("expected test %d to complete, but it didn't", id)
-        }
-
-        if bal == -1 {
-            t.Errorf("didn't expect test %d to complete, but it did", id)
-        }
+    if got != want {
+        t.Errorf("test was called %d times, want %d", got, want)
     }
 }
