@@ -268,7 +268,7 @@ foo=bar
         cptest.AssertNoErrors(t, errs)
     })
 
-    t.Run("Lines without assignments are gibberish",
+    t.Run("lines without assignments are gibberish",
     func(t *testing.T) {
         text := `
 hi = owww
@@ -285,6 +285,28 @@ uoenahonetuhneo
         }
 
         errLines := []int{3, 5}
+
+        cptest.AssertConfig(t, got, want)
+        cptest.AssertErrorLines(t, errs, errLines)
+    })
+
+    t.Run("assignments with lhs or rhs empty are erroneous",
+    func(t *testing.T) {
+        text := `
+foo=bar
+foo=
+=bar
+=
+ = 
+        `
+
+        got, errs := cptest.ScanConfig(text)
+
+        want := map[string]string{
+            "foo": "bar",
+        }
+
+        errLines := []int{3, 4, 5}
 
         cptest.AssertConfig(t, got, want)
         cptest.AssertErrorLines(t, errs, errLines)
