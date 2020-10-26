@@ -59,6 +59,10 @@ func IsExec(filename string) error {
         return fmt.Errorf("is executable: %s is an empty file", filename)
     }
 
+    if info.Mode()&0111 == 0 {
+        return fmt.Errorf("%s is not an executable", filename)
+    }
+
     return nil
 }
 
@@ -78,7 +82,6 @@ func main() {
 
     wd = joinIfRelative(cwd, wd)
     inputsPath = joinIfRelative(wd, inputsPath)
-    execPath = joinIfRelative(wd, execPath)
 
     inputs, errs := ReadInputs(inputsPath)
     if errs != nil {
@@ -89,6 +92,47 @@ func main() {
         return
     }
 
+    if execPath == "" {
+        dir, err := os.Open(wd)
+        if err != nil {
+            fmt.Printf("error: search executable: %v\n", err)
+            return
+        }
+
+        names, err := dir.Readdirnames(0)
+        if err != nil {
+            fmt.Printf("error: search executable: %v\n", err)
+            return
+        }
+
+        var execs []string
+        for _, name := range names {
+            name = path.Join(wd, name)
+            if IsExec(name) == nil {
+                execs = append(execs, name)
+            }
+        }
+
+        if len(execs) == 0 {
+            fmt.Printf("error: no executables found in %s", wd)
+            return
+        }
+
+        if len(execs) > 1 {
+            fmt.Printf("error: more that one executable found in %s.", wd)
+            fmt.Printf(" Choose appropriate one with -e flag.\nfound %d:\n", len(execs))
+            
+            for _, name := range execs {
+                fmt.Println(name)
+            }
+
+            return
+        }
+
+        execPath = execs[0]
+    }
+
+    execPath = joinIfRelative(wd, execPath)
     err = IsExec(execPath)
     if err != nil {
         fmt.Printf("error: %v\n", err)
