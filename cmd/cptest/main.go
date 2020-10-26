@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
+    "errors"
 
 	"github.com/kureduro/cptest"
 )
@@ -66,12 +68,65 @@ func IsExec(filename string) error {
     return nil
 }
 
-func main() {
+func FindExecutable(dirPath string) (string, error) {
+    dir, err := os.Open(wd)
+    if err != nil {
+        return "", fmt.Errorf("search executable: %v\n", err)
+    }
 
+    names, err := dir.Readdirnames(0)
+    if err != nil {
+        return "", fmt.Errorf("search executable: %v\n", err)
+    }
+
+    var execs []string
+    for _, name := range names {
+        name = path.Join(wd, name)
+        if IsExec(name) == nil {
+            execs = append(execs, name)
+        }
+    }
+
+    if len(execs) == 0 {
+        return "", fmt.Errorf("no executables found in %s", wd)
+    }
+
+    if len(execs) > 1 {
+        var msg strings.Builder
+
+        msg.WriteString(fmt.Sprintf("error: more that one executable found in %s. ", wd))
+        msg.WriteString("Choose appropriate one with -e flag.\n")
+        msg.WriteString(fmt.Sprintf("found %d:\n", len(execs)))
+        
+        for _, name := range execs {
+            msg.WriteString(name)
+            msg.WriteRune('\n')
+        }
+
+        return "", errors.New(msg.String())
+    }
+
+    return execs[0], nil
+}
+
+func CheckWd(wd string) error {
+    _, err := os.Open(wd)
+    if err != nil {
+        return fmt.Errorf("check working directory: %v", err)
+    }
+
+    return nil
+}
+
+func main() {
     flag.Parse()
 
-    if len(flag.Args()) != 0 {
+    if count := len(flag.Args()); count != 0 {
         wd = flag.Args()[0]
+
+        if count > 1 {
+            fmt.Printf("warning: expected 0 or 1 command line argument, got %v\n", count)
+        }
     }
 
     cwd, err := os.Getwd()
@@ -81,6 +136,12 @@ func main() {
     }
 
     wd = joinIfRelative(cwd, wd)
+
+    if err = CheckWd(wd); err != nil {
+        fmt.Printf("error: %v\n", err)
+        return
+    }
+
     inputsPath = joinIfRelative(wd, inputsPath)
 
     inputs, errs := ReadInputs(inputsPath)
@@ -93,48 +154,19 @@ func main() {
     }
 
     if execPath == "" {
-        dir, err := os.Open(wd)
+        execPath, err = FindExecutable(wd)
+
         if err != nil {
-            fmt.Printf("error: search executable: %v\n", err)
+            fmt.Printf("error: %v", err)
             return
         }
 
-        names, err := dir.Readdirnames(0)
-        if err != nil {
-            fmt.Printf("error: search executable: %v\n", err)
-            return
-        }
-
-        var execs []string
-        for _, name := range names {
-            name = path.Join(wd, name)
-            if IsExec(name) == nil {
-                execs = append(execs, name)
-            }
-        }
-
-        if len(execs) == 0 {
-            fmt.Printf("error: no executables found in %s", wd)
-            return
-        }
-
-        if len(execs) > 1 {
-            fmt.Printf("error: more that one executable found in %s.", wd)
-            fmt.Printf(" Choose appropriate one with -e flag.\nfound %d:\n", len(execs))
-            
-            for _, name := range execs {
-                fmt.Println(name)
-            }
-
-            return
-        }
-
-        execPath = execs[0]
+        fmt.Printf("found executable: %s\n", joinIfRelative(wd, execPath))
     }
 
     execPath = joinIfRelative(wd, execPath)
-    err = IsExec(execPath)
-    if err != nil {
+
+    if err = IsExec(execPath); err != nil {
         fmt.Printf("error: %v\n", err)
         return
     }
