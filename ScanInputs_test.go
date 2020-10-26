@@ -86,7 +86,7 @@ dcba
         `
 
         errsWant := []error{
-            cptest.NoSections,
+            cptest.IOSeparatorMissing,
         }
 
         test, errs := cptest.ScanTest(text)
@@ -102,9 +102,26 @@ dcba
         cptest.AssertTest(t, test, cptest.Test{})
         cptest.AssertNoErrors(t, errs)
     })
+
+    t.Run("a lonely separator also counts",
+    func(t *testing.T) {
+        test, errs := cptest.ScanTest("---")
+
+        cptest.AssertTest(t, test, cptest.Test{})
+        cptest.AssertNoErrors(t, errs)
+    })
 }
 
 func TestScanInputs(t *testing.T) {
+
+    t.Run("emtpy returns empty inputs",
+    func(t *testing.T) {
+        inputs, errs := cptest.ScanInputs(strings.NewReader(""))
+
+        cptest.AssertTests(t, inputs.Tests, nil)
+        cptest.AssertNoErrors(t, errs)
+        cptest.AssertNoConfig(t, inputs.Config)
+    })
 
     t.Run("single",
     func(t *testing.T) {
@@ -123,6 +140,7 @@ func TestScanInputs(t *testing.T) {
         
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
+        cptest.AssertNoConfig(t, inputs.Config)
     })
 
     t.Run("multiple",
@@ -166,6 +184,7 @@ func TestScanInputs(t *testing.T) {
         
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
+        cptest.AssertNoConfig(t, inputs.Config)
     })
 
     t.Run("skip empty tests",
@@ -203,6 +222,7 @@ zyx
 
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
+        cptest.AssertNoConfig(t, inputs.Config)
     })
 
     t.Run("TestDelimeters in wrong places",
@@ -235,14 +255,90 @@ tra^iling space
 
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
+        cptest.AssertNoConfig(t, inputs.Config)
     })
 
-    t.Run("emtpy returns empty inputs",
+    t.Run("config as first test",
     func(t *testing.T) {
-        inputs, errs := cptest.ScanInputs(strings.NewReader(""))
+        testsWant := []cptest.Test{
+            {
+                Input: "2 2",
+                Output: "4",
+            },
+        }
+
+        configWant := map[string]string{
+            "tl": "2.0",
+            "foo": "bar",
+        }
+
+        text := `
+tl = 2.0
+foo= bar
+===
+2 2
+---
+4
+        `
+        text = strings.ReplaceAll(text, "---", cptest.IODelim)
+        text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+
+        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+
+        cptest.AssertTests(t, inputs.Tests, testsWant)
+        cptest.AssertNoErrors(t, errs)
+        cptest.AssertConfig(t, inputs.Config, configWant)
+    })
+
+    t.Run("configs are treated as such only in test 1",
+    func(t *testing.T) {
+        testsWant := []cptest.Test{
+            {
+                Input: "2 2",
+                Output: "4",
+            },
+        }
+
+        text := `
+===
+2 2
+---
+4
+===
+tl = 2.0
+foo= bar
+        `
+        text = strings.ReplaceAll(text, "---", cptest.IODelim)
+        text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+
+        errsWant := []error{
+            cptest.IOSeparatorMissing,
+        }
+
+        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+
+        cptest.AssertTests(t, inputs.Tests, testsWant)
+        cptest.AssertErrors(t, errs, errsWant)
+        cptest.AssertNoConfig(t, inputs.Config)
+    })
+
+    t.Run("wierd (empty inputs)",
+    func(t *testing.T) {
+        text := `
+===
+---
+===
+---
+===
+---
+===
+        `
+
+        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
 
         cptest.AssertTests(t, inputs.Tests, nil)
         cptest.AssertNoErrors(t, errs)
+        cptest.AssertNoConfig(t, inputs.Config)
     })
 }
 

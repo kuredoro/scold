@@ -2,7 +2,6 @@ package cptest
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -15,9 +14,12 @@ func (e InputsError) Error() string {
 }
 
 const (
-    NoSections = InputsError("IO separator missing")
+    IOSeparatorMissing = InputsError("IO separator missing")
+    KeyMissing = InputsError("key cannot be empty")
+    ValueMissing = InputsError("value cannot be empty")
+    KVMissing = InputsError("key and value are missing")
+    NotKVPair = InputsError("not a key-value pair")
 )
-
 
 type LinedError struct {
     Header string
@@ -46,23 +48,31 @@ type Test struct {
 
 type Inputs struct {
     Tests []Test
+    Config map[string]string
 }
 
 func ScanTest(str string) (Test, []error) {
-    if strings.TrimSpace(str) == "" {
+    if strings.TrimSpace(str) == "" || str == IODelim {
         return Test{}, nil
     }
 
     trueDelim := "\n" + IODelim + "\n"
-    parts := strings.Split(str, trueDelim)
+    parts := strings.SplitN(str, trueDelim, 2)
 
     if len(parts) < 2 {
-        return Test{}, []error{fmt.Errorf("%w", NoSections)}
+        // Maybe --- is on first line
+        trueDelim = IODelim + "\n"
+        parts = strings.SplitN(str, trueDelim, 2)
+
+        if len(parts) < 2 || parts[0] != "" {
+            return Test{}, []error{fmt.Errorf("%w", IOSeparatorMissing)}
+        }
+
     }
 
     test := Test{
         Input: strings.TrimSpace(parts[0]),
-        Output: strings.TrimSpace(strings.Join(parts[1:], trueDelim)),
+        Output: strings.TrimSpace(parts[1]),
     }
 
     return test, nil
@@ -126,18 +136,18 @@ func ScanKeyValuePair(line string) (string, string, error) {
         }
 
         if cleanLine == "=" {
-            return "", "", errors.New("key and value are missing")
+            return "", "", KVMissing
         }
 
-        return "", "", errors.New("no equality sign")
+        return "", "", NotKVPair
     }
 
     if parts[0] == "" {
-        return "", "", errors.New("key cannot be empty")
+        return "", "", KeyMissing
     }
 
     if parts[1] == "" {
-        return "", "", errors.New("value cannot be empty")
+        return "", "", ValueMissing
     }
 
     key := strings.TrimSpace(parts[0])
@@ -172,15 +182,36 @@ func ScanConfig(text string) (m map[string]string, errs []error) {
     return
 }
 
-func ScanInputs(r io.Reader) (input Inputs, errs []error) {
+func ScanInputs(r io.Reader) (inputs Inputs, errs []error) {
+    inputs.Config = make(map[string]string)
 
     s := bufio.NewScanner(r)
     s.Split(func(data []byte, atEOF bool) (int, []byte, error) {
         return splitByString(data, atEOF, TestDelim)
     })
 
+    firstTest := true
     for testId := 1; s.Scan(); testId++ {
+
         test, testErrs := ScanTest(s.Text())
+
+        if firstTest && testErrs != nil {
+            var configErrs []error
+            inputs.Config, configErrs = ScanConfig(s.Text())
+
+            if configErrs != nil {
+                // Yeah, I know. errs should be empty anyways, so append is
+                // redundant. But for the sake of genericity I'll leave it as is.
+                errs = append(errs, configErrs...)
+                return
+            }
+
+            testId--
+            firstTest = false
+            continue
+        }
+
+        firstTest = false
 
         if testErrs != nil {
             for i, err := range testErrs {
@@ -196,7 +227,7 @@ func ScanInputs(r io.Reader) (input Inputs, errs []error) {
             continue
         }
 
-        input.Tests = append(input.Tests, test)
+        inputs.Tests = append(inputs.Tests, test)
     }
 
     return
