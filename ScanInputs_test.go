@@ -245,3 +245,26 @@ tra^iling space
         cptest.AssertNoErrors(t, errs)
     })
 }
+
+func TestScanConfig(t *testing.T) {
+
+    t.Run("trim spaces",
+    func(t *testing.T) {
+        text := `
+hello = world
+foo=bar
+  two words   =  is   true   
+        `
+
+        got, errs := cptest.ScanConfig(text)
+
+        want := map[string]string{
+            "hello": "world",
+            "foo": "bar",
+            "two words": "is   true",
+        }
+
+        cptest.AssertConfig(t, got, want)
+        cptest.AssertNoErrors(t, errs)
+    })
+}

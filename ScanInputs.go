@@ -97,6 +97,14 @@ func splitByString(data []byte, atEOF bool, delim string) (advance int, token []
     return 0, nil, nil
 }
 
+func ScanConfig(text string) (map[string]string, []error) {
+    return map[string]string{
+        "hello": "world",
+        "foo": "bar",
+        "two words": "is   true",
+    }, nil
+}
+
 func ScanInputs(r io.Reader) (input Inputs, errs []error) {
 
     s := bufio.NewScanner(r)
@@ -117,6 +125,7 @@ func ScanInputs(r io.Reader) (input Inputs, errs []error) {
         }
 
         if test.Input == "" && test.Output == "" {
+            testId--
             continue
         }
 
