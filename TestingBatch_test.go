@@ -3,20 +3,25 @@ package cptest_test
 import (
 	"fmt"
 	"io"
+    "errors"
 	"testing"
 
 	"github.com/kureduro/cptest"
 )
 
-func ProcFuncMultiply(in io.Reader, out io.Writer) {
+func ProcFuncMultiply(in io.Reader, out io.Writer) error {
     var a, b int
     fmt.Fscan(in, &a, &b)
 
     fmt.Fprintln(out, a * b)
+
+    return nil
 }
 
-func ProcFuncAnswer(in io.Reader, out io.Writer) {
+func ProcFuncAnswer(in io.Reader, out io.Writer) error {
     fmt.Fprintln(out, 42)
+
+    return nil
 }
 
 // IDEA: Add support for presentation errors...
@@ -32,7 +37,9 @@ func TestTestingBatch(t *testing.T) {
             },
         }
 
-        proc := cptest.NewProcessFunc(ProcFuncMultiply)
+        proc := &cptest.SpyProcesser{
+            Proc: cptest.ProcesserFunc(ProcFuncMultiply),
+        }
 
         want := map[int]cptest.Verdict{
             1: cptest.OK,
@@ -44,7 +51,7 @@ func TestTestingBatch(t *testing.T) {
         batch.Run()
 
         cptest.AssertVerdicts(t, batch.Stat, want)
-        cptest.AssertCompleted(t, proc, 1)
+        cptest.AssertCallCount(t, proc.CallCount, 1)
     })
 
     t.Run("all WA",
@@ -62,7 +69,9 @@ func TestTestingBatch(t *testing.T) {
             },
         }
 
-        proc := cptest.NewProcessFunc(ProcFuncAnswer)
+        proc := &cptest.SpyProcesser{
+            Proc: cptest.ProcesserFunc(ProcFuncAnswer),
+        }
 
         batch := cptest.NewTestingBatch(inputs, proc)
         batch.ResultPrinter = cptest.BlankResultPrinter
@@ -75,7 +84,7 @@ func TestTestingBatch(t *testing.T) {
         }
 
         cptest.AssertVerdicts(t, batch.Stat, want)
-        cptest.AssertCompleted(t, proc, 1, 2)
+        cptest.AssertCallCount(t, proc.CallCount, 2)
     })
 
     t.Run("multiple with a runtime error",
@@ -101,16 +110,21 @@ func TestTestingBatch(t *testing.T) {
             },
         }
 
-        proc := cptest.NewProcessFunc(func(r io.Reader, w io.Writer) {
-            var num int
-            fmt.Fscan(r, &num)
+        proc := &cptest.SpyProcesser{
+            Proc: cptest.ProcesserFunc(
+            func(r io.Reader, w io.Writer) error {
+                var num int
+                fmt.Fscan(r, &num)
 
-            if num == 3 {
-                panic("brrrrrr")
-            }
+                if num == 3 {
+                    return errors.New("segfault. core dumped.")
+                }
 
-            fmt.Fprintln(w, 1)
-        })
+                fmt.Fprintln(w, 1)
+
+                return nil
+            }),
+        }
 
         batch := cptest.NewTestingBatch(inputs, proc)
         batch.ResultPrinter = cptest.BlankResultPrinter
@@ -125,6 +139,6 @@ func TestTestingBatch(t *testing.T) {
         }
 
         cptest.AssertVerdicts(t, batch.Stat, want)
-        cptest.AssertCompleted(t, proc, 1, 2, 3, 4)
+        cptest.AssertCallCount(t, proc.CallCount, 4)
     })
 }
