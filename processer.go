@@ -13,7 +13,7 @@ import (
 type InternalError struct{}
 
 func (e InternalError) Error() string {
-    return "internal:"
+    return "internal"
 }
 
 var internalErr InternalError

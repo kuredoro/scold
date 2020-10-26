@@ -34,14 +34,13 @@ func VerboseResultPrinter(b *TestingBatch, test Test, id int) {
         fmt.Printf("Test:\n%s\n\n", test.Input)
         fmt.Printf("Answer:\n%s\n\n", test.Output)
 
-        switch verdict {
-        case RE:
-            fmt.Println("Stderr:")
-        case WA:
-            fmt.Println("Program's output:")
+        if verdict == RE {
+            fmt.Printf("Stderr:\n%s\n\n", b.proc.GetOutput(id))
+        } else if verdict == WA {
+            fmt.Printf("Program's output:\n%s\n\n", b.proc.GetOutput(id))
+        } else if verdict == IE {
+            fmt.Printf("Error:\n%v\n\n", b.proc.GetError(id))
         }
-
-        fmt.Printf("%s\n\n", b.proc.GetOutput(id))
     }
 }
 
