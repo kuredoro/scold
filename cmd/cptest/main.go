@@ -38,8 +38,8 @@ func ReadInputs(inputsPath string) (cptest.Inputs, []error) {
 
     inputs, errs := cptest.ScanInputs(inputsFile)
     if errs != nil {
-        for _, err := range errs {
-            fmt.Printf("load tests: %v\n", err)
+        for i, err := range errs {
+            errs[i] = fmt.Errorf("load tests: %v", err)
         }
         return cptest.Inputs{}, errs
     }
@@ -147,7 +147,7 @@ func main() {
     inputs, errs := ReadInputs(inputsPath)
     if errs != nil {
         for _, err := range errs {
-            fmt.Println(err)
+            fmt.Printf("error: %v\n", err)
         }
 
         return
@@ -171,7 +171,9 @@ func main() {
         return
     }
 
-    proc := cptest.NewProcess(execPath)
+    proc := &cptest.Executable{
+        Path: execPath,
+    }
 
     batch := cptest.NewTestingBatch(inputs, proc)
 
