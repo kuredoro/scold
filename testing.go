@@ -106,3 +106,15 @@ func AssertErrorLines(t *testing.T, errs []error, lines []int) {
         }
     }
 }
+
+func AssertNoConfig(t *testing.T, got map[string]string) {
+    t.Helper()
+
+    if got == nil {
+        t.Error("expected empty config, but config isn't even initialized")
+    }
+
+    if len(got) != 0 {
+        t.Errorf("expected emtpy config, but got %v", litter.Sdump(got))
+    }
+}
