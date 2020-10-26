@@ -87,7 +87,7 @@ func TestTestingBatch(t *testing.T) {
         cptest.AssertCallCount(t, proc.CallCount, 2)
     })
 
-    t.Run("multiple with a runtime error",
+    t.Run("runtime error and internal error",
     func(t *testing.T) {
         inputs := cptest.Inputs{
             Tests: []cptest.Test{
@@ -107,6 +107,10 @@ func TestTestingBatch(t *testing.T) {
                     Input: "4",
                     Output: "4",
                 },
+                {
+                    Input: "5",
+                    Output: "5",
+                },
             },
         }
 
@@ -118,6 +122,10 @@ func TestTestingBatch(t *testing.T) {
 
                 if num == 3 {
                     return errors.New("segfault. core dumped.")
+                }
+
+                if num == 5 {
+                    panic("brrrr")
                 }
 
                 fmt.Fprintln(w, 1)
@@ -136,9 +144,10 @@ func TestTestingBatch(t *testing.T) {
             2: cptest.WA,
             3: cptest.RE,
             4: cptest.WA,
+            5: cptest.IE,
         }
 
         cptest.AssertVerdicts(t, batch.Stat, want)
-        cptest.AssertCallCount(t, proc.CallCount, 4)
+        cptest.AssertCallCount(t, proc.CallCount, 5)
     })
 }
