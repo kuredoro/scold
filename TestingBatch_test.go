@@ -1,10 +1,11 @@
 package cptest_test
 
 import (
+	"errors"
 	"fmt"
 	"io"
-    "errors"
 	"testing"
+	"time"
 
 	"github.com/kureduro/cptest"
 )
@@ -45,9 +46,9 @@ func TestTestingBatch(t *testing.T) {
             Proc: cptest.ProcesserFunc(ProcFuncMultiply),
         }
 
-        //watch := &cptest.SpyStopwatcher{}
+        swatch := &cptest.SpyStopwatcher{}
 
-        batch := cptest.NewTestingBatch(inputs, proc)
+        batch := cptest.NewTestingBatch(inputs, proc, swatch)
         batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
@@ -80,7 +81,9 @@ func TestTestingBatch(t *testing.T) {
             Proc: cptest.ProcesserFunc(ProcFuncAnswer),
         }
 
-        batch := cptest.NewTestingBatch(inputs, proc)
+        swatch := &cptest.SpyStopwatcher{}
+
+        batch := cptest.NewTestingBatch(inputs, proc, swatch)
         batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
@@ -141,7 +144,9 @@ func TestTestingBatch(t *testing.T) {
             }),
         }
 
-        batch := cptest.NewTestingBatch(inputs, proc)
+        swatch := &cptest.SpyStopwatcher{}
+
+        batch := cptest.NewTestingBatch(inputs, proc, swatch)
         batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
@@ -156,5 +161,50 @@ func TestTestingBatch(t *testing.T) {
 
         cptest.AssertVerdicts(t, batch.Stat, want)
         cptest.AssertCallCount(t, proc.CallCount, 5)
+    })
+
+    t.Run("test cases may be abandoned at TL",
+    func(t *testing.T) {
+        inputs := cptest.Inputs{
+            Tests: []cptest.Test{
+                {"1", "1"},
+                {"2", "2"},
+                {"3", "3"},
+                {"4", "4"},
+            },
+        }
+
+        proc := &cptest.SpyProcesser{
+            Proc: cptest.ProcesserFunc(
+            func(r io.Reader, w io.Writer) error {
+                var num int
+                fmt.Fscan(r, &num)
+
+                dur := time.Duration(num)
+                time.Sleep(dur * time.Millisecond)
+
+                fmt.Fprintln(w, num)
+                return nil
+            }),
+        }
+
+        swatch := &cptest.SpyStopwatcher{
+            TLAtCall: 3,
+        }
+
+        batch := cptest.NewTestingBatch(inputs, proc, swatch)
+        batch.ResultPrinter = cptest.BlankResultPrinter
+
+        batch.Run()
+
+        testsWant := map[int]cptest.Verdict{
+            1: cptest.OK,
+            2: cptest.OK,
+            3: cptest.TL,
+            4: cptest.TL,
+        }
+
+        cptest.AssertVerdicts(t, batch.Stat, testsWant)
+        cptest.AssertCallCount(t, proc.CallCount, 4)
     })
 }

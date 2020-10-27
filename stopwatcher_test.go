@@ -13,14 +13,14 @@ func TestSpyStopwatcher(t *testing.T) {
     func(t *testing.T) {
         const totalCalls = 5
 
-        watch := &cptest.SpyStopwatcher{
+        swatch := &cptest.SpyStopwatcher{
             TLAtCall: totalCalls,
         }
 
         for i := 0; i < totalCalls - 1; i++ {
             select {
             case <-time.After(1 * time.Millisecond):
-            case <-watch.TimeLimit():
+            case <-swatch.TimeLimit():
                 t.Errorf("got TL at call #%d, want at call #%d", i + 1, totalCalls)
             }
         }
@@ -29,13 +29,13 @@ func TestSpyStopwatcher(t *testing.T) {
         select {
         case <-time.After(1 * time.Millisecond):
             t.Fatalf("go no TL at call #%d, want one", totalCalls)
-        case firstTL = <-watch.TimeLimit():
+        case firstTL = <-swatch.TimeLimit():
         }
 
         select {
         case <-time.After(1 * time.Millisecond):
             t.Fatalf("go no TL at call #%d, want one", totalCalls + 1)
-        case secondTL = <-watch.TimeLimit():
+        case secondTL = <-swatch.TimeLimit():
         }
 
         if firstTL != secondTL {
@@ -50,14 +50,14 @@ func TestSpyStopwatcher(t *testing.T) {
     t.Run("TL at 0 should never TL",
     func(t *testing.T) {
 
-        watch := &cptest.SpyStopwatcher{}
+        swatch := &cptest.SpyStopwatcher{}
 
         // There won't be more than 10 test cases in the tests, so I think it's
         // enough
         for i := 0; i < 10; i++ {
             select {
             case <-time.After(1 * time.Millisecond):
-            case <-watch.TimeLimit():
+            case <-swatch.TimeLimit():
                 t.Errorf("got TL at call #%d, want none", i + 1)
             }
         }
