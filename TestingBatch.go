@@ -24,6 +24,7 @@ const (
     IE
     WA
     RE
+    TL
 )
 
 var verdictStr = map[Verdict]string{
@@ -70,10 +71,11 @@ type TestingBatch struct {
     Stat map[int]Verdict
 
     Proc Processer
+    Swatch Stopwatcher
     ResultPrinter PrintResultFunc
 }
 
-func NewTestingBatch(inputs Inputs, proc Processer) *TestingBatch {
+func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *TestingBatch {
     return &TestingBatch{
         inputs: inputs,
 
@@ -82,7 +84,9 @@ func NewTestingBatch(inputs Inputs, proc Processer) *TestingBatch {
         outs: make(map[int]string),
 
         Stat: make(map[int]Verdict),
+
         Proc: proc,
+        Swatch: swatch,
         ResultPrinter: VerboseResultPrinter,
     }
 }
@@ -120,7 +124,20 @@ func (b *TestingBatch) Run() {
     }
 
     for range b.inputs.Tests {
-        id := <-b.complete
+        var id int
+
+        select {
+        case id = <-b.complete:
+        case <-b.Swatch.TimeLimit():
+
+            for id = range b.inputs.Tests {
+                if _, finished := b.Stat[id + 1]; !finished {
+                    b.Stat[id + 1] = TL
+                }
+            }
+
+            return
+        }
 
         test := b.inputs.Tests[id - 1]
         defer b.ResultPrinter(b, test, id)
