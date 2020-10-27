@@ -34,6 +34,10 @@ func TestTestingBatch(t *testing.T) {
                     Input: "2 2",
                     Output: "4",
                 },
+                {
+                    Input: "-2 -2",
+                    Output: "4",
+                },
             },
         }
 
@@ -41,17 +45,20 @@ func TestTestingBatch(t *testing.T) {
             Proc: cptest.ProcesserFunc(ProcFuncMultiply),
         }
 
-        want := map[int]cptest.Verdict{
-            1: cptest.OK,
-        }
+        //watch := &cptest.SpyStopwatcher{}
 
         batch := cptest.NewTestingBatch(inputs, proc)
         batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
 
+        want := map[int]cptest.Verdict{
+            1: cptest.OK,
+            2: cptest.OK,
+        }
+
         cptest.AssertVerdicts(t, batch.Stat, want)
-        cptest.AssertCallCount(t, proc.CallCount, 1)
+        cptest.AssertCallCount(t, proc.CallCount, 2)
     })
 
     t.Run("all WA",
