@@ -29,3 +29,32 @@ func (s *SpyStopwatcher) TimeLimit() <-chan time.Duration {
 
     return ch
 } 
+
+
+type ConfigurableStopwatcher struct {
+    tlChan <-chan time.Duration
+}
+
+func NewConfigurableStopwatcher(TL time.Duration) *ConfigurableStopwatcher {
+    tlChan := make(chan time.Duration)
+
+    go func() {
+        if TL <= time.Duration(0) {
+            return
+        }
+
+        start := time.Now()
+        after := <-time.After(TL)
+        realTL := after.Sub(start)
+        tlChan<-realTL
+    }()
+
+    return &ConfigurableStopwatcher{
+        tlChan: tlChan,
+    }
+
+}
+
+func (s *ConfigurableStopwatcher) TimeLimit() <-chan time.Duration {
+    return s.tlChan
+}
