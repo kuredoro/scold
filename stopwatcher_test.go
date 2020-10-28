@@ -20,6 +20,11 @@ func TestSpyStopwatcher(t *testing.T) {
         for i := 0; i < totalCalls - 1; i++ {
             select {
             case <-time.After(1 * time.Millisecond):
+                elapsedGot := swatch.Elapsed()
+                elapsedWant := time.Duration(i + 1) * time.Second
+                if elapsedGot != elapsedWant {
+                    t.Errorf("got %v elapsed, want %v", elapsedGot, elapsedWant)
+                }
             case <-swatch.TimeLimit():
                 t.Errorf("got TL at call #%d, want at call #%d", i + 1, totalCalls)
             }
@@ -71,22 +76,39 @@ func TestConfigurableStopwatcher(t *testing.T) {
 
         TL := 7 * time.Millisecond
         timeStep := 2 * time.Millisecond
-        steps := int(TL / timeStep / time.Millisecond)
+        steps := int(TL / timeStep)
 
         swatch := cptest.NewConfigurableStopwatcher(TL)
 
+        // It seems that this is enough of error for the check of the TL times
+        // at the end to work
+        const eps = 250 * time.Microsecond
+
         for i := 0; i < steps; i++ {
+            elapsedWant := time.Duration(i + 1) * timeStep
+
             select {
             case <-swatch.TimeLimit():
-                curTime := time.Duration(i) * timeStep
-                t.Errorf("got timelimit at %v, want at %v", curTime, TL)
+                t.Errorf("got timelimit at %v, want at %v", elapsedWant, TL)
             case <-time.After(timeStep):
+                elapsedGot := swatch.Elapsed()
+
+                // It seems that time.After is not precise enough. It's error
+                // seems to be ~0.2ms maximum (on my computer at least).
+                // Hence after consequent time.After in the case statement above
+                // error starts to accumulate and 'skew' the elapsedWant and
+                // elapsedGot by making the first one fall behind.
+                // This is my weak attempt to mitigate this.
+                skew := time.Duration(i + 1) * eps
+
+                if elapsedGot - elapsedWant > skew {
+                    t.Errorf("got elapsed %v, want %v", elapsedGot, elapsedWant)
+                }
             }
         }
 
         time.Sleep(TL - time.Duration(steps) * timeStep)
 
-        eps := 500 * time.Microsecond
         select {
         case realTL := <-swatch.TimeLimit():
             if realTL - TL > eps {

@@ -33,6 +33,7 @@ func (s *SpyStopwatcher) TimeLimit() <-chan time.Duration {
 
 type ConfigurableStopwatcher struct {
     tlChan <-chan time.Duration
+    startTime time.Time
 }
 
 func NewConfigurableStopwatcher(TL time.Duration) *ConfigurableStopwatcher {
@@ -51,6 +52,7 @@ func NewConfigurableStopwatcher(TL time.Duration) *ConfigurableStopwatcher {
 
     return &ConfigurableStopwatcher{
         tlChan: tlChan,
+        startTime: time.Now(),
     }
 
 }
@@ -60,5 +62,5 @@ func (s *ConfigurableStopwatcher) TimeLimit() <-chan time.Duration {
 }
 
 func (s *ConfigurableStopwatcher) Elapsed() time.Duration {
-    return 0
+    return time.Since(s.startTime)
 }
