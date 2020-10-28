@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 )
 
 type InternalError bool
@@ -70,6 +71,7 @@ type TestingBatch struct {
     outs map[int]string
 
     Stat map[int]Verdict
+    Times map[int]time.Duration
 
     Proc Processer
     Swatch Stopwatcher
@@ -85,6 +87,7 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
         outs: make(map[int]string),
 
         Stat: make(map[int]Verdict),
+        Times: make(map[int]time.Duration),
 
         Proc: proc,
         Swatch: swatch,
@@ -95,10 +98,10 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 func (b *TestingBatch) launchTest(id int, in string) {
     go func() {
         defer func() {
-            b.mu.Lock()
-            defer b.mu.Unlock()
-
             if e := recover(); e != nil {
+                b.mu.Lock()
+                defer b.mu.Unlock()
+
                 b.errs[id] = fmt.Errorf("%w: %v", internalErr, e)
                 b.outs[id] = ""
             }
@@ -129,11 +132,12 @@ func (b *TestingBatch) Run() {
 
         select {
         case id = <-b.complete:
-        case <-b.Swatch.TimeLimit():
+        case tl := <-b.Swatch.TimeLimit():
 
             for id = range b.inputs.Tests {
                 if _, finished := b.Stat[id + 1]; !finished {
                     b.Stat[id + 1] = TL
+                    b.Times[id + 1] = tl
                     b.ResultPrinter(b, b.inputs.Tests[id], id + 1)
                 }
             }
@@ -142,6 +146,8 @@ func (b *TestingBatch) Run() {
         }
 
         test := b.inputs.Tests[id - 1]
+
+        b.Times[id] = b.Swatch.Elapsed()
 
         // So I have these ugly ifs, cuz I want the result be printed as it
         // arrives. In the previous version I got printing defered and these

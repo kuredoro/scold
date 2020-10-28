@@ -15,7 +15,7 @@ type SpyStopwatcher struct {
 
 func (s *SpyStopwatcher) Elapsed() time.Duration {
 
-    return time.Duration(s.callCount)
+    return time.Duration(s.callCount) * time.Second
 }
 
 func (s *SpyStopwatcher) TimeLimit() <-chan time.Duration {
@@ -24,7 +24,7 @@ func (s *SpyStopwatcher) TimeLimit() <-chan time.Duration {
     ch := make(chan time.Duration, 1)
     
     if s.TLAtCall != 0 && s.TLAtCall <= s.callCount {
-        ch<-time.Duration(s.TLAtCall)
+        ch<-time.Duration(s.TLAtCall) * time.Second
     }
 
     return ch

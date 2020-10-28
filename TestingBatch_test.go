@@ -204,7 +204,15 @@ func TestTestingBatch(t *testing.T) {
             4: cptest.TL,
         }
 
+        timesWant := map[int]time.Duration{
+            1: 1 * time.Second,
+            2: 2 * time.Second,
+            3: 3 * time.Second,
+            4: 3 * time.Second,
+        }
+
         cptest.AssertVerdicts(t, batch.Stat, testsWant)
         cptest.AssertCallCount(t, proc.CallCount, 4)
+        cptest.AssertTimes(t, batch.Times, timesWant)
     })
 }
