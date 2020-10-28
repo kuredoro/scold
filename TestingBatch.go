@@ -43,7 +43,8 @@ func BlankResultPrinter(b *TestingBatch, test Test, id int) {}
 func VerboseResultPrinter(b *TestingBatch, test Test, id int) {
     verdict := b.Stat[id]
 
-    fmt.Printf("--- %s:\tTest %d\n", verdictStr[verdict], id)
+    seconds := b.Times[id].Round(time.Millisecond).Seconds()
+    fmt.Printf("--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], id, seconds)
 
     if verdict != OK {
         fmt.Printf("Input:\n%s\n\n", test.Input)
@@ -138,6 +139,7 @@ func (b *TestingBatch) Run() {
                 if _, finished := b.Stat[id + 1]; !finished {
                     b.Stat[id + 1] = TL
                     b.Times[id + 1] = tl
+
                     b.ResultPrinter(b, b.inputs.Tests[id], id + 1)
                 }
             }
