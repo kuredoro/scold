@@ -42,7 +42,7 @@ func TestSpyStopwatcher(t *testing.T) {
             t.Errorf("got first and seconds TLs that don't match (%v != %v), want matching ones", firstTL, secondTL)
         }
 
-        if firstTL != time.Duration(totalCalls) {
+        if firstTL != time.Duration(totalCalls) * time.Second {
             t.Errorf("got TL equal to %v, want it equal to %v", firstTL, time.Duration(totalCalls))
         }
     })
@@ -86,7 +86,7 @@ func TestConfigurableStopwatcher(t *testing.T) {
 
         time.Sleep(TL - time.Duration(steps) * timeStep)
 
-        eps := 200 * time.Microsecond
+        eps := 500 * time.Microsecond
         select {
         case realTL := <-swatch.TimeLimit():
             if realTL - TL > eps {

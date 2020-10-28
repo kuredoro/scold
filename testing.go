@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sanity-io/litter"
 )
@@ -116,5 +117,26 @@ func AssertNoConfig(t *testing.T, got map[string]string) {
 
     if len(got) != 0 {
         t.Errorf("expected emtpy config, but got %v", litter.Sdump(got))
+    }
+}
+
+func AssertTimes(t *testing.T, got, want map[int]time.Duration) {
+    if len(got) != len(want) {
+        t.Errorf("got %d timestamps, want %d\ngot %v\nwant %v\n",
+            len(got), len(want), litter.Sdump(got), litter.Sdump(want))
+        return
+    }
+
+    for id, wantTime := range want {
+        gotTime, exists := got[id]
+
+        if !exists {
+            t.Errorf("expected time #%d to exist, but doesn't", id)
+            continue
+        }
+
+        if gotTime != wantTime {
+            t.Errorf("id=%d: got time %v, want %v", id, gotTime, wantTime)
+        }
     }
 }
