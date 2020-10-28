@@ -58,3 +58,7 @@ func NewConfigurableStopwatcher(TL time.Duration) *ConfigurableStopwatcher {
 func (s *ConfigurableStopwatcher) TimeLimit() <-chan time.Duration {
     return s.tlChan
 }
+
+func (s *ConfigurableStopwatcher) Elapsed() time.Duration {
+    return 0
+}
