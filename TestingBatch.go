@@ -32,6 +32,7 @@ var verdictStr = map[Verdict]string{
     IE: "IE",
     WA: "WA",
     RE: "RE",
+    TL: "TL",
 }
 
 type PrintResultFunc func(*TestingBatch, Test, int)
@@ -44,13 +45,13 @@ func VerboseResultPrinter(b *TestingBatch, test Test, id int) {
     fmt.Printf("--- %s:\tTest %d\n", verdictStr[verdict], id)
 
     if verdict != OK {
-        fmt.Printf("Test:\n%s\n\n", test.Input)
+        fmt.Printf("Input:\n%s\n\n", test.Input)
         fmt.Printf("Answer:\n%s\n\n", test.Output)
 
         if verdict == RE {
             fmt.Printf("Stderr:\n%s\n\n", b.outs[id])
         } else if verdict == WA {
-            fmt.Printf("Program's output:\n%s\n\n", b.outs[id])
+            fmt.Printf("Output:\n%s\n\n", b.outs[id])
         } else if verdict == IE {
             fmt.Printf("Error:\n%v\n\n", b.errs[id])
         }
@@ -133,6 +134,7 @@ func (b *TestingBatch) Run() {
             for id = range b.inputs.Tests {
                 if _, finished := b.Stat[id + 1]; !finished {
                     b.Stat[id + 1] = TL
+                    b.ResultPrinter(b, b.inputs.Tests[id], id + 1)
                 }
             }
 
@@ -140,23 +142,26 @@ func (b *TestingBatch) Run() {
         }
 
         test := b.inputs.Tests[id - 1]
-        defer b.ResultPrinter(b, test, id)
 
+        // So I have these ugly ifs, cuz I want the result be printed as it
+        // arrives. In the previous version I got printing defered and these
+        // ifs were super dope and readable (thanks to continue statements).
+        // But defer in a loop executes the printing at the loop's very end
+        // which is unfortunate...
+        // So, here I go. I somebody knows a way prettify this part, I would be
+        // very glad!
         if err := b.errs[id]; err != nil {
             if errors.Is(err, internalErr) {
                 b.Stat[id] = IE
-                continue
+            } else {
+                b.Stat[id] = RE
             }
-
-            b.Stat[id] = RE
-            continue
-        }
-
-        if test.Output != b.outs[id] {
+        } else if test.Output != b.outs[id] {
             b.Stat[id] = WA
-            continue
+        } else {
+            b.Stat[id] = OK
         }
 
-        b.Stat[id] = OK
+        b.ResultPrinter(b, test, id)
     }
 }

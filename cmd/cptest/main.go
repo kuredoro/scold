@@ -214,6 +214,6 @@ func main() {
     if passCount == len(batch.Stat) {
         fmt.Println("OK")
     } else {
-        fmt.Printf("FAIL\t(%d/%d passed)\n", passCount, len(batch.Stat))
+        fmt.Printf("FAIL\n%d/%d passed\n", passCount, len(batch.Stat))
     }
 }
