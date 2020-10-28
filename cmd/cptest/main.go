@@ -1,15 +1,19 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
-    "errors"
+	"time"
 
 	"github.com/kureduro/cptest"
 )
+
+const defaultTL = 6 * time.Second
 
 var wd = "."
 
@@ -118,6 +122,24 @@ func CheckWd(wd string) error {
     return nil
 }
 
+func GetTL(inputs cptest.Inputs) (TL time.Duration) {
+    TL = defaultTL
+
+    if str, exists := inputs.Config["tl"]; exists {
+        sec, err := strconv.ParseFloat(str, 64)
+        if err != nil {
+            fmt.Printf("warning: time limit %q is of incorrect format: %v\n", str, err)
+            return
+        }
+
+        TL = time.Duration(sec * float64(time.Second))
+        return
+    }
+
+    fmt.Printf("using default time limit: %v\n", defaultTL)
+    return
+}
+
 func main() {
     flag.Parse()
 
@@ -175,7 +197,10 @@ func main() {
         Path: execPath,
     }
 
-    batch := cptest.NewTestingBatch(inputs, proc)
+    TL := GetTL(inputs)
+    swatch := cptest.NewConfigurableStopwatcher(TL)
+
+    batch := cptest.NewTestingBatch(inputs, proc, swatch)
 
     batch.Run()
 
