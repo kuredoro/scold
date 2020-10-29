@@ -28,10 +28,52 @@ FLAGS
 
         fmt.Fprintf(flag.CommandLine.Output(),
 `
-NOTES
+EXECUTABLE SEARCHING
         If no executable path provided, cptest will try to find an executable
         inside working directory. If only one executable is found it is chosen
         as the executable to be tested.
+
+INPUTS SYNTAX
+        The input and output should be separated by 3 hyphes (---) on their own
+        line. The input and output is stripped of spaces from both sides.
+        The input is given to the executable as is. The executable's output is
+        also stripped of spaces from both sides and then compared with the
+        expected output symbol by symbol. A valid test case should alsways
+        contain the separator.
+
+        Each individual test case is separated by 3 equality signs (===) on
+        their own line. A test case may be empty (=== and another === on the
+        next line). They are ignored.
+
+        The first test case can describe a set of key-value pairs in format
+        key=value. In this case, the key-value pairs will be used to fine-tune
+        and configure cptest session. For example, a time limit can be changed
+        to a custom one by providing "tl = 10.0" to set it to 10 seconds.
+
+INPUTS EXAMPLE
+
+        tl = 1
+        ===
+        5
+        5 4 3 2 1
+        ---
+        1 2 3 4 5
+        ===
+        7
+        2 1 4 3 6 5 7
+        ---
+        1 2 3 4 5 6 7
+
+AUTHOR
+        @kuredoro
+        Project's GitHub page: https://github.com/kuredoro/cptest
+
+        If you found a bug or would like to have some awesome feature, be sure
+        to make an issue on GitHub!
+
+VERSION
+        1.0.0
+
 `)
     }
 
