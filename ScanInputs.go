@@ -65,29 +65,35 @@ type Inputs struct {
 // ScanTest parses a single test case: input and output, separated with the
 // Input/Output separator. It also trims space around input and output. If
 // separator is absent, it returns an error.
-func ScanTest(str string) (Test, []error) {
-    if strings.TrimSpace(str) == "" || str == IODelim {
-        return Test{}, nil
-    }
+func ScanTest(testStr string) (Test, []error) {
 
-    trueDelim := "\n" + IODelim + "\n"
-    parts := strings.SplitN(str, trueDelim, 2)
+    test := Test{}
 
-    if len(parts) < 2 {
-        // Maybe --- is on first line
-        trueDelim = IODelim + "\n"
-        parts = strings.SplitN(str, trueDelim, 2)
+    var str strings.Builder
+    delimFound := false
 
-        if len(parts) < 2 || parts[0] != "" {
-            return Test{}, []error{fmt.Errorf("%w", IOSeparatorMissing)}
+    s := bufio.NewScanner(strings.NewReader(testStr))
+    for s.Scan() {
+
+        if !delimFound && strings.HasPrefix(s.Text(), IODelim) {
+            delimFound = true
+            test.Input = str.String()
+            str = strings.Builder{}
+            continue
         }
 
+        line := strings.TrimSpace(s.Text())
+        if line != "" {
+            str.WriteString(line)
+            str.WriteRune('\n')
+        }
     }
 
-    test := Test{
-        Input: strings.TrimSpace(parts[0]),
-        Output: strings.TrimSpace(parts[1]),
+    if !delimFound && str.String() != "" {
+        return Test{}, []error{IOSeparatorMissing}
     }
+
+    test.Output = str.String()
 
     return test, nil
 }

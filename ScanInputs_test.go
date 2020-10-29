@@ -13,14 +13,14 @@ func TestScanTest(t *testing.T) {
     t.Run("trim spaces",
     func(t *testing.T) {
         want := cptest.Test{
-            Input: "5\n1 2 3 4 5",
-            Output: "5 4 3 2 1",
+            Input: "5\n1 2 3 4 5\n",
+            Output: "5 4 3 2 1\n",
         }
 
         text := `
  
   5
-1 2 3 4 5
+  1 2 3 4 5
    
 ---
 
@@ -39,14 +39,14 @@ func TestScanTest(t *testing.T) {
     func(t *testing.T) {
         inputText := `3
 abc%
-%%
-trash%and%trash`
+trash%and%trash
+`
 
         inputText = strings.ReplaceAll(inputText, "%", cptest.IODelim)
 
         want := cptest.Test{
             Input: inputText,
-            Output: "correct",
+            Output: "correct\n",
         }
 
         text := fmt.Sprintf("%s\n%s\ncorrect", inputText, cptest.IODelim)
@@ -68,11 +68,30 @@ c
         `
 
         want := cptest.Test{
-            Input: "a",
-            Output: "b\n---\nc",
+            Input: "a\n",
+            Output: "b\n---\nc\n",
         }
 
         test, errs := cptest.ScanTest(text)
+
+        cptest.AssertTest(t, test, want)
+        cptest.AssertNoErrors(t, errs)
+    })
+
+    t.Run("only the prefix of a line should match IO delimeter",
+    func(t *testing.T) {
+        inputText := "3\r\n" +
+                     "---this text is discarded\r\n" +
+                     "random 12345\r\n"
+
+        inputText = strings.ReplaceAll(inputText, "---", cptest.IODelim)
+
+        want := cptest.Test{
+            Input: "3\n",
+            Output: "random 12345\n",
+        }
+
+        test, errs := cptest.ScanTest(inputText)
 
         cptest.AssertTest(t, test, want)
         cptest.AssertNoErrors(t, errs)
@@ -128,8 +147,8 @@ func TestScanInputs(t *testing.T) {
 
         testsWant := []cptest.Test{
             {
-                Input: "foo",
-                Output: "bar",
+                Input: "foo\n",
+                Output: "bar\n",
             },
         }
 
@@ -148,16 +167,16 @@ func TestScanInputs(t *testing.T) {
 
         testsWant := []cptest.Test{
             {
-                Input: "4\n1 2 3 4",
-                Output: "4 3 2 1",
+                Input: "4\n1 2 3 4\n",
+                Output: "4 3 2 1\n",
             },
             {
-                Input: "6\n1 2 3 4 5 6",
-                Output: "6 5 4 3 2 1",
+                Input: "6\n1 2 3 4 5 6\n",
+                Output: "6 5 4 3 2 1\n",
             },
             {
-                Input: "1\n1",
-                Output: "1",
+                Input: "1\n1\n",
+                Output: "1\n",
             },
         }
 
@@ -187,17 +206,62 @@ func TestScanInputs(t *testing.T) {
         cptest.AssertNoConfig(t, inputs.Config)
     })
 
+    /*
+    t.Run("multiple with CRLF",
+    func(t *testing.T) {
+
+        testsWant := []cptest.Test{
+            {
+                Input: "4\n1 2 3 4",
+                Output: "4 3 2 1",
+            },
+            {
+                Input: "6\n1 2 3 4 5 6",
+                Output: "6 5 4 3 2 1",
+            },
+            {
+                Input: "1\n1",
+                Output: "1",
+            },
+        }
+
+        text := "4\r\n" +
+                "1 2 3 4\r\n" +
+                "---\r\n" +
+                "4 3 2 1\r\n" +
+                "===\r\n" +
+                "6\r\n" +
+                "1 2 3 4 5 6\r\n" +
+                "---\r\n" +
+                "6 5 4 3 2 1\r\n" +
+                "===\r\n" +
+                "1\r\n" +
+                "1\r\n" +
+                "---\r\n" +
+                "1\r\n"
+
+        text = strings.ReplaceAll(text, "---", cptest.IODelim)
+        text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+
+        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        
+        cptest.AssertTests(t, inputs.Tests, testsWant)
+        cptest.AssertNoErrors(t, errs)
+        cptest.AssertNoConfig(t, inputs.Config)
+    })
+    */
+
     t.Run("skip empty tests",
     func(t *testing.T) {
 
         testsWant := []cptest.Test{
             {
-                Input: "abc",
-                Output: "cba",
+                Input: "abc\n",
+                Output: "cba\n",
             },
             {
-                Input: "xyz",
-                Output: "zyx",
+                Input: "xyz\n",
+                Output: "zyx\n",
             },
         }
 
@@ -229,11 +293,11 @@ zyx
     func(t *testing.T) {
         testsWant := []cptest.Test{
             {
-                Input: "===>",
-                Output: "<===\n====",
+                Input: "===>\n",
+                Output: "<===\n====\n",
             },
             {
-                Input: "=== \ntra^iling space",
+                Input: "===\ntra^iling space\n",
                 Output: "",
             },
         }
@@ -262,8 +326,8 @@ tra^iling space
     func(t *testing.T) {
         testsWant := []cptest.Test{
             {
-                Input: "2 2",
-                Output: "4",
+                Input: "2 2\n",
+                Output: "4\n",
             },
         }
 
@@ -294,8 +358,8 @@ foo= bar
     func(t *testing.T) {
         testsWant := []cptest.Test{
             {
-                Input: "2 2",
-                Output: "4",
+                Input: "2 2\n",
+                Output: "4\n",
             },
         }
 
