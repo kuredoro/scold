@@ -14,6 +14,27 @@ var inputsPath string
 var execPath string
 
 func init() {
+    flag.Usage = func() {
+        fmt.Fprintf(flag.CommandLine.Output(),
+`CPTEST
+        Competitive programming write/test cycle automation tool.
+
+USAGE
+        cptest [-i INPUTS] [-e EXECUTABLE] [WORKING_DIR]
+
+FLAGS
+`)
+        flag.PrintDefaults()
+
+        fmt.Fprintf(flag.CommandLine.Output(),
+`
+NOTES
+        If no executable path provided, cptest will try to find an executable
+        inside working directory. If only one executable is found it is chosen
+        as the executable to be tested.
+`)
+    }
+
     flag.StringVar(&inputsPath, "i", "inputs.txt", "File with the test cases (and, optionally, config)")
     flag.StringVar(&execPath, "e", "", "Path to the executable")
 }
