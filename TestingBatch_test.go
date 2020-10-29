@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kureduro/cptest"
+	"github.com/kuredoro/cptest"
 )
 
 func ProcFuncMultiply(in io.Reader, out io.Writer) error {
@@ -49,7 +49,6 @@ func TestTestingBatch(t *testing.T) {
         swatch := &cptest.SpyStopwatcher{}
 
         batch := cptest.NewTestingBatch(inputs, proc, swatch)
-        batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
 
@@ -84,7 +83,6 @@ func TestTestingBatch(t *testing.T) {
         swatch := &cptest.SpyStopwatcher{}
 
         batch := cptest.NewTestingBatch(inputs, proc, swatch)
-        batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
 
@@ -147,7 +145,6 @@ func TestTestingBatch(t *testing.T) {
         swatch := &cptest.SpyStopwatcher{}
 
         batch := cptest.NewTestingBatch(inputs, proc, swatch)
-        batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
 
@@ -193,7 +190,6 @@ func TestTestingBatch(t *testing.T) {
         }
 
         batch := cptest.NewTestingBatch(inputs, proc, swatch)
-        batch.ResultPrinter = cptest.BlankResultPrinter
 
         batch.Run()
 

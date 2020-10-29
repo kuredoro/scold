@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kureduro/cptest"
+	"github.com/kuredoro/cptest"
 )
 
 const defaultTL = 6 * time.Second
