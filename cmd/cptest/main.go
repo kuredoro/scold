@@ -100,7 +100,7 @@ func GetProc() (proc cptest.Processer, err error) {
         return nil, err
     }
 
-    proc = &cptest.Executable{
+    proc = &Executable{
         Path: path,
     }
 

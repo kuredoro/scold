@@ -17,7 +17,9 @@ func (e InternalError) Error() string {
     return "internal"
 }
 
-const internalErr = InternalError(true)
+// InternalErr is a single instance of the InternalError that may be referred
+// to in errors.Is.
+const InternalErr = InternalError(true)
 
 
 // Verdict represents a verdict asssigned by the judge.
@@ -90,7 +92,7 @@ func (b *TestingBatch) launchTest(id int, in string) {
                 b.mu.Lock()
                 defer b.mu.Unlock()
 
-                b.Errs[id] = fmt.Errorf("%w: %v", internalErr, e)
+                b.Errs[id] = fmt.Errorf("%w: %v", InternalErr, e)
                 b.Outs[id] = ""
             }
 
@@ -152,7 +154,7 @@ func (b *TestingBatch) Run() {
         // So, here I go. I somebody knows a way prettify this part, I would be
         // very glad!
         if err := b.Errs[id]; err != nil {
-            if errors.Is(err, internalErr) {
+            if errors.Is(err, InternalErr) {
                 b.Stat[id] = IE
             } else {
                 b.Stat[id] = RE
