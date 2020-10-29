@@ -7,12 +7,16 @@ import (
 	"strings"
 )
 
+// InputsError represents an error produced while scanning inputs file.
 type InputsError string
 
 func (e InputsError) Error() string {
     return string(e)
 }
 
+// A set of errors that may be produced during scanning of the inputs file.
+// These replace sentinel errors making the errors be comparable with equals
+// operator. 
 const (
     IOSeparatorMissing = InputsError("IO separator missing")
     KeyMissing = InputsError("key cannot be empty")
@@ -21,6 +25,8 @@ const (
     NotKVPair = InputsError("not a key-value pair")
 )
 
+// LinedError appends line information to the error message. It is mainly used
+// to test that errors are produced for correct lines.
 type LinedError struct {
     Header string
     Line int
@@ -36,21 +42,29 @@ func (e *LinedError) Unwrap() error {
 }
 
 
+// The set of delimeters used when partitioning inputs file.
 const (
     IODelim = "---"
     TestDelim = "==="
 )
 
+// Test represents a single test case: an input and the expected output.
 type Test struct {
     Input string
     Output string
 }
 
+// Inputs contains all information located in the inputs file. It contains
+// all of the tests listed there and the set of key-value pairs, if were
+// provided.
 type Inputs struct {
     Tests []Test
     Config map[string]string
 }
 
+// ScanTest parses a single test case: input and output, separated with the
+// Input/Output separator. It also trims space around input and output. If
+// separator is absent, it returns an error.
 func ScanTest(str string) (Test, []error) {
     if strings.TrimSpace(str) == "" || str == IODelim {
         return Test{}, nil
@@ -78,6 +92,8 @@ func ScanTest(str string) (Test, []error) {
     return test, nil
 }
 
+// splitByString is a generic function that splits buffered input by a 
+// specified string.
 func splitByString(data []byte, atEOF bool, delim string) (advance int, token []byte, err error) {
 
     trueDelim := delim + "\n"
@@ -124,7 +140,9 @@ func splitByString(data []byte, atEOF bool, delim string) (advance int, token []
     return 0, nil, nil
 }
 
-
+// ScanKeyValuePair parses the key-value pair definition of form key=value.
+// It returns error if no equality signs are present, or if any side is empty.
+// The space around key and value is trimmed.
 func ScanKeyValuePair(line string) (string, string, error) {
     parts := strings.Split(line, "=")
 
@@ -156,6 +174,9 @@ func ScanKeyValuePair(line string) (string, string, error) {
     return key, val, nil
 }
 
+// ScanConfig tries to parse a stream of key-value pairs. It expects each pair
+// to be located on a dedicated line. Duplicate keys are allowed, the later
+// version is preferred.
 func ScanConfig(text string) (m map[string]string, errs []error) {
     s := bufio.NewScanner(strings.NewReader(text))
 
@@ -182,6 +203,13 @@ func ScanConfig(text string) (m map[string]string, errs []error) {
     return
 }
 
+// ScanInputs is the main routine for parsing inputs file. It splits the input
+// by test case separator, and tries to parse each individual test case one by
+// one. If the true first test could not be parsed without errors, it is
+// interpreted as a configuration and parsed again. The empty tests are
+// skipped (those that don't contain input, output and the separator).
+// If test case could not be parsed, parsing continues to the next test case,
+// but the errors are accumulated and returned together.
 func ScanInputs(r io.Reader) (inputs Inputs, errs []error) {
     inputs.Config = make(map[string]string)
 
@@ -191,7 +219,7 @@ func ScanInputs(r io.Reader) (inputs Inputs, errs []error) {
     })
 
     firstTest := true
-    for testId := 1; s.Scan(); testId++ {
+    for testID := 1; s.Scan(); testID++ {
 
         test, testErrs := ScanTest(s.Text())
 
@@ -206,7 +234,7 @@ func ScanInputs(r io.Reader) (inputs Inputs, errs []error) {
                 return
             }
 
-            testId--
+            testID--
             firstTest = false
             continue
         }
@@ -215,7 +243,7 @@ func ScanInputs(r io.Reader) (inputs Inputs, errs []error) {
 
         if testErrs != nil {
             for i, err := range testErrs {
-                testErrs[i] = fmt.Errorf("test %d: %w", testId, err)
+                testErrs[i] = fmt.Errorf("test %d: %w", testID, err)
             }
 
             errs = append(errs, testErrs...)
@@ -223,7 +251,7 @@ func ScanInputs(r io.Reader) (inputs Inputs, errs []error) {
         }
 
         if test.Input == "" && test.Output == "" {
-            testId--
+            testID--
             continue
         }
 

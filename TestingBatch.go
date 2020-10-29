@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+// InternalError represents an error that occured due to internal failure in
+// TestingBatch.
 type InternalError bool
 
 func (e InternalError) Error() string {
@@ -18,8 +20,12 @@ func (e InternalError) Error() string {
 const internalErr = InternalError(true)
 
 
+// Verdict represents a verdict asssigned by the judge.
 type Verdict int
 
+// The set of all possible judge verdicts that can be assigned. The 
+// abbreviatons are due to competitive programming online judges.
+// (Except for IE, that stands for Internal Error)
 const (
     OK Verdict = iota
     IE
@@ -36,8 +42,11 @@ var verdictStr = map[Verdict]string{
     TL: "TL",
 }
 
+// PrintResultFunc is type representing a function to print statistics and
+// information about the finished test case.
 type PrintResultFunc func(*TestingBatch, Test, int)
 
+// BlankResultPrinter is the standard PrintResultFunc that outputs nothing.
 func BlankResultPrinter(b *TestingBatch, test Test, id int) {}
 
 func VerboseResultPrinter(b *TestingBatch, test Test, id int) {
@@ -61,7 +70,11 @@ func VerboseResultPrinter(b *TestingBatch, test Test, id int) {
 }
 
 
-
+// TestingBatch is responsible for running tests and evaluating the verdicts
+// for tests. For each test case, the verdict and execution time are stored.
+// It utilizer an instance of Processer to run tests, and an instance of
+// Stopwatcher to track time limit. Optionally, user can set ResultPrinter
+// to a custom function to output useful statistics about test case's result.
 type TestingBatch struct {
     inputs Inputs
 
@@ -79,6 +92,8 @@ type TestingBatch struct {
     ResultPrinter PrintResultFunc
 }
 
+// NewTestingBatch will initialize channels and maps inside TestingBatch and
+// will assign respective dependency injections.
 func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *TestingBatch {
     return &TestingBatch{
         inputs: inputs,
@@ -121,6 +136,12 @@ func (b *TestingBatch) launchTest(id int, in string) {
     }()
 }
 
+// Run will lauch test cases in parallel and then will wait for each test to
+// finish or for the time to timelimit. When a test is finished the verdict
+// and the time it took to execute are remembered. Additionally, ResultPrinter
+// is called on the test case's statistics. When a time limit is reached,
+// each not-yet-judged test is assigned TL verdict and the ResultPrinter is
+// also called on each test.
 func (b *TestingBatch) Run() {
     for i, test := range b.inputs.Tests {
         b.launchTest(i + 1, test.Input)
