@@ -1,10 +1,7 @@
 package cptest
 
 import (
-	"fmt"
 	"io"
-	"os/exec"
-	"strings"
 )
 
 // Processer interface abstracts away the concept of the executable under
@@ -38,27 +35,3 @@ func (p ProcesserFunc) Run(r io.Reader, w io.Writer) error {
 }
 
 
-type Executable struct {
-    Path string
-}
-
-func (e *Executable) Run(r io.Reader, w io.Writer) error {
-    cmd := exec.Command(e.Path)
-    cmd.Stdin = r
-
-    out, err := cmd.Output()
-
-    if ee, ok := err.(*exec.ExitError); ok {
-        cleanStderr := strings.TrimSpace(string(ee.Stderr))
-        fmt.Fprint(w, cleanStderr)
-        return fmt.Errorf("%v", ee)
-    }
-
-    if err != nil {
-        return fmt.Errorf("%w: %v", internalErr, err)
-    }
-
-    cleanOutput := strings.TrimSpace(string(out))
-    fmt.Fprint(w, cleanOutput)
-    return nil
-}
