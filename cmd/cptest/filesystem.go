@@ -7,7 +7,7 @@ import (
     "os"
     "fmt"
 
-	"github.com/kureduro/cptest"
+	"github.com/kuredoro/cptest"
 )
 
 func joinIfRelative(dir, filepath string) string {

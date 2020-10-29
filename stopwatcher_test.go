@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kureduro/cptest"
+	"github.com/kuredoro/cptest"
 )
 
 func TestSpyStopwatcher(t *testing.T) {

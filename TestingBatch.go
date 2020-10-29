@@ -34,40 +34,12 @@ const (
     TL
 )
 
-var verdictStr = map[Verdict]string{
-    OK: "OK",
-    IE: "IE",
-    WA: "WA",
-    RE: "RE",
-    TL: "TL",
-}
-
 // PrintResultFunc is type representing a function to print statistics and
 // information about the finished test case.
 type PrintResultFunc func(*TestingBatch, Test, int)
 
 // BlankResultPrinter is the standard PrintResultFunc that outputs nothing.
 func BlankResultPrinter(b *TestingBatch, test Test, id int) {}
-
-func VerboseResultPrinter(b *TestingBatch, test Test, id int) {
-    verdict := b.Stat[id]
-
-    seconds := b.Times[id].Round(time.Millisecond).Seconds()
-    fmt.Printf("--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], id, seconds)
-
-    if verdict != OK {
-        fmt.Printf("Input:\n%s\n\n", test.Input)
-        fmt.Printf("Answer:\n%s\n\n", test.Output)
-
-        if verdict == RE {
-            fmt.Printf("Stderr:\n%s\n\n", b.outs[id])
-        } else if verdict == WA {
-            fmt.Printf("Output:\n%s\n\n", b.outs[id])
-        } else if verdict == IE {
-            fmt.Printf("Error:\n%v\n\n", b.errs[id])
-        }
-    }
-}
 
 
 // TestingBatch is responsible for running tests and evaluating the verdicts
@@ -81,8 +53,8 @@ type TestingBatch struct {
     complete chan int
 
     mu sync.Mutex
-    errs map[int]error
-    outs map[int]string
+    Errs map[int]error
+    Outs map[int]string
 
     Stat map[int]Verdict
     Times map[int]time.Duration
@@ -99,15 +71,15 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
         inputs: inputs,
 
         complete: make(chan int),
-        errs: make(map[int]error),
-        outs: make(map[int]string),
+        Errs: make(map[int]error),
+        Outs: make(map[int]string),
 
         Stat: make(map[int]Verdict),
         Times: make(map[int]time.Duration),
 
         Proc: proc,
         Swatch: swatch,
-        ResultPrinter: VerboseResultPrinter,
+        ResultPrinter: BlankResultPrinter,
     }
 }
 
@@ -118,8 +90,8 @@ func (b *TestingBatch) launchTest(id int, in string) {
                 b.mu.Lock()
                 defer b.mu.Unlock()
 
-                b.errs[id] = fmt.Errorf("%w: %v", internalErr, e)
-                b.outs[id] = ""
+                b.Errs[id] = fmt.Errorf("%w: %v", internalErr, e)
+                b.Outs[id] = ""
             }
 
             b.complete<-id
@@ -131,8 +103,8 @@ func (b *TestingBatch) launchTest(id int, in string) {
         b.mu.Lock()
         defer b.mu.Unlock()
 
-        b.errs[id] = err
-        b.outs[id] = strings.TrimSpace(buf.String())
+        b.Errs[id] = err
+        b.Outs[id] = strings.TrimSpace(buf.String())
     }()
 }
 
@@ -179,13 +151,13 @@ func (b *TestingBatch) Run() {
         // which is unfortunate...
         // So, here I go. I somebody knows a way prettify this part, I would be
         // very glad!
-        if err := b.errs[id]; err != nil {
+        if err := b.Errs[id]; err != nil {
             if errors.Is(err, internalErr) {
                 b.Stat[id] = IE
             } else {
                 b.Stat[id] = RE
             }
-        } else if test.Output != b.outs[id] {
+        } else if test.Output != b.Outs[id] {
             b.Stat[id] = WA
         } else {
             b.Stat[id] = OK

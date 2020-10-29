@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kureduro/cptest"
+	"github.com/kuredoro/cptest"
 )
 
 var wd = "."
@@ -151,6 +151,8 @@ func main() {
     swatch := cptest.NewConfigurableStopwatcher(TL)
 
     batch := cptest.NewTestingBatch(inputs, proc, swatch)
+    
+    batch.ResultPrinter = VerboseResultPrinter
 
     batch.Run()
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kureduro/cptest"
+	"github.com/kuredoro/cptest"
 )
 
 func TestScanTest(t *testing.T) {
