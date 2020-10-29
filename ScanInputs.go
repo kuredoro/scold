@@ -3,7 +3,6 @@ package cptest
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"strings"
 )
 
@@ -98,54 +97,6 @@ func ScanTest(testStr string) (Test, []error) {
     return test, nil
 }
 
-// splitByString is a generic function that splits buffered input by a 
-// specified string.
-func splitByString(data []byte, atEOF bool, delim string) (advance int, token []byte, err error) {
-
-    trueDelim := delim + "\n"
-
-    if len(trueDelim) <= len(data) {
-        prefix := data[:len(trueDelim)]
-
-        if string(prefix) == trueDelim {
-            return len(trueDelim), []byte{}, nil
-        }
-    }
-
-    trueDelim = "\n" + delim + "\n"
-
-    prefixEnd := 0
-    for i := 0; i < len(data); i++ {
-        if data[i] == trueDelim[prefixEnd] {
-            prefixEnd++
-        } else {
-            prefixEnd = 0
-        }
-
-        if prefixEnd == len(trueDelim) {
-            return i + 1, data[:i-prefixEnd+1], nil
-        }
-    }
-
-    if atEOF && len(data) != 0 {
-        testLen := len(data)
-
-        // Explicit check that we have === at the very end with no \n at the end
-        trueDelim = "\n" + delim
-        if len(trueDelim) <= len(data) {
-            suffix := data[len(data)-len(trueDelim):]
-
-            if string(suffix) == trueDelim {
-                testLen = len(data) - len(trueDelim)
-            }
-        }
-
-        return testLen, data[:testLen], nil
-    }
-
-    return 0, nil, nil
-}
-
 // ScanKeyValuePair parses the key-value pair definition of form key=value.
 // It returns error if no equality signs are present, or if any side is empty.
 // The space around key and value is trimmed.
@@ -216,52 +167,61 @@ func ScanConfig(text string) (m map[string]string, errs []error) {
 // skipped (those that don't contain input, output and the separator).
 // If test case could not be parsed, parsing continues to the next test case,
 // but the errors are accumulated and returned together.
-func ScanInputs(r io.Reader) (inputs Inputs, errs []error) {
+func ScanInputs(text string) (inputs Inputs, errs []error) {
+    // Sentinel test case delimeter
+    text += "\n" + TestDelim + "\n"
+
     inputs.Config = make(map[string]string)
 
-    s := bufio.NewScanner(r)
-    s.Split(func(data []byte, atEOF bool) (int, []byte, error) {
-        return splitByString(data, atEOF, TestDelim)
-    })
+    var str strings.Builder
+    testID := 0
 
-    firstTest := true
-    for testID := 1; s.Scan(); testID++ {
+    s := bufio.NewScanner(strings.NewReader(text))
+    for s.Scan() {
 
-        test, testErrs := ScanTest(s.Text())
+        if strings.HasPrefix(s.Text(), TestDelim) {
+            part := str.String()
+            str = strings.Builder{}
 
-        if firstTest && testErrs != nil {
-            var configErrs []error
-            inputs.Config, configErrs = ScanConfig(s.Text())
+            test, testErrs := ScanTest(part)
 
-            if configErrs != nil {
-                // Yeah, I know. errs should be empty anyways, so append is
-                // redundant. But for the sake of genericity I'll leave it as is.
-                errs = append(errs, configErrs...)
-                return
+            if test.Input == "" && test.Output == "" && testErrs == nil {
+                continue
             }
 
-            testID--
-            firstTest = false
-            continue
-        }
+            // More than 1 configs
+            if inputs.Tests == nil && testErrs != nil {
+                config, configErrs := ScanConfig(part)
 
-        firstTest = false
+                if configErrs != nil {
+                    errs = append(errs, configErrs...)
+                }
 
-        if testErrs != nil {
-            for i, err := range testErrs {
-                testErrs[i] = fmt.Errorf("test %d: %w", testID, err)
+                for k, v := range config {
+                    inputs.Config[k] = v
+                }
+                continue
             }
 
-            errs = append(errs, testErrs...)
+            testID++
+
+            if testErrs != nil {
+                for i, err := range testErrs {
+                    testErrs[i] = fmt.Errorf("test %d: %w", testID, err)
+                }
+                errs = append(errs, testErrs...)
+                continue
+            }
+
+            inputs.Tests = append(inputs.Tests, test)
             continue
         }
 
-        if test.Input == "" && test.Output == "" {
-            testID--
-            continue
+        line := strings.TrimSpace(s.Text())
+        if line != "" {
+            str.WriteString(line)
+            str.WriteRune('\n')
         }
-
-        inputs.Tests = append(inputs.Tests, test)
     }
 
     return
