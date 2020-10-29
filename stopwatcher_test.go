@@ -82,7 +82,7 @@ func TestConfigurableStopwatcher(t *testing.T) {
 
         // It seems that this is enough of error for the check of the TL times
         // at the end to work
-        const eps = 250 * time.Microsecond
+        const eps = 400 * time.Microsecond
 
         for i := 0; i < steps; i++ {
             elapsedWant := time.Duration(i + 1) * timeStep
