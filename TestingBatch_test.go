@@ -181,7 +181,7 @@ func TestTestingBatch(t *testing.T) {
                 fmt.Fscan(r, &num)
 
                 dur := time.Duration(num)
-                time.Sleep(dur * time.Millisecond)
+                time.Sleep(5 * dur * time.Millisecond)
 
                 fmt.Fprintln(w, num)
                 return nil
