@@ -11,6 +11,8 @@ import (
 	"github.com/sanity-io/litter"
 )
 
+// AssertTest compare the inputs and outputs with respective expected ones
+// for equivalence.
 func AssertTest(t *testing.T, got Test, want Test) {
     t.Helper()
     if !reflect.DeepEqual(got, want) {
@@ -18,6 +20,7 @@ func AssertTest(t *testing.T, got Test, want Test) {
     }
 }
 
+// AssertTests will compare received array of tests with the expected one.
 func AssertTests(t *testing.T, got []Test, want []Test) {
     t.Helper()
     if !reflect.DeepEqual(got, want) {
@@ -25,6 +28,8 @@ func AssertTests(t *testing.T, got []Test, want []Test) {
     }
 }
 
+// AssertNoErrors will check if the array of errors is empty. If it's not
+// empty, the test will be failed and the errors will be reported.
 func AssertNoErrors(t *testing.T, errs []error) {
     t.Helper()
 
@@ -40,6 +45,7 @@ func AssertNoErrors(t *testing.T, errs []error) {
     }
 }
 
+// AssertErrors compared received array of errors with the expected one.
 func AssertErrors(t *testing.T, got, want []error) {
     t.Helper()
 
@@ -58,6 +64,8 @@ func AssertErrors(t *testing.T, got, want []error) {
     }
 }
 
+// AssertVerdicts checks that received and expected verdict maps contain the
+// same keys, and then checks that the values for these keys equal.
 func AssertVerdicts(t *testing.T, got, want map[int]Verdict) {
     t.Helper()
 
@@ -65,13 +73,15 @@ func AssertVerdicts(t *testing.T, got, want map[int]Verdict) {
         t.Fatalf("got %d verdicts, want %d", len(got), len(want))
     }
 
-    for testId, got := range got {
-        if got != want[testId] {
-            t.Errorf("for test %d got verdict %v, want %v", testId, got, want[testId])
+    for testID, got := range got {
+        if got != want[testID] {
+            t.Errorf("for test %d got verdict %v, want %v", testID, got, want[testID])
         }
     }
 }
 
+// AssertCallCount checks that the received and expected number of calls are
+// equal.
 func AssertCallCount(t *testing.T, got, want int) {
     t.Helper()
 
@@ -80,6 +90,8 @@ func AssertCallCount(t *testing.T, got, want int) {
     }
 }
 
+// AssertConfig checks whether received and expected config key-value sets
+// are equal.
 func AssertConfig(t *testing.T, got, want map[string]string) {
     t.Helper()
 
@@ -88,6 +100,9 @@ func AssertConfig(t *testing.T, got, want map[string]string) {
     }
 }
 
+// AssertErrorLines checks that each error in the received array of errors
+// is wrapping a LinedError error. At the same time, it checks that the line
+// numbers are equal to the expected ones.
 func AssertErrorLines(t *testing.T, errs []error, lines []int) {
     t.Helper()
 
@@ -108,6 +123,8 @@ func AssertErrorLines(t *testing.T, errs []error, lines []int) {
     }
 }
 
+// AssertNoConfig checks that the received key-value set is empty. If it's not,
+// the test is failed and the its contents are printed.
 func AssertNoConfig(t *testing.T, got map[string]string) {
     t.Helper()
 
@@ -120,6 +137,8 @@ func AssertNoConfig(t *testing.T, got map[string]string) {
     }
 }
 
+// AssertTimes check whether the received and expected timestampts for the
+// test cases both exist and are equal.
 func AssertTimes(t *testing.T, got, want map[int]time.Duration) {
     if len(got) != len(want) {
         t.Errorf("got %d timestamps, want %d\ngot %v\nwant %v\n",
