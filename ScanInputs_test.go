@@ -135,7 +135,7 @@ func TestScanInputs(t *testing.T) {
 
     t.Run("emtpy returns empty inputs",
     func(t *testing.T) {
-        inputs, errs := cptest.ScanInputs(strings.NewReader(""))
+        inputs, errs := cptest.ScanInputs("")
 
         cptest.AssertTests(t, inputs.Tests, nil)
         cptest.AssertNoErrors(t, errs)
@@ -155,7 +155,7 @@ func TestScanInputs(t *testing.T) {
         text := "foo\n---\nbar\n"
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        inputs, errs := cptest.ScanInputs(text)
         
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
@@ -199,29 +199,28 @@ func TestScanInputs(t *testing.T) {
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        inputs, errs := cptest.ScanInputs(text)
         
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
         cptest.AssertNoConfig(t, inputs.Config)
     })
 
-    /*
     t.Run("multiple with CRLF",
     func(t *testing.T) {
 
         testsWant := []cptest.Test{
             {
-                Input: "4\n1 2 3 4",
-                Output: "4 3 2 1",
+                Input: "4\n1 2 3 4\n",
+                Output: "4 3 2 1\n",
             },
             {
-                Input: "6\n1 2 3 4 5 6",
-                Output: "6 5 4 3 2 1",
+                Input: "6\n1 2 3 4 5 6\n",
+                Output: "6 5 4 3 2 1\n",
             },
             {
-                Input: "1\n1",
-                Output: "1",
+                Input: "1\n1\n",
+                Output: "1\n",
             },
         }
 
@@ -243,13 +242,12 @@ func TestScanInputs(t *testing.T) {
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        inputs, errs := cptest.ScanInputs(text)
         
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
         cptest.AssertNoConfig(t, inputs.Config)
     })
-    */
 
     t.Run("skip empty tests",
     func(t *testing.T) {
@@ -282,22 +280,22 @@ zyx
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        inputs, errs := cptest.ScanInputs(text)
 
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
         cptest.AssertNoConfig(t, inputs.Config)
     })
 
-    t.Run("TestDelimeters in wrong places",
+    t.Run("only line's prefix should match TestDelimeter",
     func(t *testing.T) {
         testsWant := []cptest.Test{
             {
-                Input: "===>\n",
-                Output: "<===\n====\n",
+                Input: "",
+                Output: "<===\n",
             },
             {
-                Input: "===\ntra^iling space\n",
+                Input: "--===\n",
                 Output: "",
             },
         }
@@ -308,21 +306,21 @@ zyx
 <===
 ====
 ===
-=== 
-tra^iling space
+--===
 ---
+===---
         `
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        inputs, errs := cptest.ScanInputs(text)
 
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
         cptest.AssertNoConfig(t, inputs.Config)
     })
 
-    t.Run("config as first test",
+    t.Run("configs may be listed before first test",
     func(t *testing.T) {
         testsWant := []cptest.Test{
             {
@@ -334,11 +332,14 @@ tra^iling space
         configWant := map[string]string{
             "tl": "2.0",
             "foo": "bar",
+            "extra": "love",
         }
 
         text := `
 tl = 2.0
 foo= bar
+===
+extra=love
 ===
 2 2
 ---
@@ -347,14 +348,14 @@ foo= bar
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        inputs, errs := cptest.ScanInputs(text)
 
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
         cptest.AssertConfig(t, inputs.Config, configWant)
     })
 
-    t.Run("configs are treated as such only in test 1",
+    t.Run("configs are treated as such only before test 1",
     func(t *testing.T) {
         testsWant := []cptest.Test{
             {
@@ -379,7 +380,7 @@ foo= bar
             cptest.IOSeparatorMissing,
         }
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        inputs, errs := cptest.ScanInputs(text)
 
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertErrors(t, errs, errsWant)
@@ -398,7 +399,7 @@ foo= bar
 ===
         `
 
-        inputs, errs := cptest.ScanInputs(strings.NewReader(text))
+        inputs, errs := cptest.ScanInputs(text)
 
         cptest.AssertTests(t, inputs.Tests, nil)
         cptest.AssertNoErrors(t, errs)
