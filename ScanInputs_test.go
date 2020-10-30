@@ -472,9 +472,14 @@ uoenahonetuhneo
         }
 
         errLines := []int{3, 5}
+        errsWant := []error{
+            cptest.NotKVPair,
+            cptest.NotKVPair,
+        }
 
         cptest.AssertConfig(t, got, want)
         cptest.AssertErrorLines(t, errs, errLines)
+        cptest.AssertErrors(t, errs, errsWant)
     })
 
     t.Run("assignments with lhs or rhs empty are erroneous",
@@ -493,9 +498,16 @@ foo=
             "foo": "bar",
         }
 
-        errLines := []int{3, 4, 5}
+        errLines := []int{3, 4, 5, 6}
+        errsWant := []error{
+            cptest.ValueMissing,
+            cptest.KeyMissing,
+            cptest.KVMissing,
+            cptest.KVMissing,
+        }
 
         cptest.AssertConfig(t, got, want)
         cptest.AssertErrorLines(t, errs, errLines)
+        cptest.AssertErrors(t, errs, errsWant)
     })
 }
