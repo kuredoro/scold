@@ -65,7 +65,7 @@ type Inputs struct {
 // It returns error if no equality signs are present, or if any side is empty.
 // The space around key and value is trimmed.
 func ScanKeyValuePair(line string) (string, string, error) {
-    parts := strings.Split(line, "=")
+    parts := strings.SplitN(line, "=", 2)
 
     if len(parts) == 1 {
         cleanLine := strings.TrimSpace(line)
@@ -74,23 +74,23 @@ func ScanKeyValuePair(line string) (string, string, error) {
             return "", "", nil
         }
 
-        if cleanLine == "=" {
-            return "", "", KVMissing
-        }
-
         return "", "", NotKVPair
     }
 
-    if parts[0] == "" {
+    key := strings.TrimSpace(parts[0])
+    val := strings.TrimSpace(parts[1])
+
+    if key == "" && val == "" {
+        return "", "", KVMissing
+    }
+
+    if key == "" {
         return "", "", KeyMissing
     }
 
-    if parts[1] == "" {
+    if val == "" {
         return "", "", ValueMissing
     }
-
-    key := strings.TrimSpace(parts[0])
-    val := strings.TrimSpace(strings.Join(parts[1:], "="))
 
     return key, val, nil
 }
@@ -170,10 +170,6 @@ func ScanTest(testStr string) (Test, []error) {
     }
 
     parts := SplitByInlinedPrefixN(testStr, IODelim, 2)
-
-    if len(parts) == 0 {
-        return Test{}, nil
-    }
 
     if len(parts) == 1 {
         return Test{}, []error{IOSeparatorMissing}
