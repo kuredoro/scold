@@ -61,42 +61,6 @@ type Inputs struct {
     Config map[string]string
 }
 
-// ScanTest parses a single test case: input and output, separated with the
-// Input/Output separator. It also trims space around input and output. If
-// separator is absent, it returns an error.
-func ScanTest(testStr string) (Test, []error) {
-
-    test := Test{}
-
-    var str strings.Builder
-    delimFound := false
-
-    s := bufio.NewScanner(strings.NewReader(testStr))
-    for s.Scan() {
-
-        if !delimFound && strings.HasPrefix(s.Text(), IODelim) {
-            delimFound = true
-            test.Input = str.String()
-            str = strings.Builder{}
-            continue
-        }
-
-        line := strings.TrimSpace(s.Text())
-        if line != "" {
-            str.WriteString(line)
-            str.WriteRune('\n')
-        }
-    }
-
-    if !delimFound && str.String() != "" {
-        return Test{}, []error{IOSeparatorMissing}
-    }
-
-    test.Output = str.String()
-
-    return test, nil
-}
-
 // ScanKeyValuePair parses the key-value pair definition of form key=value.
 // It returns error if no equality signs are present, or if any side is empty.
 // The space around key and value is trimmed.
@@ -156,64 +120,30 @@ func ScanConfig(text string) (m map[string]string, errs []error) {
 
         m[key] = val
     }
-    
+
     return
 }
 
-// ScanInputs is the main routine for parsing inputs file. It splits the input
-// by test case separator, and tries to parse each individual test case one by
-// one. If the true first test could not be parsed without errors, it is
-// interpreted as a configuration and parsed again. The empty tests are
-// skipped (those that don't contain input, output and the separator).
-// If test case could not be parsed, parsing continues to the next test case,
-// but the errors are accumulated and returned together.
-func ScanInputs(text string) (inputs Inputs, errs []error) {
-    // Sentinel test case delimeter
-    text += "\n" + TestDelim + "\n"
-
-    inputs.Config = make(map[string]string)
+// SplitByInlinedPrefxN works in the same way as strings.SplitN. However,
+// it does 2 additional things. First, it matches the *prefixes of the lines* 
+// for equality with the delimeter. Upon match the entire line is discarded. 
+// Second, each line of the produced parts is space-trimmed.
+//
+// If text doesn't contain the delimeter, only one part is returned.
+// User can specify the number of parts they want at most via the third
+// argument.
+func SplitByInlinedPrefixN(text, delim string, n int) (parts []string) {
 
     var str strings.Builder
-    testID := 0
 
     s := bufio.NewScanner(strings.NewReader(text))
     for s.Scan() {
-
-        if strings.HasPrefix(s.Text(), TestDelim) {
+        
+        if (n == 0 || len(parts) + 1 < n) && strings.HasPrefix(s.Text(), delim) {
             part := str.String()
+            parts = append(parts, part)
+
             str = strings.Builder{}
-
-            test, testErrs := ScanTest(part)
-
-            if test.Input == "" && test.Output == "" && testErrs == nil {
-                continue
-            }
-
-            // More than 1 configs
-            if inputs.Tests == nil && testErrs != nil {
-                config, configErrs := ScanConfig(part)
-
-                if configErrs != nil {
-                    errs = append(errs, configErrs...)
-                }
-
-                for k, v := range config {
-                    inputs.Config[k] = v
-                }
-                continue
-            }
-
-            testID++
-
-            if testErrs != nil {
-                for i, err := range testErrs {
-                    testErrs[i] = fmt.Errorf("test %d: %w", testID, err)
-                }
-                errs = append(errs, testErrs...)
-                continue
-            }
-
-            inputs.Tests = append(inputs.Tests, test)
             continue
         }
 
@@ -222,6 +152,89 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
             str.WriteString(line)
             str.WriteRune('\n')
         }
+    }
+
+    part := str.String()
+    parts = append(parts, part)
+
+    return
+}
+
+// ScanTest parses a single test case: input and output, separated with the
+// Input/Output separator. It also trims space around input and output
+// line-wise. If separator is absent, it returns an error.
+func ScanTest(testStr string) (Test, []error) {
+
+    if testStr == "" {
+        return Test{}, nil
+    }
+
+    parts := SplitByInlinedPrefixN(testStr, IODelim, 2)
+
+    if len(parts) == 0 {
+        return Test{}, nil
+    }
+
+    if len(parts) == 1 {
+        return Test{}, []error{IOSeparatorMissing}
+    }
+
+    test := Test{
+        Input: parts[0],
+        Output: parts[1],
+    }
+
+    return test, nil
+}
+
+// ScanInputs is the main routine for parsing inputs file. It splits the input
+// by test case separator, and tries to parse each individual test case one by
+// one. If the first meaningful test could not be parsed without errors, it is
+// interpreted as a configuration and parsed again. There may be multiple
+// configurations per file. The later ones overwrite keys set by former ones.
+// The empty tests are skipped (those that don't contain input, output and the 
+// separator). If test case could not be parsed, parsing continues to the next 
+// test case, but the errors are accumulated and returned together.
+func ScanInputs(text string) (inputs Inputs, errs []error) {
+    inputs.Config = make(map[string]string)
+
+    parts := SplitByInlinedPrefixN(text, TestDelim, 0)
+
+    testNum := 0
+    for _, part := range parts {
+        test, testErrs := ScanTest(part)
+
+        // Try to parse config
+        if testErrs != nil && testNum == 0 {
+            config, configErrs := ScanConfig(part)
+            if configErrs != nil {
+                errs = append(errs, configErrs...)
+                continue
+            }
+
+            for k, v := range config {
+                inputs.Config[k] = v
+            }
+            continue
+        }
+
+        // Skip empty tests
+        if testErrs == nil && test.Input == "" && test.Output == "" {
+            continue
+        }
+
+        testNum++
+
+        if testErrs != nil {
+            for i, err := range testErrs {
+                testErrs[i] = fmt.Errorf("test %d: %w", testNum, err)
+            }
+
+            errs = append(errs, testErrs...)
+            continue
+        }
+
+        inputs.Tests = append(inputs.Tests, test)
     }
 
     return
