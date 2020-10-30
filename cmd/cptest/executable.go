@@ -1,12 +1,14 @@
 package main
 
 import (
-    "fmt"
-    "io"
-    "os/exec"
-    "strings"
+	"bufio"
+	"bytes"
+	"fmt"
+	"io"
+	"os/exec"
+	"strings"
 
-    "github.com/kuredoro/cptest"
+	"github.com/kuredoro/cptest"
 )
 
 type Executable struct {
@@ -29,7 +31,14 @@ func (e *Executable) Run(r io.Reader, w io.Writer) error {
         return fmt.Errorf("%w: %v", cptest.InternalErr, err)
     }
 
-    cleanOutput := strings.TrimSpace(string(out))
-    fmt.Fprint(w, cleanOutput)
+    var str strings.Builder
+    s := bufio.NewScanner(bytes.NewReader(out))
+
+    for s.Scan() {
+        str.WriteString(strings.TrimSpace(s.Text()))
+        str.WriteRune('\n')
+    }
+
+    fmt.Fprint(w, str.String())
     return nil
 }

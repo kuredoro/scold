@@ -1,5 +1,5 @@
 ## cptest
-[![Coverage Status](https://coveralls.io/repos/github/kureduro/cptest/badge.svg?branch=master)](https://coveralls.io/github/kureduro/cptest?branch=master) [![Actions Status](https://github.com/kureduro/cptest/workflows/build/badge.svg)](https://github.com/kureduro/cptest/actions)
+[![Coverage Status](https://coveralls.io/repos/github/kuredoro/cptest/badge.svg?branch=master)](https://coveralls.io/github/kuredoro/cptest?branch=master) [![Actions Status](https://github.com/kuredoro/cptest/workflows/build/badge.svg)](https://github.com/kuredoro/cptest/actions)
 
 Copy all example test cases from a problem statement into a file. Then test your code in one command!
 
