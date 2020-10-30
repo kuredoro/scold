@@ -129,6 +129,32 @@ dcba
         cptest.AssertTest(t, test, cptest.Test{})
         cptest.AssertNoErrors(t, errs)
     })
+
+    t.Run("empty input",
+    func(t *testing.T) {
+        test, errs := cptest.ScanTest("\n---\ntwo\n")
+
+        want := cptest.Test{
+            Input: "",
+            Output: "two\n",
+        }
+
+        cptest.AssertTest(t, test, want)
+        cptest.AssertNoErrors(t, errs)
+    })
+
+    t.Run("empty output",
+    func(t *testing.T) {
+        test, errs := cptest.ScanTest("one\n---\n")
+
+        want := cptest.Test{
+            Input: "one\n",
+            Output: "",
+        }
+
+        cptest.AssertTest(t, test, want)
+        cptest.AssertNoErrors(t, errs)
+    })
 }
 
 func TestScanInputs(t *testing.T) {
@@ -243,7 +269,7 @@ func TestScanInputs(t *testing.T) {
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
         inputs, errs := cptest.ScanInputs(text)
-        
+
         cptest.AssertTests(t, inputs.Tests, testsWant)
         cptest.AssertNoErrors(t, errs)
         cptest.AssertNoConfig(t, inputs.Config)
