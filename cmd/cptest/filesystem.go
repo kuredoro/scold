@@ -1,11 +1,12 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"path"
 	"strings"
-	"errors"
-    "os"
-    "fmt"
 
 	"github.com/kuredoro/cptest"
 )
@@ -25,7 +26,12 @@ func ReadInputs(inputsPath string) (cptest.Inputs, []error) {
     }
     defer inputsFile.Close()
 
-    inputs, errs := cptest.ScanInputs(inputsFile)
+    text, err := ioutil.ReadAll(inputsFile)
+    if err != nil {
+        return cptest.Inputs{}, []error{fmt.Errorf("load tests: %v", err)}
+    }
+
+    inputs, errs := cptest.ScanInputs(string(text))
     if errs != nil {
         for i, err := range errs {
             errs[i] = fmt.Errorf("load tests: %v", err)

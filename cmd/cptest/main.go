@@ -35,15 +35,15 @@ EXECUTABLE SEARCHING
 
 INPUTS SYNTAX
         The input and output should be separated by 3 hyphes (---) on their own
-        line. The input and output is stripped of spaces from both sides.
-        The input is given to the executable as is. The executable's output is
-        also stripped of spaces from both sides and then compared with the
-        expected output symbol by symbol. A valid test case should alsways
+        line. The input and output is stripped of spaces from both sides 
+        line-wise. The input is given to the executable. The executable's
+        output is also stripped of spaces from both sides and then compared with
+        the expected output symbol by symbol. A valid test case should always
         contain the separator.
 
         Each individual test case is separated by 3 equality signs (===) on
         their own line. A test case may be empty (=== and another === on the
-        next line). They are ignored.
+        next line). These are ignored.
 
         The first test case can describe a set of key-value pairs in format
         key=value. In this case, the key-value pairs will be used to fine-tune
