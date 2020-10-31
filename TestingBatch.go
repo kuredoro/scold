@@ -106,7 +106,7 @@ func (b *TestingBatch) launchTest(id int, in string) {
         defer b.mu.Unlock()
 
         b.Errs[id] = err
-        b.Outs[id] = strings.TrimSpace(buf.String())
+        b.Outs[id] = buf.String()
     }()
 }
 
