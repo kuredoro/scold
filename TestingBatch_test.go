@@ -32,12 +32,12 @@ func TestTestingBatch(t *testing.T) {
         inputs := cptest.Inputs{
             Tests: []cptest.Test{
                 {
-                    Input: "2 2",
-                    Output: "4",
+                    Input: "2 2\n",
+                    Output: "4\n",
                 },
                 {
-                    Input: "-2 -2",
-                    Output: "4",
+                    Input: "-2 -2\n",
+                    Output: "4\n",
                 },
             },
         }
@@ -66,12 +66,12 @@ func TestTestingBatch(t *testing.T) {
         inputs := cptest.Inputs{
             Tests: []cptest.Test{
                 {
-                    Input: "4\n1 2 3 4",
-                    Output: "2 3 4 5",
+                    Input: "4\n1 2 3 4\n",
+                    Output: "2 3 4 5\n",
                 },
                 {
-                    Input: "2\n-2 -1",
-                    Output: "-1 0",
+                    Input: "2\n-2 -1\n",
+                    Output: "-1 0\n",
                 },
             },
         }
@@ -100,24 +100,24 @@ func TestTestingBatch(t *testing.T) {
         inputs := cptest.Inputs{
             Tests: []cptest.Test{
                 {
-                    Input: "1",
-                    Output: "1",
+                    Input: "1\n",
+                    Output: "1\n",
                 },
                 {
-                    Input: "2",
-                    Output: "2",
+                    Input: "2\n",
+                    Output: "2\n",
                 },
                 {
-                    Input: "3",
-                    Output: "3",
+                    Input: "3\n",
+                    Output: "3\n",
                 },
                 {
-                    Input: "4",
-                    Output: "4",
+                    Input: "4\n",
+                    Output: "4\n",
                 },
                 {
-                    Input: "5",
-                    Output: "5",
+                    Input: "5\n",
+                    Output: "5\n",
                 },
             },
         }
@@ -164,10 +164,10 @@ func TestTestingBatch(t *testing.T) {
     func(t *testing.T) {
         inputs := cptest.Inputs{
             Tests: []cptest.Test{
-                {"1", "1"},
-                {"2", "2"},
-                {"3", "3"},
-                {"4", "4"},
+                {"1\n", "1\n"},
+                {"2\n", "2\n"},
+                {"3\n", "3\n"},
+                {"4\n", "4\n"},
             },
         }
 

@@ -26,9 +26,9 @@ func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
 		fmt.Printf("Answer:\n%s\n", test.Output)
 
 		if verdict == cptest.RE {
-			fmt.Printf("Stderr:\n%s\n\n", b.Outs[id])
+			fmt.Printf("Stderr:\n%s\n", b.Outs[id])
 		} else if verdict == cptest.WA {
-			fmt.Printf("Output:\n%s\n\n", b.Outs[id])
+			fmt.Printf("Output:\n%s\n", b.Outs[id])
 		} else if verdict == cptest.IE {
 			fmt.Printf("Error:\n%v\n\n", b.Errs[id])
 		}

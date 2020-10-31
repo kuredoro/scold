@@ -19,8 +19,11 @@ func trimSpaceLineWise(text string) string {
 	s := bufio.NewScanner(strings.NewReader(text))
 
 	for s.Scan() {
-		str.WriteString(strings.TrimSpace(s.Text()))
-		str.WriteRune('\n')
+        line := strings.TrimSpace(s.Text())
+        if line != "" {
+            str.WriteString(strings.TrimSpace(s.Text()))
+            str.WriteRune('\n')
+        }
 	}
 
 	return str.String()
