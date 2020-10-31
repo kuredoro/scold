@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/kuredoro/cptest"
 )
 
-func joinIfRelative(dir, filepath string) string {
-    if filepath != "" && filepath[0] == '/' {
-        return filepath
+func joinIfRelative(dir, file string) string {
+    if file != "" && file[0] == '/' {
+        return file
     }
 
-    return path.Join(dir, filepath)
+    return filepath.Join(dir, file)
 }
 
 func ReadInputs(inputsPath string) (cptest.Inputs, []error) {
@@ -76,7 +76,7 @@ func FindExecutable(dirPath string) (string, error) {
 
     var execs []string
     for _, name := range names {
-        name = path.Join(wd, name)
+        name = filepath.Join(wd, name)
         if IsExec(name) == nil {
             execs = append(execs, name)
         }
