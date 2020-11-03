@@ -1,5 +1,5 @@
 ## cptest
-[![Coverage Status](https://coveralls.io/repos/github/kuredoro/cptest/badge.svg?branch=master)](https://coveralls.io/github/kuredoro/cptest?branch=master) 
+[![Coverage Status](https://coveralls.io/repos/github/kuredoro/cptest/badge.svg?branch=main)](https://coveralls.io/github/kuredoro/cptest?branch=main)
 [![Actions Status](https://github.com/kuredoro/cptest/workflows/build/badge.svg)](https://github.com/kuredoro/cptest/actions) 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/kuredoro/cptest)](https://pkg.go.dev/github.com/kuredoro/cptest)
 [![Release](https://img.shields.io/github/release/kuredoro/cptest.svg?style=flat-square)](https://github.com/kuredoro/cptest/releases/latest)

@@ -2,7 +2,7 @@ name: build
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -37,7 +37,9 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Run Unit tests.
-        run: go test -coverprofile=coverage.out
+        run: |
+          go test -coverprofile=coverage.out.tmp
+          cat coverage.out.tmp | grep -v "testing.go" > coverage.out # Remove testing.go that contains testing helpers from the coverage
 
       - name: Convert gcov to lcov
         uses: jandelgado/gcov2lcov-action@v1.0.5
