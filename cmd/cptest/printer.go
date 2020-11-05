@@ -15,6 +15,10 @@ var verdictStr = map[cptest.Verdict]string{
 	cptest.TL: "TL",
 }
 
+func RunPrinter(id int) {
+    fmt.Printf("=== RUN\tTest %d\n", id)
+}
+
 func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
 	verdict := b.Stat[id]
 

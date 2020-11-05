@@ -36,12 +36,25 @@ const (
     TL
 )
 
-// PrintResultFunc is type representing a function to print statistics and
-// information about the finished test case.
-type PrintResultFunc func(*TestingBatch, Test, int)
+// TestStartCallbackFunc represents a function to be called before a test
+// case will be launched. It accepts the id of the test case.
+type TestStartCallbackFunc func(int)
 
-// BlankResultPrinter is the standard PrintResultFunc that outputs nothing.
-func BlankResultPrinter(b *TestingBatch, test Test, id int) {}
+// TestStartStub is a stub for TestStartCallback that does nothing.
+func TestStartStub(id int) {}
+
+
+// TestEndCallbackFunc represents a function to be called when a test
+// case finishes execution. Usually, one would like to print the test case
+// result information.
+//
+// It accepts the pointer to the TestingBatch that contains verdict, time,
+// program's error and output info. it also accepts the Test and the id of
+// the Test.
+type TestEndCallbackFunc func(*TestingBatch, Test, int)
+
+// TestEndStub is a stub for TestEndCallback that does nothing.
+func TestEndStub(b *TestingBatch, test Test, id int) {}
 
 
 // TestingBatch is responsible for running tests and evaluating the verdicts
@@ -63,7 +76,9 @@ type TestingBatch struct {
 
     Proc Processer
     Swatch Stopwatcher
-    ResultPrinter PrintResultFunc
+
+    TestStartCallback TestStartCallbackFunc
+    TestEndCallback TestEndCallbackFunc
 }
 
 // NewTestingBatch will initialize channels and maps inside TestingBatch and
@@ -81,7 +96,9 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 
         Proc: proc,
         Swatch: swatch,
-        ResultPrinter: BlankResultPrinter,
+
+        TestStartCallback: TestStartStub,
+        TestEndCallback: TestEndStub,
     }
 }
 
@@ -118,9 +135,9 @@ func (b *TestingBatch) launchTest(id int, in string) {
 // also called on each test.
 func (b *TestingBatch) Run() {
     for i, test := range b.inputs.Tests {
-        b.launchTest(i + 1, test.Input)
+        b.TestStartCallback(i + 1)
 
-        fmt.Printf("=== RUN\tTest %d\n", i + 1)
+        b.launchTest(i + 1, test.Input)
     }
 
     for range b.inputs.Tests {
@@ -135,7 +152,7 @@ func (b *TestingBatch) Run() {
                     b.Stat[id + 1] = TL
                     b.Times[id + 1] = tl
 
-                    b.ResultPrinter(b, b.inputs.Tests[id], id + 1)
+                    b.TestEndCallback(b, b.inputs.Tests[id], id + 1)
                 }
             }
 
@@ -165,6 +182,6 @@ func (b *TestingBatch) Run() {
             b.Stat[id] = OK
         }
 
-        b.ResultPrinter(b, test, id)
+        b.TestEndCallback(b, test, id)
     }
 }

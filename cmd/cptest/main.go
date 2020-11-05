@@ -154,7 +154,8 @@ func main() {
 
 	batch := cptest.NewTestingBatch(inputs, proc, swatch)
 
-	batch.ResultPrinter = VerboseResultPrinter
+    batch.TestStartCallback = RunPrinter
+	batch.TestEndCallback = VerboseResultPrinter
 
 	batch.Run()
 
