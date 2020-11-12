@@ -20,7 +20,7 @@ func init() {
         Competitive programming write/test cycle automation tool.
 
 USAGE
-        cptest [-i INPUTS] [-e EXECUTABLE] [WORKING_DIR]
+        cptest [-i INPUTS] EXECUTABLE
 
 FLAGS
 `)
@@ -28,11 +28,6 @@ FLAGS
 
 		fmt.Fprintf(flag.CommandLine.Output(),
 			`
-EXECUTABLE SEARCHING
-        If no executable path provided, cptest will try to find an executable
-        inside working directory. If only one executable is found it is chosen
-        as the executable to be tested.
-
 INPUTS SYNTAX
         The input and output should be separated by 3 hyphes (---) on their own
         line. The input and output is stripped of spaces from both sides 
@@ -68,31 +63,20 @@ AUTHOR
         @kuredoro
         Project's GitHub page: https://github.com/kuredoro/cptest
 
-        If you found a bug or would like to have some awesome feature, be sure
-        to make an issue on GitHub!
+        Feature request or a bug report is always welcome at
+        https://github.com/kuredoro/cptest/issues
 
 VERSION
-        1.0.0
+        cutting edge 1.0.1
 
 `)
 	}
 
-	flag.StringVar(&inputsPath, "i", "inputs.txt", "File with the test cases (and, optionally, config)")
-	flag.StringVar(&execPath, "e", "", "Path to the executable")
+	flag.StringVar(&inputsPath, "i", "inputs.txt", "File with the test cases")
 }
 
 func GetProc() (proc cptest.Processer, err error) {
-	if execPath == "" {
-		execPath, err = FindExecutable(wd)
 
-		if err != nil {
-			return nil, err
-		}
-
-		fmt.Printf("found executable: %s\n", joinIfRelative(wd, execPath))
-	}
-
-	execPath = joinIfRelative(wd, execPath)
 
 	/*
 	   This check does not work on Windows.
@@ -102,33 +86,23 @@ func GetProc() (proc cptest.Processer, err error) {
 	   }
 	*/
 
-	proc = &Executable{
-		Path: execPath,
-	}
-
 	return
 }
 
 func main() {
 	flag.Parse()
 
-	if count := len(flag.Args()); count != 0 {
-		wd = flag.Args()[0]
+	if count := len(flag.Args()); count != 1 {
+        flag.Usage()
 
-		if count > 1 {
-			fmt.Printf("warning: expected 0 or 1 command line argument, got %v\n", count)
-		}
+        return
 	}
 
-	cwd, err := os.Getwd()
+	execPath = flag.Args()[0]
+
+	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Println("error: could not get path for current working directory")
-		return
-	}
-
-	wd = joinIfRelative(cwd, wd)
-	if err = CheckWd(wd); err != nil {
-		fmt.Printf("error: %v\n", err)
 		return
 	}
 
@@ -143,7 +117,10 @@ func main() {
 		return
 	}
 
-	proc, err := GetProc()
+	execPath = joinIfRelative(wd, execPath)
+    proc := &Executable{
+		Path: execPath,
+	}
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return
