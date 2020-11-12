@@ -11,7 +11,7 @@ Copy all example test cases from a problem statement into a file. Then test your
 Let's assume that you have a shortcut for compiling your code. Also the directory with your code looks like this
 ```
 $ ls
-app Makefile main.cpp
+app* Makefile main.cpp
 ```
 
 Create a file, say, `inputs.txt` and copy the test cases in the following format:
@@ -29,8 +29,7 @@ That is, just separate input and output with `---` and test cases themselves wit
 
 Now, simply run in the directory
 ```
-$ cptest
-found executable: /home/username/path/to/app
+$ cptest app
 using default time limit: 6s
 === RUN Test 1
 === RUN Test 2
@@ -61,7 +60,7 @@ no
 You can also explicitly provide the working directory and/or the path to the inputs/executable. In general
 ```
 Usage:
-    cptest -i INPUTS -e EXECUTABLE [WORKING_DIR]
+    cptest [-i INPUTS] EXECUTABLE
 ```
 
 You can simply amend the command you're executing with the shortcut and that's it! No more risking getting a WA on the first test or wasting time rechecking the given examples!
@@ -90,8 +89,7 @@ tl = 10.0
 
 Running `cptest`, we get
 ```
-$ cptest
-found executable: /home/username/path/to/app
+$ cptest app
 === RUN	Test 1
 === RUN	Test 2
 === RUN	Test 3
@@ -117,4 +115,7 @@ $ go build ./cmd/cptest
 $ ./cptest
 ```
 
-You can add it to your PATH to call it from anywhere in the console. On Linux that could be `/usr/bin/` directory.
+You can add it to your PATH to call it from anywhere in the console. On Linux run
+```
+# mv cptest /usr/bin
+```
