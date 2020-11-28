@@ -163,13 +163,6 @@ func (b *TestingBatch) Run() {
 
         b.Times[id] = b.Swatch.Elapsed()
 
-        // So I have these ugly ifs, cuz I want the result be printed as it
-        // arrives. In the previous version I got printing defered and these
-        // ifs were super dope and readable (thanks to continue statements).
-        // But defer in a loop executes the printing at the loop's very end
-        // which is unfortunate...
-        // So, here I go. I somebody knows a way prettify this part, I would be
-        // very glad!
         if err := b.Errs[id]; err != nil {
             if errors.Is(err, InternalErr) {
                 b.Stat[id] = IE
