@@ -455,34 +455,31 @@ foo=bar
         cptest.AssertNoErrors(t, errs)
     })
 
-    t.Run("lines without assignments are gibberish",
+    t.Run("lines without assignments are keys without values",
     func(t *testing.T) {
         text := `
 hi = owww
 key assign value
 zap = paz
-uoenahonetuhneo
+ignore_newline
+this is ok =
         `
 
         got, errs := cptest.ScanConfig(text)
 
         want := map[string]string{
             "hi": "owww",
+            "key assign value": "",
             "zap": "paz",
-        }
-
-        errLines := []int{3, 5}
-        errsWant := []error{
-            cptest.NotKVPair,
-            cptest.NotKVPair,
+            "ignore_newline": "",
+            "this is ok": "",
         }
 
         cptest.AssertConfig(t, got, want)
-        cptest.AssertErrorLines(t, errs, errLines)
-        cptest.AssertErrors(t, errs, errsWant)
+        cptest.AssertNoErrors(t, errs)
     })
 
-    t.Run("assignments with lhs or rhs empty are erroneous",
+    t.Run("assignments with empty lhs are erroneous",
     func(t *testing.T) {
         text := `
 foo=bar
@@ -495,15 +492,14 @@ foo=
         got, errs := cptest.ScanConfig(text)
 
         want := map[string]string{
-            "foo": "bar",
+            "foo": "",
         }
 
-        errLines := []int{3, 4, 5, 6}
+        errLines := []int{4, 5, 6}
         errsWant := []error{
-            cptest.ValueMissing,
             cptest.KeyMissing,
-            cptest.KVMissing,
-            cptest.KVMissing,
+            cptest.KeyMissing,
+            cptest.KeyMissing,
         }
 
         cptest.AssertConfig(t, got, want)

@@ -19,9 +19,6 @@ func (e InputsError) Error() string {
 const (
     IOSeparatorMissing = InputsError("IO separator missing")
     KeyMissing = InputsError("key cannot be empty")
-    ValueMissing = InputsError("value cannot be empty")
-    KVMissing = InputsError("key and value are missing")
-    NotKVPair = InputsError("not a key-value pair")
 )
 
 // LinedError appends line information to the error message. It is mainly used
@@ -53,17 +50,17 @@ type Test struct {
     Output string
 }
 
-// Inputs contains all information located in the inputs file. It contains
-// all of the tests listed there and the set of key-value pairs, if were
-// provided.
+// Inputs contains all information located in the inputs file: tests and
+// the set of key-value pairs that were provided.
 type Inputs struct {
     Tests []Test
     Config map[string]string
 }
 
-// ScanKeyValuePair parses the key-value pair definition of form key=value.
-// It returns error if no equality signs are present, or if any side is empty.
-// The space around key and value is trimmed.
+// ScanKeyValuePair parses the key-value pair of form 'key=value'.
+// Strings without assignment are treated as keys with empty value.
+// Strings with assignment but with empty key are erroneous.
+// The space around key and value respectively is trimmed.
 func ScanKeyValuePair(line string) (string, string, error) {
     parts := strings.SplitN(line, "=", 2)
 
@@ -74,22 +71,14 @@ func ScanKeyValuePair(line string) (string, string, error) {
             return "", "", nil
         }
 
-        return "", "", NotKVPair
+        return parts[0], "", nil
     }
 
     key := strings.TrimSpace(parts[0])
     val := strings.TrimSpace(parts[1])
 
-    if key == "" && val == "" {
-        return "", "", KVMissing
-    }
-
     if key == "" {
         return "", "", KeyMissing
-    }
-
-    if val == "" {
-        return "", "", ValueMissing
     }
 
     return key, val, nil
