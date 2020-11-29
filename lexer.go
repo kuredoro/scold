@@ -19,7 +19,7 @@ type Lexer struct {
 // \n\n are parsed as separate lexemes ("\n", "\n").
 // It will never return an empty lexeme.
 // The definition of other spaces is set by unicode.IsSpace.
-func scanLexemes(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func ScanLexemes(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	// Skip leading spaces.
 	start := 0
 	for width := 0; start < len(data); start += width {
@@ -66,7 +66,7 @@ func (l *Lexer) Scan(text string) (seq LexSequence) {
 
     r := strings.NewReader(text)
     s := bufio.NewScanner(r)
-    s.Split(scanLexemes)
+    s.Split(ScanLexemes)
 
     for s.Scan() {
         seq = append(seq, s.Text())

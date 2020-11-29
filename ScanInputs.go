@@ -114,9 +114,8 @@ func ScanConfig(text string) (m map[string]string, errs []error) {
 }
 
 // SplitByInlinedPrefxN works in the same way as strings.SplitN. However,
-// it does 2 additional things. First, it matches the *prefixes of the lines* 
+// it does one additional thing. It matches the *prefixes of the lines*
 // for equality with the delimeter. Upon match the entire line is discarded. 
-// Second, each line of the produced parts is space-trimmed.
 //
 // If text doesn't contain the delimeter, only one part is returned.
 // User can specify the number of parts they want at most via the third
@@ -136,8 +135,7 @@ func SplitByInlinedPrefixN(text, delim string, n int) (parts []string) {
             continue
         }
 
-        line := strings.TrimSpace(s.Text())
-        str.WriteString(line)
+        str.WriteString(s.Text())
         str.WriteRune('\n')
     }
 
