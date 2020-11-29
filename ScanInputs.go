@@ -137,10 +137,8 @@ func SplitByInlinedPrefixN(text, delim string, n int) (parts []string) {
         }
 
         line := strings.TrimSpace(s.Text())
-        if line != "" {
-            str.WriteString(line)
-            str.WriteRune('\n')
-        }
+        str.WriteString(line)
+        str.WriteRune('\n')
     }
 
     part := str.String()
