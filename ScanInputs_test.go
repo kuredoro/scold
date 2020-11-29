@@ -10,11 +10,11 @@ import (
 
 func TestScanTest(t *testing.T) {
 
-    t.Run("trim spaces",
+    t.Run("trim spaces but not \\n",
     func(t *testing.T) {
         want := cptest.Test{
-            Input: "5\n1 2 3 4 5\n",
-            Output: "5 4 3 2 1\n",
+            Input: "\n\n5\n1 2 3 4 5\n\n",
+            Output: "\n5 4 3 2 1\n\n\n\n",
         }
 
         text := `
@@ -49,7 +49,7 @@ trash%and%trash
             Output: "correct\n",
         }
 
-        text := fmt.Sprintf("%s\n%s\ncorrect", inputText, cptest.IODelim)
+        text := fmt.Sprintf("%s%s\ncorrect", inputText, cptest.IODelim)
 
         test, errs := cptest.ScanTest(text)
 
@@ -59,13 +59,11 @@ trash%and%trash
 
     t.Run("second+ IO delimeters are ignored",
     func(t *testing.T) {
-        text := `
-a
+        text := `a
 ---
 b
 ---
-c
-        `
+c`
 
         want := cptest.Test{
             Input: "a\n",
@@ -132,7 +130,7 @@ dcba
 
     t.Run("empty input",
     func(t *testing.T) {
-        test, errs := cptest.ScanTest("\n---\ntwo\n")
+        test, errs := cptest.ScanTest("---\ntwo\n")
 
         want := cptest.Test{
             Input: "",
@@ -206,8 +204,7 @@ func TestScanInputs(t *testing.T) {
             },
         }
 
-        text := `
-4
+        text := `4
 1 2 3 4
 ---
 4 3 2 1
@@ -221,7 +218,7 @@ func TestScanInputs(t *testing.T) {
 1
 ---
 1
-        `
+`
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
@@ -302,7 +299,7 @@ xyz
 ---
 zyx
 ===
-        `
+`
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
@@ -335,7 +332,7 @@ zyx
 --===
 ---
 ===---
-        `
+`
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
@@ -370,7 +367,7 @@ extra=love
 2 2
 ---
 4
-        `
+`
         text = strings.ReplaceAll(text, "---", cptest.IODelim)
         text = strings.ReplaceAll(text, "===", cptest.TestDelim)
 
