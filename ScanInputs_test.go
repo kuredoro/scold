@@ -10,11 +10,11 @@ import (
 
 func TestScanTest(t *testing.T) {
 
-    t.Run("trim spaces but not \\n",
+    t.Run("don't trim space",
     func(t *testing.T) {
         want := cptest.Test{
-            Input: "\n\n5\n1 2 3 4 5\n\n",
-            Output: "\n5 4 3 2 1\n\n\n\n",
+            Input: "\n \n  5\n  1 2 3 4 5\n   \n",
+            Output: "\n  5 4 3 2 1\n\n  \n",
         }
 
         text := `
@@ -27,7 +27,7 @@ func TestScanTest(t *testing.T) {
   5 4 3 2 1
 
   
-        `
+`
 
         test, errs := cptest.ScanTest(text)
 
