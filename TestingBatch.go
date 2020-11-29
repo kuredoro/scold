@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -169,10 +170,17 @@ func (b *TestingBatch) Run() {
             } else {
                 b.Stat[id] = RE
             }
-        } else if test.Output != b.Outs[id] {
-            b.Stat[id] = WA
         } else {
-            b.Stat[id] = OK
+            lexer := Lexer{}
+
+            got := lexer.Scan(b.Outs[id])
+            want := lexer.Scan(test.Output)
+
+            if !reflect.DeepEqual(got, want) {
+                b.Stat[id] = WA
+            } else {
+                b.Stat[id] = OK
+            }
         }
 
         b.TestEndCallback(b, test, id)
