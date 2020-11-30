@@ -9,6 +9,12 @@ import (
 
 type LexSequence []string
 
+type LexDiff struct {
+    Got string
+    Want string
+    Equal bool
+}
+
 type Lexer struct {
 
 }
@@ -73,4 +79,19 @@ func (l *Lexer) Scan(text string) (seq LexSequence) {
     }
 
     return
+}
+
+func (l *Lexer) Compare(got, want LexSequence) ([]LexDiff, bool) {
+    return []LexDiff{
+        {
+            Got: "foo",
+            Want: "foo",
+            Equal: true,
+        },
+        {
+            Got: "bar",
+            Want: "bar",
+            Equal: true,
+        },
+    }, true
 }

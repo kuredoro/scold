@@ -20,7 +20,7 @@ func RunPrinter(id int) {
 }
 
 func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
-	verdict := b.Stat[id]
+	verdict := b.Verdicts[id]
 
 	seconds := b.Times[id].Round(time.Millisecond).Seconds()
 	fmt.Printf("--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], id, seconds)

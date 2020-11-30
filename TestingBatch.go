@@ -72,7 +72,7 @@ type TestingBatch struct {
     Errs map[int]error
     Outs map[int]string
 
-    Stat map[int]Verdict
+    Verdicts map[int]Verdict
     Times map[int]time.Duration
 
     Proc Processer
@@ -92,7 +92,7 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
         Errs: make(map[int]error),
         Outs: make(map[int]string),
 
-        Stat: make(map[int]Verdict),
+        Verdicts: make(map[int]Verdict),
         Times: make(map[int]time.Duration),
 
         Proc: proc,
@@ -149,8 +149,8 @@ func (b *TestingBatch) Run() {
         case tl := <-b.Swatch.TimeLimit():
 
             for id = range b.inputs.Tests {
-                if _, finished := b.Stat[id + 1]; !finished {
-                    b.Stat[id + 1] = TL
+                if _, finished := b.Verdicts[id + 1]; !finished {
+                    b.Verdicts[id + 1] = TL
                     b.Times[id + 1] = tl
 
                     b.TestEndCallback(b, b.inputs.Tests[id], id + 1)
@@ -166,9 +166,9 @@ func (b *TestingBatch) Run() {
 
         if err := b.Errs[id]; err != nil {
             if errors.Is(err, InternalErr) {
-                b.Stat[id] = IE
+                b.Verdicts[id] = IE
             } else {
-                b.Stat[id] = RE
+                b.Verdicts[id] = RE
             }
         } else {
             lexer := Lexer{}
@@ -177,9 +177,9 @@ func (b *TestingBatch) Run() {
             want := lexer.Scan(test.Output)
 
             if !reflect.DeepEqual(got, want) {
-                b.Stat[id] = WA
+                b.Verdicts[id] = WA
             } else {
-                b.Stat[id] = OK
+                b.Verdicts[id] = OK
             }
         }
 

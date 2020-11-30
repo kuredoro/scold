@@ -137,15 +137,15 @@ func main() {
 	batch.Run()
 
 	passCount := 0
-	for _, v := range batch.Stat {
+	for _, v := range batch.Verdicts {
 		if v == cptest.OK {
 			passCount++
 		}
 	}
 
-	if passCount == len(batch.Stat) {
+	if passCount == len(batch.Verdicts) {
 		fmt.Println("OK")
 	} else {
-		fmt.Printf("FAIL\n%d/%d passed\n", passCount, len(batch.Stat))
+		fmt.Printf("FAIL\n%d/%d passed\n", passCount, len(batch.Verdicts))
 	}
 }

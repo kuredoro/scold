@@ -70,7 +70,7 @@ func TestTestingBatch(t *testing.T) {
             2: cptest.OK,
         }
 
-        cptest.AssertVerdicts(t, batch.Stat, want)
+        cptest.AssertVerdicts(t, batch.Verdicts, want)
         cptest.AssertCallCount(t, proc.CallCount, 2)
     })
 
@@ -104,7 +104,7 @@ func TestTestingBatch(t *testing.T) {
             2: cptest.OK,
         }
 
-        cptest.AssertVerdicts(t, batch.Stat, want)
+        cptest.AssertVerdicts(t, batch.Verdicts, want)
         cptest.AssertCallCount(t, proc.CallCount, 2)
     })
 
@@ -138,7 +138,7 @@ func TestTestingBatch(t *testing.T) {
             2: cptest.WA,
         }
 
-        cptest.AssertVerdicts(t, batch.Stat, want)
+        cptest.AssertVerdicts(t, batch.Verdicts, want)
         cptest.AssertCallCount(t, proc.CallCount, 2)
     })
 
@@ -203,7 +203,7 @@ func TestTestingBatch(t *testing.T) {
             5: cptest.IE,
         }
 
-        cptest.AssertVerdicts(t, batch.Stat, want)
+        cptest.AssertVerdicts(t, batch.Verdicts, want)
         cptest.AssertCallCount(t, proc.CallCount, 5)
     })
 
@@ -254,7 +254,7 @@ func TestTestingBatch(t *testing.T) {
             4: 3 * time.Second,
         }
 
-        cptest.AssertVerdicts(t, batch.Stat, testsWant)
+        cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
         cptest.AssertCallCount(t, proc.CallCount, 4)
         cptest.AssertTimes(t, batch.Times, timesWant)
     })

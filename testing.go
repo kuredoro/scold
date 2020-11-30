@@ -168,3 +168,21 @@ func AssertLexSequence(t *testing.T, got, want LexSequence) {
         t.Errorf("got %#v, want %#v", got, want)
     }
 }
+
+// AssertDiffSuccess chacks if lexeme comparison returned ok = true.
+func AssertDiffSuccess(t *testing.T, ok bool) {
+    t.Helper()
+
+    if !ok {
+        t.Errorf("lex diff failed, but wanted to pass")
+    }
+}
+
+// AssertLexDiff checks if the two lex diff results are equal.
+func AssertLexDiff(t *testing.T, got, want []LexDiff) {
+    t.Helper()
+
+    if !reflect.DeepEqual(got, want) {
+        t.Errorf("got lex diff %s\nwant %s", litter.Sdump(got), litter.Sdump(want))
+    }
+}

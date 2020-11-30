@@ -52,3 +52,32 @@ func TestLexer(t *testing.T) {
         cptest.AssertLexSequence(t, got, want)
     })
 }
+
+func TestLexerCompare(t *testing.T) {
+
+    t.Run("several strings",
+    func (t *testing.T) {
+        a := cptest.LexSequence{"foo", "bar"}
+        b := cptest.LexSequence{"foo", "bar"}
+
+        lexer := cptest.Lexer{}
+
+        got, ok := lexer.Compare(a, b)
+
+        want := []cptest.LexDiff{
+            {
+                Got: "foo",
+                Want: "foo",
+                Equal: true,
+            },
+            {
+                Got: "bar",
+                Want: "bar",
+                Equal: true,
+            },
+        }
+
+        cptest.AssertDiffSuccess(t, ok)
+        cptest.AssertLexDiff(t, got, want)
+    })
+}
