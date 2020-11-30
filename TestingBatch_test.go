@@ -19,15 +19,15 @@ func ProcFuncMultiply(in io.Reader, out io.Writer) error {
     return nil
 }
 
-func ProcFuncSparseIntegerSequence(in io.Reader, out io.Writer) error {
+func ProcFuncIntegerSequence(in io.Reader, out io.Writer) error {
     var n int
     fmt.Fscan(in, &n)
 
     for i := 1; i <= n; i++ {
-        fmt.Fprint(out, i, "  ")
+        fmt.Fprint(out, i, " ")
     }
 
-    fmt.Fprintln(out, "")
+    fmt.Fprintln(out)
 
     return nil
 }
@@ -80,17 +80,17 @@ func TestTestingBatch(t *testing.T) {
             Tests: []cptest.Test{
                 {
                     Input: "2\n",
-                    Output: "1 2\n",
+                    Output: "1  2\n",
                 },
                 {
                     Input: "3\n",
-                    Output: "1 2 3\n",
+                    Output: "1  2  3\n",
                 },
             },
         }
 
         proc := &cptest.SpyProcesser{
-            Proc: cptest.ProcesserFunc(ProcFuncSparseIntegerSequence),
+            Proc: cptest.ProcesserFunc(ProcFuncIntegerSequence),
         }
 
         swatch := &cptest.SpyStopwatcher{}
