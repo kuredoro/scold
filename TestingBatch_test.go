@@ -106,6 +106,10 @@ func TestTestingBatch(t *testing.T) {
 
         cptest.AssertVerdicts(t, batch.Verdicts, want)
         cptest.AssertCallCount(t, proc.CallCount, 2)
+
+        if batch.Diff == nil {
+            t.Errorf("got no lex diff data, want some")
+        }
     })
 
     t.Run("all WA",

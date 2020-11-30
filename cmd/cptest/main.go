@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/kuredoro/cptest"
+	"github.com/logrusorgru/aurora"
 )
 
 var wd = "."
@@ -144,8 +145,9 @@ func main() {
 	}
 
 	if passCount == len(batch.Verdicts) {
-		fmt.Println("OK")
+		fmt.Println(aurora.Bold("OK").Green())
 	} else {
-		fmt.Printf("FAIL\n%d/%d passed\n", passCount, len(batch.Verdicts))
+        fmt.Println(aurora.Bold("FAIL").Red())
+		fmt.Printf("%d/%d passed\n", passCount, len(batch.Verdicts))
 	}
 }

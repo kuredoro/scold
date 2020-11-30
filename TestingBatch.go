@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -71,6 +70,7 @@ type TestingBatch struct {
     mu sync.Mutex
     Errs map[int]error
     Outs map[int]string
+    Diff []LexDiff
 
     Verdicts map[int]Verdict
     Times map[int]time.Duration
@@ -176,7 +176,10 @@ func (b *TestingBatch) Run() {
             got := lexer.Scan(b.Outs[id])
             want := lexer.Scan(test.Output)
 
-            if !reflect.DeepEqual(got, want) {
+            var same bool
+            b.Diff, same = lexer.Compare(got, want)
+
+            if !same {
                 b.Verdicts[id] = WA
             } else {
                 b.Verdicts[id] = OK
