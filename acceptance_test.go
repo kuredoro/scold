@@ -39,5 +39,5 @@ func TestAcceptanceSimple(t *testing.T) {
         3: cptest.WA,
     }
 
-    cptest.AssertVerdicts(t, batch.Stat, want)
+    cptest.AssertVerdicts(t, batch.Verdicts, want)
 }
