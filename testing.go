@@ -178,6 +178,15 @@ func AssertDiffSuccess(t *testing.T, ok bool) {
     }
 }
 
+// AssertDiffSuccess chacks if lexeme comparison returned ok = true.
+func AssertDiffFailure(t *testing.T, ok bool) {
+    t.Helper()
+
+    if ok {
+        t.Errorf("lex diff succeeded, but wanted to fail")
+    }
+}
+
 // AssertLexDiff checks if the two lex diff results are equal.
 func AssertLexDiff(t *testing.T, got, want []LexDiff) {
     t.Helper()

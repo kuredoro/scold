@@ -81,17 +81,23 @@ func (l *Lexer) Scan(text string) (seq LexSequence) {
     return
 }
 
-func (l *Lexer) Compare(got, want LexSequence) ([]LexDiff, bool) {
-    return []LexDiff{
-        {
-            Got: "foo",
-            Want: "foo",
-            Equal: true,
-        },
-        {
-            Got: "bar",
-            Want: "bar",
-            Equal: true,
-        },
-    }, true
+func (l *Lexer) Compare(got, want LexSequence) (diff []LexDiff, ok bool) {
+    ok = true
+
+    for i := range got {
+
+        cmp := LexDiff{
+            Got: got[i],
+            Want: want[i],
+            Equal: got[i] == want[i],
+        }
+
+        if !cmp.Equal {
+            ok = false
+        }
+
+        diff = append(diff, cmp)
+    }
+
+    return
 }
