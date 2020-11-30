@@ -80,4 +80,56 @@ func TestLexerCompare(t *testing.T) {
         cptest.AssertDiffSuccess(t, ok)
         cptest.AssertLexDiff(t, got, want)
     })
+
+    t.Run("totaly different strings",
+    func(t *testing.T) {
+        a := cptest.LexSequence{"foo", "bar"}
+        b := cptest.LexSequence{"one", "x"}
+
+        lexer := cptest.Lexer{}
+
+        got, ok := lexer.Compare(a, b)
+
+        want := []cptest.LexDiff{
+            {
+                Got: "foo",
+                Want: "one",
+                Equal: false,
+            },
+            {
+                Got: "bar",
+                Want: "x",
+                Equal: false,
+            },
+        }
+
+        cptest.AssertDiffFailure(t, ok)
+        cptest.AssertLexDiff(t, got, want)
+    })
+
+    t.Run("strings: ok fail",
+    func(t *testing.T) {
+        a := cptest.LexSequence{"x",   "bar"}
+        b := cptest.LexSequence{"one", "bar"}
+
+        lexer := cptest.Lexer{}
+
+        got, ok := lexer.Compare(a, b)
+
+        want := []cptest.LexDiff{
+            {
+                Got: "x",
+                Want: "one",
+                Equal: false,
+            },
+            {
+                Got: "bar",
+                Want: "bar",
+                Equal: true,
+            },
+        }
+
+        cptest.AssertDiffFailure(t, ok)
+        cptest.AssertLexDiff(t, got, want)
+    })
 }
