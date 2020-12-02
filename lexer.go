@@ -3,20 +3,19 @@ package cptest
 import (
 	"bufio"
 	"strings"
-    "unicode"
-    "unicode/utf8"
+	"unicode"
+	"unicode/utf8"
 )
 
 type LexSequence []string
 
 type LexDiff struct {
-    Got string
-    Want string
-    Equal bool
+	Got   string
+	Want  string
+	Equal bool
 }
 
 type Lexer struct {
-
 }
 
 // ScanLexemes is a split function for bufio.Scanner. It is same as
@@ -41,13 +40,13 @@ func ScanLexemes(data []byte, atEOF bool) (advance int, token []byte, err error)
 		var r rune
 		r, width = utf8.DecodeRune(data[i:])
 
-        if r == '\n' {
-            if i == start {
-                return i + width, data[start:i + width], nil
-            }
+		if r == '\n' {
+			if i == start {
+				return i + width, data[start : i+width], nil
+			}
 
-            return i, data[start:i], nil
-        }
+			return i, data[start:i], nil
+		}
 
 		if unicode.IsSpace(r) {
 			return i + width, data[start:i], nil
@@ -68,36 +67,36 @@ func ScanLexemes(data []byte, atEOF bool) (advance int, token []byte, err error)
 // or a single newline character.
 // The returned LexSequence is never nil.
 func (l *Lexer) Scan(text string) (seq LexSequence) {
-    seq = LexSequence{}
+	seq = LexSequence{}
 
-    r := strings.NewReader(text)
-    s := bufio.NewScanner(r)
-    s.Split(ScanLexemes)
+	r := strings.NewReader(text)
+	s := bufio.NewScanner(r)
+	s.Split(ScanLexemes)
 
-    for s.Scan() {
-        seq = append(seq, s.Text())
-    }
+	for s.Scan() {
+		seq = append(seq, s.Text())
+	}
 
-    return
+	return
 }
 
 func (l *Lexer) Compare(got, want LexSequence) (diff []LexDiff, ok bool) {
-    ok = true
+	ok = true
 
-    for i := range got {
+	for i := range got {
 
-        cmp := LexDiff{
-            Got: got[i],
-            Want: want[i],
-            Equal: got[i] == want[i],
-        }
+		cmp := LexDiff{
+			Got:   got[i],
+			Want:  want[i],
+			Equal: got[i] == want[i],
+		}
 
-        if !cmp.Equal {
-            ok = false
-        }
+		if !cmp.Equal {
+			ok = false
+		}
 
-        diff = append(diff, cmp)
-    }
+		diff = append(diff, cmp)
+	}
 
-    return
+	return
 }
