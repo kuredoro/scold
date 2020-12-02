@@ -78,7 +78,6 @@ VERSION
 
 func GetProc() (proc cptest.Processer, err error) {
 
-
 	/*
 	   This check does not work on Windows.
 	   TODO: Find fix.
@@ -94,9 +93,9 @@ func main() {
 	flag.Parse()
 
 	if count := len(flag.Args()); count != 1 {
-        flag.Usage()
+		flag.Usage()
 
-        return
+		return
 	}
 
 	execPath = flag.Args()[0]
@@ -119,7 +118,7 @@ func main() {
 	}
 
 	execPath = joinIfRelative(wd, execPath)
-    proc := &Executable{
+	proc := &Executable{
 		Path: execPath,
 	}
 	if err != nil {
@@ -132,7 +131,7 @@ func main() {
 
 	batch := cptest.NewTestingBatch(inputs, proc, swatch)
 
-    batch.TestStartCallback = RunPrinter
+	batch.TestStartCallback = RunPrinter
 	batch.TestEndCallback = VerboseResultPrinter
 
 	batch.Run()
@@ -147,7 +146,7 @@ func main() {
 	if passCount == len(batch.Verdicts) {
 		fmt.Println(aurora.Bold("OK").Green())
 	} else {
-        fmt.Println(aurora.Bold("FAIL").Red())
+		fmt.Println(aurora.Bold("FAIL").Red())
 		fmt.Printf("%d/%d passed\n", passCount, len(batch.Verdicts))
 	}
 }

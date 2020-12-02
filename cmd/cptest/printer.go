@@ -10,7 +10,7 @@ import (
 )
 
 const (
-    ErrorColor = aurora.BoldFm|aurora.RedFg
+	ErrorColor = aurora.BoldFm | aurora.RedFg
 )
 
 var verdictStr = map[cptest.Verdict]aurora.Value{
@@ -22,35 +22,35 @@ var verdictStr = map[cptest.Verdict]aurora.Value{
 }
 
 func RunPrinter(id int) {
-    fmt.Printf("=== RUN\tTest %d\n", id)
+	fmt.Printf("=== RUN\tTest %d\n", id)
 }
 
 func DumpLexemes(diffs []cptest.LexDiff) (string, string) {
-    var gotStr, wantStr strings.Builder
+	var gotStr, wantStr strings.Builder
 
-    for _, diff := range diffs {
-        if diff.Equal {
-            gotStr.WriteString(diff.Got)
-            if diff.Got != "\n" {
-                gotStr.WriteRune(' ')
-            }
-            wantStr.WriteString(diff.Want)
-            if diff.Want != "\n" {
-                wantStr.WriteRune(' ')
-            }               
-        } else {
-            gotStr.WriteString(aurora.Colorize(diff.Got, ErrorColor).String())
-            if diff.Got != "\n" {
-                gotStr.WriteRune(' ')
-            }
-            wantStr.WriteString(aurora.Colorize(diff.Want, ErrorColor).String())
-            if diff.Want != "\n" {
-                wantStr.WriteRune(' ')
-            }               
-        }
-    }
+	for _, diff := range diffs {
+		if diff.Equal {
+			gotStr.WriteString(diff.Got)
+			if diff.Got != "\n" {
+				gotStr.WriteRune(' ')
+			}
+			wantStr.WriteString(diff.Want)
+			if diff.Want != "\n" {
+				wantStr.WriteRune(' ')
+			}
+		} else {
+			gotStr.WriteString(aurora.Colorize(diff.Got, ErrorColor).String())
+			if diff.Got != "\n" {
+				gotStr.WriteRune(' ')
+			}
+			wantStr.WriteString(aurora.Colorize(diff.Want, ErrorColor).String())
+			if diff.Want != "\n" {
+				wantStr.WriteRune(' ')
+			}
+		}
+	}
 
-    return gotStr.String(), wantStr.String()
+	return gotStr.String(), wantStr.String()
 }
 
 func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
@@ -62,7 +62,7 @@ func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
 	if verdict != cptest.OK {
 		fmt.Printf("Input:\n%s\n", test.Input)
 
-        output, answer := DumpLexemes(b.Diff)
+		output, answer := DumpLexemes(b.Diff)
 		fmt.Printf("Answer:\n%s\n", answer)
 
 		if verdict == cptest.RE {
