@@ -25,32 +25,18 @@ func RunPrinter(id int) {
 	fmt.Printf("=== RUN\tTest %d\n", id)
 }
 
-func DumpLexemes(diffs []cptest.LexDiff) (string, string) {
-	var gotStr, wantStr strings.Builder
+func DumpLexemes(xms []string) string {
+	var str strings.Builder
 
-	for _, diff := range diffs {
-		if diff.Equal {
-			gotStr.WriteString(diff.Got)
-			if diff.Got != "\n" {
-				gotStr.WriteRune(' ')
-			}
-			wantStr.WriteString(diff.Want)
-			if diff.Want != "\n" {
-				wantStr.WriteRune(' ')
-			}
-		} else {
-			gotStr.WriteString(aurora.Colorize(diff.Got, ErrorColor).String())
-			if diff.Got != "\n" {
-				gotStr.WriteRune(' ')
-			}
-			wantStr.WriteString(aurora.Colorize(diff.Want, ErrorColor).String())
-			if diff.Want != "\n" {
-				wantStr.WriteRune(' ')
-			}
-		}
+	for _, xm := range xms {
+        str.WriteString(xm)
+
+        if xm != "\n" {
+            str.WriteRune(' ')
+        }
 	}
 
-	return gotStr.String(), wantStr.String()
+	return str.String()
 }
 
 func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
@@ -62,13 +48,12 @@ func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
 	if verdict != cptest.OK {
 		fmt.Printf("Input:\n%s\n", test.Input)
 
-		output, answer := DumpLexemes(b.Diff)
-		fmt.Printf("Answer:\n%s\n", answer)
+		fmt.Printf("Answer:\n%s\n", DumpLexemes(b.Diff.Want))
 
 		if verdict == cptest.RE {
 			fmt.Printf("Stderr:\n%s\n", b.Outs[id])
 		} else if verdict == cptest.WA {
-			fmt.Printf("Output:\n%s\n", output)
+			fmt.Printf("Output:\n%s\n", DumpLexemes(b.Diff.Got))
 		} else if verdict == cptest.IE {
 			fmt.Printf("Error:\n%v\n\n", b.Errs[id])
 		}

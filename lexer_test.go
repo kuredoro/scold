@@ -11,7 +11,7 @@ func TestLexer(t *testing.T) {
 	t.Run("empty string",
 		func(t *testing.T) {
 			text := ""
-			want := cptest.LexSequence{}
+			var want []string
 
 			lexer := cptest.Lexer{}
 			got := lexer.Scan(text)
@@ -22,7 +22,7 @@ func TestLexer(t *testing.T) {
 	t.Run("one word",
 		func(t *testing.T) {
 			text := "foo"
-			want := cptest.LexSequence{"foo"}
+			want := []string{"foo"}
 
 			lexer := cptest.Lexer{}
 			got := lexer.Scan(text)
@@ -33,7 +33,7 @@ func TestLexer(t *testing.T) {
 	t.Run("several words",
 		func(t *testing.T) {
 			text := " foo bar   --> "
-			want := cptest.LexSequence{"foo", "bar", "-->"}
+			want := []string{"foo", "bar", "-->"}
 
 			lexer := cptest.Lexer{}
 			got := lexer.Scan(text)
@@ -44,7 +44,7 @@ func TestLexer(t *testing.T) {
 	t.Run("newline is treated like a word",
 		func(t *testing.T) {
 			text := "one\ntwo\n\n  three \n"
-			want := cptest.LexSequence{"one", "\n", "two", "\n", "\n", "three", "\n"}
+			want := []string{"one", "\n", "two", "\n", "\n", "three", "\n"}
 
 			lexer := cptest.Lexer{}
 			got := lexer.Scan(text)
@@ -57,24 +57,16 @@ func TestLexerCompare(t *testing.T) {
 
 	t.Run("several strings",
 		func(t *testing.T) {
-			a := cptest.LexSequence{"foo", "bar"}
-			b := cptest.LexSequence{"foo", "bar"}
+			a := []string{"foo", "bar"}
+			b := []string{"foo", "bar"}
 
 			lexer := cptest.Lexer{}
 
 			got, ok := lexer.Compare(a, b)
 
-			want := []cptest.LexDiff{
-				{
-					Got:   "foo",
-					Want:  "foo",
-					Equal: true,
-				},
-				{
-					Got:   "bar",
-					Want:  "bar",
-					Equal: true,
-				},
+			want := cptest.LexComparison{
+                Got: []string{"foo", "bar"},
+                Want: []string{"foo", "bar"},
 			}
 
 			cptest.AssertDiffSuccess(t, ok)
@@ -83,24 +75,16 @@ func TestLexerCompare(t *testing.T) {
 
 	t.Run("totaly different strings",
 		func(t *testing.T) {
-			a := cptest.LexSequence{"foo", "bar"}
-			b := cptest.LexSequence{"one", "x"}
+			a := []string{"foo", "bar"}
+			b := []string{"one", "x"}
 
 			lexer := cptest.Lexer{}
 
 			got, ok := lexer.Compare(a, b)
 
-			want := []cptest.LexDiff{
-				{
-					Got:   "foo",
-					Want:  "one",
-					Equal: false,
-				},
-				{
-					Got:   "bar",
-					Want:  "x",
-					Equal: false,
-				},
+			want := cptest.LexComparison{
+                Got: []string{"foo", "bar"},
+                Want: []string{"one", "x"},
 			}
 
 			cptest.AssertDiffFailure(t, ok)
@@ -109,24 +93,16 @@ func TestLexerCompare(t *testing.T) {
 
 	t.Run("strings: ok fail",
 		func(t *testing.T) {
-			a := cptest.LexSequence{"x", "bar"}
-			b := cptest.LexSequence{"one", "bar"}
+			a := []string{"x", "bar"}
+			b := []string{"one", "bar"}
 
 			lexer := cptest.Lexer{}
 
 			got, ok := lexer.Compare(a, b)
 
-			want := []cptest.LexDiff{
-				{
-					Got:   "x",
-					Want:  "one",
-					Equal: false,
-				},
-				{
-					Got:   "bar",
-					Want:  "bar",
-					Equal: true,
-				},
+			want := cptest.LexComparison{
+                Got: []string{"x", "bar"},
+                Want: []string{"one", "bar"},
 			}
 
 			cptest.AssertDiffFailure(t, ok)

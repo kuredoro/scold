@@ -67,7 +67,7 @@ type TestingBatch struct {
 	mu   sync.Mutex
 	Errs map[int]error
 	Outs map[int]string
-	Diff []LexDiff
+	Diff LexComparison
 
 	Verdicts map[int]Verdict
 	Times    map[int]time.Duration
