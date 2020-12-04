@@ -7,16 +7,16 @@ import (
 	"unicode/utf8"
 )
 
-type LexSequence []string
 
-type LexDiff struct {
-	Got   string
-	Want  string
-	Equal bool
 }
 
-type Lexer struct {
+
+type LexComparison struct {
+	Got   []string
+	Want  []string
 }
+
+type Lexer struct {}
 
 // ScanLexemes is a split function for bufio.Scanner. It is same as
 // bufio.ScanWords, except that it treats \n character in a special way.
@@ -66,36 +66,29 @@ func ScanLexemes(data []byte, atEOF bool) (advance int, token []byte, err error)
 // is either a string consisting of not unicode.IsSpace characters,
 // or a single newline character.
 // The returned LexSequence is never nil.
-func (l *Lexer) Scan(text string) (seq LexSequence) {
-	seq = LexSequence{}
-
+func (l *Lexer) Scan(text string) (xms []string) {
 	r := strings.NewReader(text)
 	s := bufio.NewScanner(r)
 	s.Split(ScanLexemes)
 
 	for s.Scan() {
-		seq = append(seq, s.Text())
+		xms = append(xms, s.Text())
 	}
 
 	return
 }
 
-func (l *Lexer) Compare(got, want LexSequence) (diff []LexDiff, ok bool) {
-	ok = true
+func (l *Lexer) Compare(got, want []string) (diff LexComparison, equal bool) {
+	equal = true
 
 	for i := range got {
 
-		cmp := LexDiff{
-			Got:   got[i],
-			Want:  want[i],
-			Equal: got[i] == want[i],
-		}
+        diff.Got = append(diff.Got, got[i])
+        diff.Want = append(diff.Want, want[i])
 
-		if !cmp.Equal {
-			ok = false
+		if got[i] != want[i] {
+			equal = false
 		}
-
-		diff = append(diff, cmp)
 	}
 
 	return

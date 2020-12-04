@@ -161,7 +161,7 @@ func AssertTimes(t *testing.T, got, want map[int]time.Duration) {
 }
 
 // AssertLexSequence compares if the two LexSequences are equal.
-func AssertLexSequence(t *testing.T, got, want LexSequence) {
+func AssertLexSequence(t *testing.T, got, want []string) {
 	t.Helper()
 
 	if !reflect.DeepEqual(got, want) {
@@ -188,7 +188,7 @@ func AssertDiffFailure(t *testing.T, ok bool) {
 }
 
 // AssertLexDiff checks if the two lex diff results are equal.
-func AssertLexDiff(t *testing.T, got, want []LexDiff) {
+func AssertLexDiff(t *testing.T, got, want LexComparison) {
 	t.Helper()
 
 	if !reflect.DeepEqual(got, want) {
