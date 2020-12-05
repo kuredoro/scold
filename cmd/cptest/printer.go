@@ -10,30 +10,31 @@ import (
 )
 
 const (
-	ErrorColor = aurora.BoldFm | aurora.RedFg
+	DiffColor = aurora.ReverseFm
 )
 
 var verdictStr = map[cptest.Verdict]aurora.Value{
 	cptest.OK: aurora.Bold("OK").Green(),
 	cptest.IE: aurora.Bold("IE"),
 	cptest.WA: aurora.Bold("WA").Red(),
-	cptest.RE: aurora.Bold("RE").Yellow(),
-	cptest.TL: aurora.Bold("TL").Magenta(),
+	cptest.RE: aurora.Bold("RE").Red(),
+	cptest.TL: aurora.Bold("TL").Yellow(),
 }
 
 func RunPrinter(id int) {
 	fmt.Printf("=== RUN\tTest %d\n", id)
 }
 
-func DumpLexemes(xms []string) string {
+func DumpLexemes(xms []cptest.RichText) string {
 	var str strings.Builder
 
 	for _, xm := range xms {
-        str.WriteString(xm)
-
-        if xm != "\n" {
-            str.WriteRune(' ')
+        if xm.Str == "\n" {
+            str.WriteRune('\n')
+            continue
         }
+
+        str.WriteString(xm.Colorize(DiffColor))
 	}
 
 	return str.String()
