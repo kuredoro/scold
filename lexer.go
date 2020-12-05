@@ -7,7 +7,12 @@ import (
 	"unicode/utf8"
 )
 
+/*
+type Lexeme struct {
+    str string
+    // type int
 }
+*/
 
 type LexComparison struct {
 	Got   []RichText
