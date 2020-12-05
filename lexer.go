@@ -81,13 +81,22 @@ func (l *Lexer) Scan(text string) (xms []string) {
 	return
 }
 
-func (l *Lexer) Compare(got, want []string) (diff LexComparison, equal bool) {
-	equal = true
+func (l *Lexer) Compare(got, want []string) (diff LexComparison, ok bool) {
+    ok = len(got) == len(want)
+
+    // Make got always smaller or equal want to simplify code.
+    swapped := false
+    if len(got) > len(want) {
+        tmp := got
+        got = want
+        want = tmp
+        swapped = true
+    }
 
 	for i := range got {
 
 		if got[i] != want[i] {
-			equal = false
+			ok = false
 
             diff.Got = append(diff.Got, RichText{
                 got[i], 
@@ -110,6 +119,20 @@ func (l *Lexer) Compare(got, want []string) (diff LexComparison, equal bool) {
             })
         }
 	}
+
+    for i := len(got); i < len(want); i++ {
+        diff.Want = append(diff.Want, RichText{
+
+            want[i],
+            []int{0, len(want[i])},
+        })
+    }
+
+    if swapped {
+        tmp := diff.Got
+        diff.Got = diff.Want
+        diff.Want = tmp
+    }
 
 	return
 }
