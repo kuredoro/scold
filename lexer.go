@@ -8,12 +8,15 @@ import (
 )
 
 
+type RichText struct {
+    Str string
+    Partition []int
 }
 
 
 type LexComparison struct {
-	Got   []string
-	Want  []string
+	Got   []RichText
+	Want  []RichText
 }
 
 type Lexer struct {}
@@ -83,12 +86,29 @@ func (l *Lexer) Compare(got, want []string) (diff LexComparison, equal bool) {
 
 	for i := range got {
 
-        diff.Got = append(diff.Got, got[i])
-        diff.Want = append(diff.Want, want[i])
-
 		if got[i] != want[i] {
 			equal = false
-		}
+
+            diff.Got = append(diff.Got, RichText{
+                got[i], 
+                []int{0, len(got[i])},
+            })
+
+            diff.Want = append(diff.Want, RichText{
+                want[i], 
+                []int{0, len(want[i])},
+            })
+        } else {
+            diff.Got = append(diff.Got, RichText{
+                got[i], 
+                []int{len(got[i])},
+            })
+
+            diff.Want = append(diff.Want, RichText{
+                want[i], 
+                []int{len(want[i])},
+            })
+        }
 	}
 
 	return
