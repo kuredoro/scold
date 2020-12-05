@@ -92,4 +92,46 @@ func TestLexerCompare(t *testing.T) {
         cptest.AssertDiffFailure(t, ok)
         cptest.AssertLexDiff(t, got, want)
     })
+
+	t.Run("got more than want", func(t *testing.T) {
+        a := []string{"one", "two"}
+        b := []string{"one"}
+
+        lexer := cptest.Lexer{}
+
+        got, ok := lexer.Compare(a, b)
+
+        want := cptest.LexComparison{
+            Got: []cptest.RichText{
+                {"one", []int{3}}, {"two", []int{0, 3}},
+            },
+            Want: []cptest.RichText{
+                {"one", []int{3}},
+            },
+        }
+
+        cptest.AssertDiffFailure(t, ok)
+        cptest.AssertLexDiff(t, got, want)
+    })
+
+	t.Run("want more than got", func(t *testing.T) {
+        a := []string{"one"}
+        b := []string{"one", "two"}
+
+        lexer := cptest.Lexer{}
+
+        got, ok := lexer.Compare(a, b)
+
+        want := cptest.LexComparison{
+            Got: []cptest.RichText{
+                {"one", []int{3}},
+            },
+            Want: []cptest.RichText{
+                {"one", []int{3}}, {"two", []int{0, 3}},
+            },
+        }
+
+        cptest.AssertDiffFailure(t, ok)
+        cptest.AssertLexDiff(t, got, want)
+    })
 }
