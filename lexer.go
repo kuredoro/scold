@@ -7,12 +7,7 @@ import (
 	"unicode/utf8"
 )
 
-
-type RichText struct {
-    Str string
-    Partition []int
 }
-
 
 type LexComparison struct {
 	Got   []RichText
