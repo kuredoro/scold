@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/logrusorgru/aurora"
 	"github.com/sanity-io/litter"
 )
 
@@ -161,7 +162,7 @@ func AssertTimes(t *testing.T, got, want map[int]time.Duration) {
 }
 
 // AssertLexSequence compares if the two LexSequences are equal.
-func AssertLexSequence(t *testing.T, got, want []string) {
+func AssertLexemes(t *testing.T, got, want []string) {
 	t.Helper()
 
 	if !reflect.DeepEqual(got, want) {
@@ -187,11 +188,89 @@ func AssertDiffFailure(t *testing.T, ok bool) {
 	}
 }
 
-// AssertLexDiff checks if the two lex diff results are equal.
 func AssertLexDiff(t *testing.T, got, want LexComparison) {
 	t.Helper()
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got lex diff %s\nwant %s", litter.Sdump(got), litter.Sdump(want))
+	if len(got.Got) != len(want.Got) {
+		t.Errorf("expected a different number of Got lexemes,\ngot %#v\nwant %#v",
+			got.Got, want.Got)
+		return
+	}
+
+	if len(got.Want) != len(want.Want) {
+		t.Errorf("expected a different number of Want lexemes,\ngot %#v\nwant %#v",
+			got.Want, want.Want)
+		return
+	}
+
+	// Note: maybe defining helper types is not a sign of good code...
+	type ComparisonError struct {
+		Got, Want string
+	}
+
+	gotErrors := make([]ComparisonError, len(got.Got))
+	wantErrors := make([]ComparisonError, len(got.Want))
+
+	for i := range got.Got {
+		gotXm := got.Got[i].Colorize(aurora.ReverseFm)
+		wantXm := want.Got[i].Colorize(aurora.ReverseFm)
+
+		if gotXm != wantXm {
+			gotErrors[i] = ComparisonError{
+				Got:  gotXm,
+				Want: wantXm,
+			}
+		}
+	}
+
+	for i := range got.Want {
+		gotXm := got.Want[i].Colorize(aurora.ReverseFm)
+		wantXm := want.Want[i].Colorize(aurora.ReverseFm)
+
+		if gotXm != wantXm {
+			wantErrors[i] = ComparisonError{
+				Got:  gotXm,
+				Want: wantXm,
+			}
+		}
+	}
+
+	minSize := len(gotErrors)
+	if len(wantErrors) < minSize {
+		minSize = len(wantErrors)
+	}
+
+	// Okay. Why this code is here. Eeeehehehe....
+	// Well, I wanted that the relevant got and want lexemes were printed
+	// together on two lines, not separated by N other Got and Want errors
+	// In the end of the day, the ooutput is much more easier to read now.
+	//
+	// "I made so that the error messages produced by tests are readable"
+	// "What did it cost?"
+	// "Everything"
+	for i := 0; i < minSize; i++ {
+		if gotErrors[i].Got != "" || gotErrors[i].Want != "" {
+			t.Errorf("got %dth Got  lexeme: '%s',\twant '%s'",
+				i+1, gotErrors[i].Got, gotErrors[i].Want)
+		}
+
+		if wantErrors[i].Got != "" || wantErrors[i].Want != "" {
+			t.Errorf("got %dth Want lexeme: '%s',\twant '%s'",
+				i+1, wantErrors[i].Got, wantErrors[i].Want)
+		}
+	}
+
+	for i := minSize; i < len(gotErrors); i++ {
+		if gotErrors[i].Got != "" || gotErrors[i].Want != "" {
+			t.Errorf("got %dth Got  lexeme: '%s',\twant '%s'",
+				i+1, gotErrors[i].Got, gotErrors[i].Want)
+		}
+	}
+
+	for i := minSize; i < len(wantErrors); i++ {
+		if wantErrors[i].Got != "" || wantErrors[i].Want != "" {
+			t.Errorf("got %dth Want lexeme: '%s',\twant '%s'",
+				i+1, wantErrors[i].Got, wantErrors[i].Want)
+		}
 	}
 }

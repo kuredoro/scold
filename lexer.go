@@ -7,19 +7,12 @@ import (
 	"unicode/utf8"
 )
 
-/*
-type Lexeme struct {
-    str string
-    // type int
-}
-*/
-
 type LexComparison struct {
-	Got   []RichText
-	Want  []RichText
+	Got  []RichText
+	Want []RichText
 }
 
-type Lexer struct {}
+type Lexer struct{}
 
 // ScanLexemes is a split function for bufio.Scanner. It is same as
 // bufio.ScanWords, except that it treats \n character in a special way.
@@ -82,57 +75,57 @@ func (l *Lexer) Scan(text string) (xms []string) {
 }
 
 func (l *Lexer) Compare(got, want []string) (diff LexComparison, ok bool) {
-    ok = len(got) == len(want)
+	ok = len(got) == len(want)
 
-    // Make got always smaller or equal want to simplify code.
-    swapped := false
-    if len(got) > len(want) {
-        tmp := got
-        got = want
-        want = tmp
-        swapped = true
-    }
+	// Make got always smaller or equal want to simplify code.
+	swapped := false
+	if len(got) > len(want) {
+		tmp := got
+		got = want
+		want = tmp
+		swapped = true
+	}
 
 	for i := range got {
 
 		if got[i] != want[i] {
 			ok = false
 
-            diff.Got = append(diff.Got, RichText{
-                got[i], 
-                []int{0, len(got[i])},
-            })
+			diff.Got = append(diff.Got, RichText{
+				got[i],
+				[]int{0, len(got[i])},
+			})
 
-            diff.Want = append(diff.Want, RichText{
-                want[i], 
-                []int{0, len(want[i])},
-            })
-        } else {
-            diff.Got = append(diff.Got, RichText{
-                got[i], 
-                []int{len(got[i])},
-            })
+			diff.Want = append(diff.Want, RichText{
+				want[i],
+				[]int{0, len(want[i])},
+			})
+		} else {
+			diff.Got = append(diff.Got, RichText{
+				got[i],
+				[]int{len(got[i])},
+			})
 
-            diff.Want = append(diff.Want, RichText{
-                want[i], 
-                []int{len(want[i])},
-            })
-        }
+			diff.Want = append(diff.Want, RichText{
+				want[i],
+				[]int{len(want[i])},
+			})
+		}
 	}
 
-    for i := len(got); i < len(want); i++ {
-        diff.Want = append(diff.Want, RichText{
+	for i := len(got); i < len(want); i++ {
+		diff.Want = append(diff.Want, RichText{
 
-            want[i],
-            []int{0, len(want[i])},
-        })
-    }
+			want[i],
+			[]int{0, len(want[i])},
+		})
+	}
 
-    if swapped {
-        tmp := diff.Got
-        diff.Got = diff.Want
-        diff.Want = tmp
-    }
+	if swapped {
+		tmp := diff.Got
+		diff.Got = diff.Want
+		diff.Want = tmp
+	}
 
 	return
 }

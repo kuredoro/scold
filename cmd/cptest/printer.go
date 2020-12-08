@@ -29,12 +29,12 @@ func DumpLexemes(xms []cptest.RichText) string {
 	var str strings.Builder
 
 	for _, xm := range xms {
-        if xm.Str == "\n" {
-            str.WriteRune('\n')
-            continue
-        }
+		if xm.Str == "\n" {
+			str.WriteRune('\n')
+			continue
+		}
 
-        str.WriteString(xm.Colorize(DiffColor))
+		str.WriteString(xm.Colorize(DiffColor))
 	}
 
 	return str.String()
