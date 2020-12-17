@@ -61,10 +61,10 @@ func TestLexerCompare(t *testing.T) {
 
 		want := cptest.LexComparison{
 			Got: []cptest.RichText{
-				{"foo", []int{3}}, {"bar", []int{3}},
+				{"foo", make([]bool, 3)}, {"bar", make([]bool, 3)},
 			},
 			Want: []cptest.RichText{
-				{"foo", []int{3}}, {"bar", []int{3}},
+				{"foo", make([]bool, 3)}, {"bar", make([]bool, 3)},
 			},
 		}
 
@@ -82,10 +82,10 @@ func TestLexerCompare(t *testing.T) {
 
 		want := cptest.LexComparison{
 			Got: []cptest.RichText{
-				{"x", []int{0, 1}}, {"bar", []int{0, 3}},
+				{"x", []bool{true}}, {"bar", []bool{true, true, true}},
 			},
 			Want: []cptest.RichText{
-				{"one", []int{0, 3}}, {"x", []int{0, 1}},
+				{"one", []bool{true, true, true}}, {"x", []bool{true}},
 			},
 		}
 
@@ -103,10 +103,10 @@ func TestLexerCompare(t *testing.T) {
 
 		want := cptest.LexComparison{
 			Got: []cptest.RichText{
-				{"one", []int{3}}, {"two", []int{0, 3}},
+				{"one", make([]bool, 3)}, {"two", []bool{true, true, true}},
 			},
 			Want: []cptest.RichText{
-				{"one", []int{3}},
+				{"one", make([]bool, 3)},
 			},
 		}
 
@@ -124,10 +124,10 @@ func TestLexerCompare(t *testing.T) {
 
 		want := cptest.LexComparison{
 			Got: []cptest.RichText{
-				{"one", []int{3}},
+				{"one", make([]bool, 3)},
 			},
 			Want: []cptest.RichText{
-				{"one", []int{3}}, {"two", []int{0, 3}},
+				{"one", make([]bool, 3)}, {"two", []bool{true, true, true}},
 			},
 		}
 
@@ -136,7 +136,7 @@ func TestLexerCompare(t *testing.T) {
 	})
 
 	t.Run("only unequal characters are highlighted", func(t *testing.T) {
-		a := []string{"abcd", ".b.d."}
+		a := []string{"abcd",  ".b.de"}
 		b := []string{"a.c.e", "abcd"}
 
 		lexer := cptest.Lexer{}
@@ -145,10 +145,10 @@ func TestLexerCompare(t *testing.T) {
 
 		want := cptest.LexComparison{
 			Got: []cptest.RichText{
-				{"abcd", []int{1, 2, 3, 4}}, {".b.de", []int{0, 1, 2, 3, 4, 5}},
+				{"abcd", []bool{false, true, false, true}}, {".b.de", []bool{true, false, true, false, true}},
 			},
 			Want: []cptest.RichText{
-				{"a.c.e", []int{1, 2, 3, 5}}, {"abcd", []int{0, 1, 2, 3, 4}},
+				{"a.c.e", []bool{false, true, false, true, true}}, {"abcd", []bool{true, false, true, false}},
 			},
 		}
 

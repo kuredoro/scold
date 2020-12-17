@@ -1,34 +1,47 @@
 package cptest
 
 import (
-	"sort"
 	"strings"
 
 	"github.com/logrusorgru/aurora"
 )
 
 type RichText struct {
-	Str       string
-	Partition []int
+	Str  string
+	Mask []bool
+}
+
+func (rt *RichText) Colorful() bool {
+    for _, v := range rt.Mask {
+        if v {
+            return true
+        }
+    }
+
+    return false
 }
 
 func (rt *RichText) Colorize(color aurora.Color) string {
 	var str strings.Builder
 
-	sort.Ints(rt.Partition)
-
 	start := 0
-	for i, end := range rt.Partition {
-		part := rt.Str[start:end]
+    for start != len(rt.Mask) {
+        end := start + 1
+        for ; end != len(rt.Mask); end++ {
+            if rt.Mask[start] != rt.Mask[end] {
+                break
+            }
+        }
 
-		if i&1 == 0 {
+        part := rt.Str[start:end]
+        if rt.Mask[start] {
+            str.WriteString(aurora.Colorize(part, color).String())
+        } else {
 			str.WriteString(part)
-		} else {
-			str.WriteString(aurora.Colorize(part, color).String())
-		}
+        }
 
-		start = end
-	}
+        start = end
+    }
 
 	return str.String()
 }
