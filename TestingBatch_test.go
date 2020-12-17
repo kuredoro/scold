@@ -71,7 +71,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
-			cptest.AssertCallCount(t, proc.CallCount, 2)
+			cptest.AssertCallCount(t, proc.CallCount(), 2)
 		})
 
 	t.Run("outputs are compared lexeme-wise",
@@ -105,7 +105,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
-			cptest.AssertCallCount(t, proc.CallCount, 2)
+			cptest.AssertCallCount(t, proc.CallCount(), 2)
 
 			if batch.Diff.Got == nil || batch.Diff.Want == nil {
 				t.Errorf("got no lex diff data, want some")
@@ -143,7 +143,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
-			cptest.AssertCallCount(t, proc.CallCount, 2)
+			cptest.AssertCallCount(t, proc.CallCount(), 2)
 		})
 
 	t.Run("runtime error and internal error",
@@ -208,7 +208,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
-			cptest.AssertCallCount(t, proc.CallCount, 5)
+			cptest.AssertCallCount(t, proc.CallCount(), 5)
 		})
 
 	t.Run("test cases may be abandoned at TL",
@@ -259,7 +259,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
-			cptest.AssertCallCount(t, proc.CallCount, 4)
+			cptest.AssertCallCount(t, proc.CallCount(), 4)
 			cptest.AssertTimes(t, batch.Times, timesWant)
 		})
 }
