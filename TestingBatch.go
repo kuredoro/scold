@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -54,6 +53,14 @@ type TestEndCallbackFunc func(*TestingBatch, Test, int)
 // TestEndStub is a stub for TestEndCallback that does nothing.
 func TestEndStub(b *TestingBatch, test Test, id int) {}
 
+// TestResult carries an output of the process given the ID-th test input
+// and an error if any.
+type TestResult struct {
+    ID int
+    Err error
+    Out string
+}
+
 // TestingBatch is responsible for running tests and evaluating the verdicts
 // for tests. For each test case, the verdict and execution time are stored.
 // It utilizer an instance of Processer to run tests, and an instance of
@@ -62,9 +69,8 @@ func TestEndStub(b *TestingBatch, test Test, id int) {}
 type TestingBatch struct {
 	inputs Inputs
 
-	complete chan int
+	complete chan TestResult
 
-	mu   sync.Mutex
 	Errs map[int]error
 	Outs map[int]string
 	Diff LexComparison
@@ -85,7 +91,7 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 	return &TestingBatch{
 		inputs: inputs,
 
-		complete: make(chan int),
+		complete: make(chan TestResult),
 		Errs:     make(map[int]error),
 		Outs:     make(map[int]string),
 
@@ -101,28 +107,24 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 }
 
 func (b *TestingBatch) launchTest(id int, in string) {
-	go func() {
-		defer func() {
-			if e := recover(); e != nil {
-				b.mu.Lock()
-				defer b.mu.Unlock()
+    defer func() {
+        if e := recover(); e != nil {
+            b.complete <- TestResult{
+                ID: id,
+                Err: fmt.Errorf("%w: %v", InternalErr, e),
+                Out: "",
+            }
+        }
+    }()
 
-				b.Errs[id] = fmt.Errorf("%w: %v", InternalErr, e)
-				b.Outs[id] = ""
-			}
+    buf := &bytes.Buffer{}
+    err := b.Proc.Run(strings.NewReader(in), buf)
 
-			b.complete <- id
-		}()
-
-		buf := &bytes.Buffer{}
-		err := b.Proc.Run(strings.NewReader(in), buf)
-
-		b.mu.Lock()
-		defer b.mu.Unlock()
-
-		b.Errs[id] = err
-		b.Outs[id] = buf.String()
-	}()
+    b.complete <- TestResult{
+        ID: id,
+        Err: err,
+        Out: buf.String(),
+    }
 }
 
 // Run will lauch test cases in parallel and then will wait for each test to
@@ -135,17 +137,15 @@ func (b *TestingBatch) Run() {
 	for i, test := range b.inputs.Tests {
 		b.TestStartCallback(i + 1)
 
-		b.launchTest(i+1, test.Input)
+		go b.launchTest(i+1, test.Input)
 	}
 
 	for range b.inputs.Tests {
-		var id int
+		var result TestResult
 
 		select {
-		case id = <-b.complete:
 		case tl := <-b.Swatch.TimeLimit():
-
-			for id = range b.inputs.Tests {
+            for id := range b.inputs.Tests {
 				if _, finished := b.Verdicts[id+1]; !finished {
 					b.Verdicts[id+1] = TL
 					b.Times[id+1] = tl
@@ -155,10 +155,14 @@ func (b *TestingBatch) Run() {
 			}
 
 			return
+		case result = <-b.complete:
 		}
-
+        
+        id := result.ID
 		test := b.inputs.Tests[id-1]
 
+        b.Errs[id] = result.Err
+        b.Outs[id] = result.Out
 		b.Times[id] = b.Swatch.Elapsed()
 
 		if err := b.Errs[id]; err != nil {
