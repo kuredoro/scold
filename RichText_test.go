@@ -10,9 +10,9 @@ import (
 
 func TestRichTextColorize(t *testing.T) {
 
-	t.Run("identity", func(t *testing.T) {
+	t.Run("identity mask", func(t *testing.T) {
 		rt := cptest.RichText{
-			"test", []int{4},
+			"test", make([]bool, 4),
 		}
 
 		got := rt.Colorize(0)
@@ -23,9 +23,9 @@ func TestRichTextColorize(t *testing.T) {
 		}
 	})
 
-	t.Run("the partition may crop the string", func(t *testing.T) {
+	t.Run("the mask may crop the string", func(t *testing.T) {
 		rt := cptest.RichText{
-			"test", []int{2},
+			"test", make([]bool, 2),
 		}
 
 		got := rt.Colorize(0)
@@ -36,7 +36,7 @@ func TestRichTextColorize(t *testing.T) {
 		}
 	})
 
-	t.Run("nil partition produces emtpy string", func(t *testing.T) {
+	t.Run("nil mask produces emtpy string", func(t *testing.T) {
 		rt := cptest.RichText{
 			"test", nil,
 		}
@@ -51,7 +51,7 @@ func TestRichTextColorize(t *testing.T) {
 
 	t.Run("second half is highlighted", func(t *testing.T) {
 		rt := cptest.RichText{
-			"abcdef", []int{3, 6},
+			"abcdef", []bool{false, false, false, true, true, true},
 		}
 
 		got := rt.Colorize(aurora.BoldFm)
@@ -64,7 +64,7 @@ func TestRichTextColorize(t *testing.T) {
 
 	t.Run("checkerboard", func(t *testing.T) {
 		rt := cptest.RichText{
-			"gray", []int{0, 1, 2, 3, 4},
+			"gray", []bool{true, false, true, false},
 		}
 
 		got := rt.Colorize(aurora.BoldFm)
@@ -74,17 +74,26 @@ func TestRichTextColorize(t *testing.T) {
 			t.Errorf("got rich text '%s', want '%s'", got, want)
 		}
 	})
+}
 
-	t.Run("partition may be unsorted", func(t *testing.T) {
-		rt := cptest.RichText{
-			"abcdef", []int{6, 1, 5, 4, 2, 3},
-		}
+func TestRichTextColorful(t *testing.T) {
+    t.Run("no colors", func(t *testing.T) {
+        rt := cptest.RichText{
+            "abc", make([]bool, 3),
+        }
 
-		got := rt.Colorize(aurora.BoldFm)
-		want := fmt.Sprint("a", aurora.Bold("b"), "c", aurora.Bold("d"), "e", aurora.Bold("f"))
+        if rt.Colorful() {
+            t.Errorf("got rich text '%s' to be colorful, but it's not", rt.Colorize(aurora.BoldFm))
+        }
+    })
 
-		if got != want {
-			t.Errorf("got rich text '%s', want '%s'", got, want)
-		}
-	})
+    t.Run("with colors", func(t *testing.T) {
+        rt := cptest.RichText{
+            "yay", []bool{false, true, true},
+        }
+
+        if !rt.Colorful() {
+            t.Errorf("got rich text '%s' to be not colorful, but it is", rt.Colorize(aurora.BoldFm))
+        }
+    })
 }

@@ -87,37 +87,53 @@ func (l *Lexer) Compare(got, want []string) (diff LexComparison, ok bool) {
 	}
 
 	for i := range got {
+        gotRt := RichText{
+            Str: got[i],
+            Mask: make([]bool, len(got[i])),
+        }
 
-		if got[i] != want[i] {
-			ok = false
+        wantRt := RichText{
+            Str: want[i],
+            Mask: make([]bool, len(want[i])),
+        }
 
-			diff.Got = append(diff.Got, RichText{
-				got[i],
-				[]int{0, len(got[i])},
-			})
+        commonSize := len(got[i])
+        if len(got[i]) > len(want[i]) {
+            commonSize = len(want[i])
+        }
 
-			diff.Want = append(diff.Want, RichText{
-				want[i],
-				[]int{0, len(want[i])},
-			})
-		} else {
-			diff.Got = append(diff.Got, RichText{
-				got[i],
-				[]int{len(got[i])},
-			})
+        for j := 0; j < commonSize; j++ {
+            if got[i][j] != want[i][j] {
+                gotRt.Mask[j] = true
+                wantRt.Mask[j] = true
+            }
+        }
 
-			diff.Want = append(diff.Want, RichText{
-				want[i],
-				[]int{len(want[i])},
-			})
-		}
+        for j := commonSize; j < len(got[i]); j++ {
+            gotRt.Mask[j] = true
+        }
+
+        for j := commonSize; j < len(want[i]); j++ {
+            wantRt.Mask[j] = true
+        }
+
+        if gotRt.Colorful() || wantRt.Colorful() {
+            ok = false
+        }
+
+		diff.Got = append(diff.Got, gotRt)
+		diff.Want = append(diff.Want, wantRt)
 	}
 
 	for i := len(got); i < len(want); i++ {
-		diff.Want = append(diff.Want, RichText{
+        mask := make([]bool, len(want[i]))
+        for j := range want[i] {
+            mask[j] = true
+        }
 
+		diff.Want = append(diff.Want, RichText{
 			want[i],
-			[]int{0, len(want[i])},
+            mask,
 		})
 	}
 
