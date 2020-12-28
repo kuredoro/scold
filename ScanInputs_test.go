@@ -343,7 +343,7 @@ zyx
 			cptest.AssertNoConfig(t, inputs.Config)
 		})
 
-	t.Run("configs may be listed before first test",
+	t.Run("configs may be listed before first test and once",
 		func(t *testing.T) {
 			testsWant := []cptest.Test{
 				{
@@ -355,14 +355,11 @@ zyx
 			configWant := map[string]string{
 				"tl":    "2.0",
 				"foo":   "bar",
-				"extra": "love",
 			}
 
 			text := `
 tl = 2.0
 foo= bar
-===
-extra=love
 ===
 2 2
 ---
@@ -410,6 +407,33 @@ foo= bar
 			cptest.AssertNoConfig(t, inputs.Config)
 		})
 
+	t.Run("errors in config",
+		func(t *testing.T) {
+			text := `= foo
+== aaa
+a=b
+===
+extra=love
+===`
+			configWant := map[string]string{
+				"a":    "b",
+			}
+
+            errLines := []int{1, 2}
+			errsWant := []error{
+                cptest.KeyMissing,
+                cptest.KeyMissing,
+                cptest.IOSeparatorMissing,
+			}
+
+			inputs, errs := cptest.ScanInputs(text)
+
+			cptest.AssertTests(t, inputs.Tests, nil)
+            cptest.AssertErrorLines(t, errs, errLines)
+			cptest.AssertErrors(t, errs, errsWant)
+			cptest.AssertConfig(t, inputs.Config, configWant)
+		})
+
 	t.Run("wierd (empty inputs)",
 		func(t *testing.T) {
 			text := `
@@ -419,8 +443,7 @@ foo= bar
 ---
 ===
 ---
-===
-        `
+===`
 
 			inputs, errs := cptest.ScanInputs(text)
 
