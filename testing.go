@@ -192,9 +192,8 @@ func AssertRichText(t *testing.T, got, want RichText) {
 	t.Helper()
 
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got '%s' (len=%d), want '%s' (len=%d)",
-			got.Colorize(aurora.ReverseFm), len(got.Mask),
-			want.Colorize(aurora.ReverseFm), len(want.Mask))
+		t.Errorf("got '%s', want '%s'", got.Colorize(aurora.ReverseFm),
+			want.Colorize(aurora.ReverseFm))
 	}
 }
 
