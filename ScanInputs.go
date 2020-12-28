@@ -181,20 +181,21 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 	parts := SplitByInlinedPrefixN(text, TestDelim, 0)
 
 	testNum := 0
-	for _, part := range parts {
+	for partNum, part := range parts {
 		test, testErrs := ScanTest(part)
 
 		// Try to parse config
-		if testErrs != nil && testNum == 0 {
+		if testErrs != nil && partNum == 0 {
 			config, configErrs := ScanConfig(part)
+
 			if configErrs != nil {
 				errs = append(errs, configErrs...)
-				continue
 			}
 
 			for k, v := range config {
 				inputs.Config[k] = v
 			}
+
 			continue
 		}
 

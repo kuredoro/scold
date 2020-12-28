@@ -107,11 +107,12 @@ func AssertConfig(t *testing.T, got, want map[string]string) {
 func AssertErrorLines(t *testing.T, errs []error, lines []int) {
 	t.Helper()
 
-	if len(errs) != len(lines) {
+	if len(errs) < len(lines) {
 		t.Fatalf("got %d errors, want %d", len(errs), len(lines))
 	}
 
-	for i, err := range errs {
+	for i := range lines {
+        err := errs[i]
 		var e *LinedError
 		if !errors.As(err, &e) {
 			t.Errorf("got error without line info, want one with line %d. Error: %v", lines[i], err)
