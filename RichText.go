@@ -11,7 +11,7 @@ type RichText struct {
 	Mask []bool
 }
 
-func (rt *RichText) Colorful() bool {
+func (rt RichText) Colorful() bool {
 	for _, v := range rt.Mask {
 		if v {
 			return true
@@ -21,7 +21,7 @@ func (rt *RichText) Colorful() bool {
 	return false
 }
 
-func (rt *RichText) Colorize(color aurora.Color) string {
+func (rt RichText) Colorize(color aurora.Color) string {
 	var str strings.Builder
 
 	start := 0
