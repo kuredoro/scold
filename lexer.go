@@ -9,11 +9,28 @@ import (
 	"unicode/utf8"
 )
 
+var VALID_INT_MAX_LEN = 10
+
+const (
+    INTXM = iota
+)
+
+var TypeCheckers = []func(string) bool{
+    IsIntLexeme,
+}
+
+func IsIntLexeme(xm string) bool {
+    _, isInt := strconv.Atoi(xm)
+
+    return isInt == nil && len(xm) <= VALID_INT_MAX_LEN
+}
+
 type LexComparison struct {
 	Got  []RichText
 	Want []RichText
 }
 
+// IDEA: Add map[string]interface{} for custom configs from outside of library.
 type Lexer struct{}
 
 // ScanLexemes is a split function for bufio.Scanner. It is same as
