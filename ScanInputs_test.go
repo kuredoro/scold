@@ -353,8 +353,8 @@ zyx
 			}
 
 			configWant := map[string]string{
-				"tl":    "2.0",
-				"foo":   "bar",
+				"tl":  "2.0",
+				"foo": "bar",
 			}
 
 			text := `
@@ -416,20 +416,20 @@ a=b
 extra=love
 ===`
 			configWant := map[string]string{
-				"a":    "b",
+				"a": "b",
 			}
 
-            errLines := []int{1, 2}
+			errLines := []int{1, 2}
 			errsWant := []error{
-                cptest.KeyMissing,
-                cptest.KeyMissing,
-                cptest.IOSeparatorMissing,
+				cptest.KeyMissing,
+				cptest.KeyMissing,
+				cptest.IOSeparatorMissing,
 			}
 
 			inputs, errs := cptest.ScanInputs(text)
 
 			cptest.AssertTests(t, inputs.Tests, nil)
-            cptest.AssertErrorLines(t, errs, errLines)
+			cptest.AssertErrorLines(t, errs, errLines)
 			cptest.AssertErrors(t, errs, errsWant)
 			cptest.AssertConfig(t, inputs.Config, configWant)
 		})
