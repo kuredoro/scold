@@ -74,73 +74,60 @@ func (l *Lexer) Scan(text string) (xms []string) {
 	return
 }
 
-func (l *Lexer) Compare(got, want []string) (diff LexComparison, ok bool) {
-	ok = len(got) == len(want)
+func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
+	rts = make([]RichText, len(target))
+	ok = true
 
-	// Make got always smaller or equal want to simplify code.
-	swapped := false
-	if len(got) > len(want) {
-		tmp := got
-		got = want
-		want = tmp
-		swapped = true
+	commonLen := len(target)
+	if len(source) < commonLen {
+		commonLen = len(source)
 	}
 
-	for i := range got {
-        gotRt := RichText{
-            Str: got[i],
-            Mask: make([]bool, len(got[i])),
-        }
+	for i, xm := range target[:commonLen] {
+		rts[i].Str = xm
+		rts[i].Mask = l.GenMaskForString(xm, source[i])
 
-        wantRt := RichText{
-            Str: want[i],
-            Mask: make([]bool, len(want[i])),
-        }
+		maskEmpty := true
+		for _, bit := range rts[i].Mask {
+			if bit == true {
+				maskEmpty = false
+				break
+			}
+		}
 
-        commonSize := len(got[i])
-        if len(got[i]) > len(want[i]) {
-            commonSize = len(want[i])
-        }
-
-        for j := 0; j < commonSize; j++ {
-            if got[i][j] != want[i][j] {
-                gotRt.Mask[j] = true
-                wantRt.Mask[j] = true
-            }
-        }
-
-        for j := commonSize; j < len(got[i]); j++ {
-            gotRt.Mask[j] = true
-        }
-
-        for j := commonSize; j < len(want[i]); j++ {
-            wantRt.Mask[j] = true
-        }
-
-        if gotRt.Colorful() || wantRt.Colorful() {
-            ok = false
-        }
-
-		diff.Got = append(diff.Got, gotRt)
-		diff.Want = append(diff.Want, wantRt)
+		if !maskEmpty {
+			ok = false
+		}
 	}
 
-	for i := len(got); i < len(want); i++ {
-        mask := make([]bool, len(want[i]))
-        for j := range want[i] {
-            mask[j] = true
-        }
+	for i := commonLen; i < len(target); i++ {
+		rts[i].Str = target[i]
 
-		diff.Want = append(diff.Want, RichText{
-			want[i],
-            mask,
-		})
+		rts[i].Mask = make([]bool, len(target[i]))
+		for mi := range rts[i].Mask {
+			rts[i].Mask[mi] = true
+		}
+
+		ok = false
 	}
 
-	if swapped {
-		tmp := diff.Got
-		diff.Got = diff.Want
-		diff.Want = tmp
+	return
+}
+
+func (l *Lexer) GenMaskForString(target, source string) (mask []bool) {
+	commonLen := len(target)
+	if len(source) < commonLen {
+		commonLen = len(source)
+	}
+
+	mask = make([]bool, len(target))
+
+	for i := 0; i < commonLen; i++ {
+		mask[i] = target[i] != source[i]
+	}
+
+	for i := commonLen; i < len(target); i++ {
+		mask[i] = true
 	}
 
 	return

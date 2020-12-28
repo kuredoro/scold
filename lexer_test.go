@@ -6,7 +6,7 @@ import (
 	"github.com/kuredoro/cptest"
 )
 
-func TestLexer(t *testing.T) {
+func TestLexerScan(t *testing.T) {
 
 	t.Run("empty string", func(t *testing.T) {
 		text := ""
@@ -50,109 +50,97 @@ func TestLexer(t *testing.T) {
 }
 
 func TestLexerCompare(t *testing.T) {
-
-	t.Run("several equal strings", func(t *testing.T) {
-		a := []string{"foo", "bar"}
-		b := []string{"foo", "bar"}
+	t.Run("two different lexems", func(t *testing.T) {
+		target := []string{"x", "xar"}
+		source := []string{"one", "x"}
 
 		lexer := cptest.Lexer{}
 
-		got, ok := lexer.Compare(a, b)
+		got, ok := lexer.Compare(target, source)
 
-		want := cptest.LexComparison{
-			Got: []cptest.RichText{
-				{"foo", make([]bool, 3)}, {"bar", make([]bool, 3)},
-			},
-			Want: []cptest.RichText{
-				{"foo", make([]bool, 3)}, {"bar", make([]bool, 3)},
-			},
+		want := []cptest.RichText{
+			{target[0], lexer.GenMaskForString(target[0], source[0])},
+			{target[1], lexer.GenMaskForString(target[1], source[1])},
+		}
+
+		cptest.AssertDiffFailure(t, ok)
+		cptest.AssertEnrichedLexSequence(t, got, want)
+	})
+
+	t.Run("got less than want", func(t *testing.T) {
+		target := []string{"x"}
+		source := []string{"x", "y"}
+
+		lexer := cptest.Lexer{}
+
+		got, ok := lexer.Compare(target, source)
+
+		want := []cptest.RichText{
+			{target[0], lexer.GenMaskForString(target[0], source[0])},
 		}
 
 		cptest.AssertDiffSuccess(t, ok)
-		cptest.AssertLexDiff(t, got, want)
-	})
-
-	t.Run("totaly different strings", func(t *testing.T) {
-		a := []string{"x", "bar"}
-		b := []string{"one", "x"}
-
-		lexer := cptest.Lexer{}
-
-		got, ok := lexer.Compare(a, b)
-
-		want := cptest.LexComparison{
-			Got: []cptest.RichText{
-				{"x", []bool{true}}, {"bar", []bool{true, true, true}},
-			},
-			Want: []cptest.RichText{
-				{"one", []bool{true, true, true}}, {"x", []bool{true}},
-			},
-		}
-
-		cptest.AssertDiffFailure(t, ok)
-		cptest.AssertLexDiff(t, got, want)
+		cptest.AssertEnrichedLexSequence(t, got, want)
 	})
 
 	t.Run("got more than want", func(t *testing.T) {
-		a := []string{"one", "two"}
-		b := []string{"one"}
+		target := []string{"x", "yz"}
+		source := []string{"x"}
 
 		lexer := cptest.Lexer{}
 
-		got, ok := lexer.Compare(a, b)
+		got, ok := lexer.Compare(target, source)
 
-		want := cptest.LexComparison{
-			Got: []cptest.RichText{
-				{"one", make([]bool, 3)}, {"two", []bool{true, true, true}},
-			},
-			Want: []cptest.RichText{
-				{"one", make([]bool, 3)},
-			},
+		want := []cptest.RichText{
+			{target[0], lexer.GenMaskForString(target[0], source[0])},
+			{target[1], []bool{true, true}},
 		}
 
 		cptest.AssertDiffFailure(t, ok)
-		cptest.AssertLexDiff(t, got, want)
+		cptest.AssertEnrichedLexSequence(t, got, want)
+	})
+}
+
+func TestGenMaskForString(t *testing.T) {
+	lexer := &cptest.Lexer{}
+
+	t.Run("equal strings", func(t *testing.T) {
+		lexeme := "test"
+		other := "test"
+
+		got := lexer.GenMaskForString(lexeme, other)
+		want := []bool{false, false, false, false}
+
+		cptest.AssertRichTextMask(t, got, want)
 	})
 
-	t.Run("want more than got", func(t *testing.T) {
-		a := []string{"one"}
-		b := []string{"one", "two"}
+	t.Run("target is shorter", func(t *testing.T) {
+		lexeme := "123"
+		other := "12345"
 
-		lexer := cptest.Lexer{}
+		got := lexer.GenMaskForString(lexeme, other)
+		want := []bool{false, false, false}
 
-		got, ok := lexer.Compare(a, b)
-
-		want := cptest.LexComparison{
-			Got: []cptest.RichText{
-				{"one", make([]bool, 3)},
-			},
-			Want: []cptest.RichText{
-				{"one", make([]bool, 3)}, {"two", []bool{true, true, true}},
-			},
-		}
-
-		cptest.AssertDiffFailure(t, ok)
-		cptest.AssertLexDiff(t, got, want)
+		cptest.AssertRichTextMask(t, got, want)
 	})
 
-	t.Run("only unequal characters are highlighted", func(t *testing.T) {
-		a := []string{"abcd",  ".b.de"}
-		b := []string{"a.c.e", "abcd"}
+	t.Run("target is longer", func(t *testing.T) {
+		lexeme := "12345"
+		other := "123"
 
-		lexer := cptest.Lexer{}
+		got := lexer.GenMaskForString(lexeme, other)
+		want := []bool{false, false, false, true, true}
 
-		got, ok := lexer.Compare(a, b)
+		cptest.AssertRichTextMask(t, got, want)
+	})
 
-		want := cptest.LexComparison{
-			Got: []cptest.RichText{
-				{"abcd", []bool{false, true, false, true}}, {".b.de", []bool{true, false, true, false, true}},
-			},
-			Want: []cptest.RichText{
-				{"a.c.e", []bool{false, true, false, true, true}}, {"abcd", []bool{true, false, true, false}},
-			},
-		}
+	t.Run("checkerboard, lengths equal", func(t *testing.T) {
+		lexeme := "a.c.e"
+		other := "abcde"
 
-		cptest.AssertDiffFailure(t, ok)
-		cptest.AssertLexDiff(t, got, want)
+		got := lexer.GenMaskForString(lexeme, other)
+		want := []bool{false, true, false, true, false}
+
+		cptest.AssertRichTextMask(t, got, want)
 	})
 }
