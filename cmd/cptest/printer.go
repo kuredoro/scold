@@ -35,6 +35,7 @@ func DumpLexemes(xms []cptest.RichText) string {
 		}
 
 		str.WriteString(xm.Colorize(DiffColor))
+        str.WriteRune(' ')
 	}
 
 	return str.String()
@@ -49,12 +50,12 @@ func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
 	if verdict != cptest.OK {
 		fmt.Printf("Input:\n%s\n", test.Input)
 
-		fmt.Printf("Answer:\n%s\n", DumpLexemes(b.Diff.Want))
+		fmt.Printf("Answer:\n%s\n", DumpLexemes(b.RichAnswers[id]))
 
 		if verdict == cptest.RE {
 			fmt.Printf("Stderr:\n%s\n", b.Outs[id])
 		} else if verdict == cptest.WA {
-			fmt.Printf("Output:\n%s\n", DumpLexemes(b.Diff.Got))
+			fmt.Printf("Output:\n%s\n", DumpLexemes(b.RichOuts[id]))
 		} else if verdict == cptest.IE {
 			fmt.Printf("Error:\n%v\n\n", b.Errs[id])
 		}
