@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/kuredoro/cptest"
+	"github.com/sanity-io/litter"
 )
 
 func ProcFuncMultiply(in io.Reader, out io.Writer) error {
@@ -40,77 +41,79 @@ func ProcFuncAnswer(in io.Reader, out io.Writer) error {
 
 // IDEA: Add support for presentation errors...
 func TestTestingBatch(t *testing.T) {
-	t.Run("all OK",
-		func(t *testing.T) {
-			inputs := cptest.Inputs{
-				Tests: []cptest.Test{
-					{
-						Input:  "2 2\n",
-						Output: "4\n",
-					},
-					{
-						Input:  "-2 -2\n",
-						Output: "4\n",
-					},
+	t.Run("all OK", func(t *testing.T) {
+		inputs := cptest.Inputs{
+			Tests: []cptest.Test{
+				{
+					Input:  "2 2\n",
+					Output: "4\n",
 				},
-			}
-
-			proc := &cptest.SpyProcesser{
-				Proc: cptest.ProcesserFunc(ProcFuncMultiply),
-			}
-
-			swatch := &cptest.SpyStopwatcher{}
-
-			batch := cptest.NewTestingBatch(inputs, proc, swatch)
-
-			batch.Run()
-
-			want := map[int]cptest.Verdict{
-				1: cptest.OK,
-				2: cptest.OK,
-			}
-
-			cptest.AssertVerdicts(t, batch.Verdicts, want)
-			cptest.AssertCallCount(t, proc.CallCount(), 2)
-		})
-
-	t.Run("outputs are compared lexeme-wise",
-		func(t *testing.T) {
-			inputs := cptest.Inputs{
-				Tests: []cptest.Test{
-					{
-						Input:  "2\n",
-						Output: "1  2\n",
-					},
-					{
-						Input:  "3\n",
-						Output: "1  2  3\n",
-					},
+				{
+					Input:  "-2 -2\n",
+					Output: "4\n",
 				},
-			}
+			},
+		}
 
-			proc := &cptest.SpyProcesser{
-				Proc: cptest.ProcesserFunc(ProcFuncIntegerSequence),
-			}
+		proc := &cptest.SpyProcesser{
+			Proc: cptest.ProcesserFunc(ProcFuncMultiply),
+		}
 
-			swatch := &cptest.SpyStopwatcher{}
+		swatch := &cptest.SpyStopwatcher{}
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch)
+		batch := cptest.NewTestingBatch(inputs, proc, swatch)
 
-			batch.Run()
+		batch.Run()
 
-			want := map[int]cptest.Verdict{
-				1: cptest.OK,
-				2: cptest.OK,
-			}
+		want := map[int]cptest.Verdict{
+			1: cptest.OK,
+			2: cptest.OK,
+		}
 
-			cptest.AssertVerdicts(t, batch.Verdicts, want)
-			cptest.AssertCallCount(t, proc.CallCount(), 2)
+		cptest.AssertVerdicts(t, batch.Verdicts, want)
+		cptest.AssertCallCount(t, proc.CallCount(), 2)
+	})
 
-			if batch.Diff.Got == nil || batch.Diff.Want == nil {
-				t.Errorf("got no lex diff data, want some")
-			}
-		})
+	t.Run("outputs are compared lexeme-wise", func(t *testing.T) {
+		inputs := cptest.Inputs{
+			Tests: []cptest.Test{
+				{
+					Input:  "2\n",
+					Output: "1  2\n",
+				},
+				{
+					Input:  "3\n",
+					Output: "1  2  3\n",
+				},
+			},
+		}
+
+		proc := &cptest.SpyProcesser{
+			Proc: cptest.ProcesserFunc(ProcFuncIntegerSequence),
+		}
+
+		swatch := &cptest.SpyStopwatcher{}
+
+		batch := cptest.NewTestingBatch(inputs, proc, swatch)
+
+		batch.Run()
+
+		want := map[int]cptest.Verdict{
+			1: cptest.OK,
+			2: cptest.OK,
+		}
+
+		cptest.AssertVerdicts(t, batch.Verdicts, want)
+		cptest.AssertCallCount(t, proc.CallCount(), 2)
+
+		if len(batch.RichAnswers[1]) != 3 || len(batch.RichAnswers[2]) != 4 {
+			t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
+		}
+
+		if len(batch.RichOuts[1]) != 3 || len(batch.RichOuts[2]) != 4 {
+			t.Errorf("got wrong rich outputs, %s", litter.Sdump(batch.RichOuts))
+		}
+	})
 
 	t.Run("all WA",
 		func(t *testing.T) {

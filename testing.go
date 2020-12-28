@@ -184,93 +184,53 @@ func AssertDiffFailure(t *testing.T, ok bool) {
 	t.Helper()
 
 	if ok {
-		t.Errorf("lex diff succeeded, but wanted to fail")
+		t.Errorf("lexer compare succeeded, but wanted to fail")
 	}
 }
 
-func AssertLexDiff(t *testing.T, got, want LexComparison) {
+func AssertRichText(t *testing.T, got, want RichText) {
 	t.Helper()
 
-	if len(got.Got) != len(want.Got) {
-		t.Errorf("expected a different number of Got lexemes,\ngot %#v\nwant %#v",
-			got.Got, want.Got)
-		return
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got '%s' (len=%d), want '%s' (len=%d)",
+			got.Colorize(aurora.ReverseFm), len(got.Mask),
+			want.Colorize(aurora.ReverseFm), len(want.Mask))
+	}
+}
+
+func AssertRichTextMask(t *testing.T, got, want []bool) {
+	t.Helper()
+
+	gotRt := RichText{
+		Str:  strings.Repeat("#", len(got)),
+		Mask: got,
 	}
 
-	if len(got.Want) != len(want.Want) {
-		t.Errorf("expected a different number of Want lexemes,\ngot %#v\nwant %#v",
-			got.Want, want.Want)
-		return
+	wantRt := RichText{
+		Str:  strings.Repeat("#", len(want)),
+		Mask: want,
 	}
 
-	// Note: maybe defining helper types is not a sign of good code...
-	type ComparisonError struct {
-		Got, Want string
+	AssertRichText(t, gotRt, wantRt)
+}
+
+func AssertEnrichedLexSequence(t *testing.T, got, want []RichText) {
+	t.Helper()
+
+	commonLen := len(got)
+	if len(want) < commonLen {
+		commonLen = len(want)
 	}
 
-	gotErrors := make([]ComparisonError, len(got.Got))
-	wantErrors := make([]ComparisonError, len(got.Want))
-
-	for i := range got.Got {
-		gotXm := got.Got[i].Colorize(aurora.ReverseFm)
-		wantXm := want.Got[i].Colorize(aurora.ReverseFm)
-
-		if gotXm != wantXm {
-			gotErrors[i] = ComparisonError{
-				Got:  gotXm,
-				Want: wantXm,
-			}
-		}
+	for i := 0; i < commonLen; i++ {
+		AssertRichText(t, got[i], want[i])
 	}
 
-	for i := range got.Want {
-		gotXm := got.Want[i].Colorize(aurora.ReverseFm)
-		wantXm := want.Want[i].Colorize(aurora.ReverseFm)
-
-		if gotXm != wantXm {
-			wantErrors[i] = ComparisonError{
-				Got:  gotXm,
-				Want: wantXm,
-			}
-		}
+	for i := commonLen; i < len(got); i++ {
+		AssertRichText(t, got[i], RichText{"", []bool{}})
 	}
 
-	minSize := len(gotErrors)
-	if len(wantErrors) < minSize {
-		minSize = len(wantErrors)
-	}
-
-	// Okay. Why this code is here. Eeeehehehe....
-	// Well, I wanted that the relevant got and want lexemes were printed
-	// together on two lines, not separated by N other Got and Want errors
-	// In the end of the day, the ooutput is much more easier to read now.
-	//
-	// "I made so that the error messages produced by tests are readable"
-	// "What did it cost?"
-	// "Everything"
-	for i := 0; i < minSize; i++ {
-		if gotErrors[i].Got != "" || gotErrors[i].Want != "" {
-			t.Errorf("got %dth Got  lexeme: '%s',\twant '%s'",
-				i+1, gotErrors[i].Got, gotErrors[i].Want)
-		}
-
-		if wantErrors[i].Got != "" || wantErrors[i].Want != "" {
-			t.Errorf("got %dth Want lexeme: '%s',\twant '%s'",
-				i+1, wantErrors[i].Got, wantErrors[i].Want)
-		}
-	}
-
-	for i := minSize; i < len(gotErrors); i++ {
-		if gotErrors[i].Got != "" || gotErrors[i].Want != "" {
-			t.Errorf("got %dth Got  lexeme: '%s',\twant '%s'",
-				i+1, gotErrors[i].Got, gotErrors[i].Want)
-		}
-	}
-
-	for i := minSize; i < len(wantErrors); i++ {
-		if wantErrors[i].Got != "" || wantErrors[i].Want != "" {
-			t.Errorf("got %dth Want lexeme: '%s',\twant '%s'",
-				i+1, wantErrors[i].Got, wantErrors[i].Want)
-		}
+	for i := commonLen; i < len(want); i++ {
+		AssertRichText(t, RichText{"", []bool{}}, want[i])
 	}
 }

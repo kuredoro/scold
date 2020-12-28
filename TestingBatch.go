@@ -56,9 +56,9 @@ func TestEndStub(b *TestingBatch, test Test, id int) {}
 // TestResult carries an output of the process given the ID-th test input
 // and an error if any.
 type TestResult struct {
-    ID int
-    Err error
-    Out string
+	ID  int
+	Err error
+	Out string
 }
 
 // TestingBatch is responsible for running tests and evaluating the verdicts
@@ -71,9 +71,10 @@ type TestingBatch struct {
 
 	complete chan TestResult
 
-	Errs map[int]error
-	Outs map[int]string
-	Diff LexComparison
+	Errs        map[int]error
+	Outs        map[int]string
+	RichOuts    map[int][]RichText
+	RichAnswers map[int][]RichText
 
 	Verdicts map[int]Verdict
 	Times    map[int]time.Duration
@@ -91,9 +92,11 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 	return &TestingBatch{
 		inputs: inputs,
 
-		complete: make(chan TestResult),
-		Errs:     make(map[int]error),
-		Outs:     make(map[int]string),
+		complete:    make(chan TestResult),
+		Errs:        make(map[int]error),
+		Outs:        make(map[int]string),
+		RichOuts:    make(map[int][]RichText),
+		RichAnswers: make(map[int][]RichText),
 
 		Verdicts: make(map[int]Verdict),
 		Times:    make(map[int]time.Duration),
@@ -107,24 +110,24 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 }
 
 func (b *TestingBatch) launchTest(id int, in string) {
-    defer func() {
-        if e := recover(); e != nil {
-            b.complete <- TestResult{
-                ID: id,
-                Err: fmt.Errorf("%w: %v", InternalErr, e),
-                Out: "",
-            }
-        }
-    }()
+	defer func() {
+		if e := recover(); e != nil {
+			b.complete <- TestResult{
+				ID:  id,
+				Err: fmt.Errorf("%w: %v", InternalErr, e),
+				Out: "",
+			}
+		}
+	}()
 
-    buf := &bytes.Buffer{}
-    err := b.Proc.Run(strings.NewReader(in), buf)
+	buf := &bytes.Buffer{}
+	err := b.Proc.Run(strings.NewReader(in), buf)
 
-    b.complete <- TestResult{
-        ID: id,
-        Err: err,
-        Out: buf.String(),
-    }
+	b.complete <- TestResult{
+		ID:  id,
+		Err: err,
+		Out: buf.String(),
+	}
 }
 
 // Run will lauch test cases in parallel and then will wait for each test to
@@ -145,7 +148,7 @@ func (b *TestingBatch) Run() {
 
 		select {
 		case tl := <-b.Swatch.TimeLimit():
-            for id := range b.inputs.Tests {
+			for id := range b.inputs.Tests {
 				if _, finished := b.Verdicts[id+1]; !finished {
 					b.Verdicts[id+1] = TL
 					b.Times[id+1] = tl
@@ -157,12 +160,12 @@ func (b *TestingBatch) Run() {
 			return
 		case result = <-b.complete:
 		}
-        
-        id := result.ID
+
+		id := result.ID
 		test := b.inputs.Tests[id-1]
 
-        b.Errs[id] = result.Err
-        b.Outs[id] = result.Out
+		b.Errs[id] = result.Err
+		b.Outs[id] = result.Out
 		b.Times[id] = b.Swatch.Elapsed()
 
 		if err := b.Errs[id]; err != nil {
@@ -177,8 +180,11 @@ func (b *TestingBatch) Run() {
 			got := lexer.Scan(b.Outs[id])
 			want := lexer.Scan(test.Output)
 
-			var same bool
-			b.Diff, same = lexer.Compare(got, want)
+			var okOut, okAns bool
+			b.RichOuts[id], okOut = lexer.Compare(got, want)
+			b.RichAnswers[id], okAns = lexer.Compare(want, got)
+
+			same := okOut && okAns
 
 			if !same {
 				b.Verdicts[id] = WA

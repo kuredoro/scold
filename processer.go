@@ -16,24 +16,24 @@ type Processer interface {
 type SpyProcesser struct {
 	Proc Processer
 
-    mu sync.Mutex
+	mu        sync.Mutex
 	callCount int
 }
 
 // Run will execute the Run function of the inner processer, but will
 // also increase the call count by one.
 func (p *SpyProcesser) Run(r io.Reader, w io.Writer) error {
-    p.mu.Lock()
+	p.mu.Lock()
 	p.callCount++
-    p.mu.Unlock()
+	p.mu.Unlock()
 	return p.Proc.Run(r, w)
 }
 
 // CallCount will return the number of times Run was called. Can be called
 // concurrently.
 func (p *SpyProcesser) CallCount() int {
-    p.mu.Lock()
-    defer p.mu.Unlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	return p.callCount
 }
 

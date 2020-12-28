@@ -77,23 +77,23 @@ func TestRichTextColorize(t *testing.T) {
 }
 
 func TestRichTextColorful(t *testing.T) {
-    t.Run("no colors", func(t *testing.T) {
-        rt := cptest.RichText{
-            "abc", make([]bool, 3),
-        }
+	t.Run("no colors", func(t *testing.T) {
+		rt := cptest.RichText{
+			"abc", make([]bool, 3),
+		}
 
-        if rt.Colorful() {
-            t.Errorf("got rich text '%s' to be colorful, but it's not", rt.Colorize(aurora.BoldFm))
-        }
-    })
+		if rt.Colorful() {
+			t.Errorf("got rich text '%s' to be colorful, but it's not", rt.Colorize(aurora.BoldFm))
+		}
+	})
 
-    t.Run("with colors", func(t *testing.T) {
-        rt := cptest.RichText{
-            "yay", []bool{false, true, true},
-        }
+	t.Run("with colors", func(t *testing.T) {
+		rt := cptest.RichText{
+			"yay", []bool{false, true, true},
+		}
 
-        if !rt.Colorful() {
-            t.Errorf("got rich text '%s' to be not colorful, but it is", rt.Colorize(aurora.BoldFm))
-        }
-    })
+		if !rt.Colorful() {
+			t.Errorf("got rich text '%s' to be not colorful, but it is", rt.Colorize(aurora.BoldFm))
+		}
+	})
 }
