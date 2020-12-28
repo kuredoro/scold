@@ -1,6 +1,7 @@
 package cptest_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/kuredoro/cptest"
@@ -143,4 +144,33 @@ func TestGenMaskForString(t *testing.T) {
 
 		cptest.AssertRichTextMask(t, got, want)
 	})
+}
+
+func TestGenMaskForInt(t *testing.T) {
+    lexer := &cptest.Lexer{}
+
+    cases := []struct{
+        Target, Source string
+        Want []bool
+    }{
+        {"999", "1000", []bool{true, true, true}},
+        {"10", "10", []bool{false, false}},
+        {"+10", "10", []bool{false, false, false}},
+        {"10", "+10", []bool{false, false}},
+        {"-10", "10", []bool{true, false, false}},
+        {"10", "-10", []bool{false, false}},
+        {"+10", "+10", []bool{false, false, false}},
+        {"-10", "-10", []bool{false, false, false}},
+        {"+10", "-10", []bool{true, false, false}},
+        {"-10", "+10", []bool{true, false, false}},
+    }
+
+    for _, test := range cases {
+        title := fmt.Sprintf("%s against %s", test.Target, test.Source)
+        t.Run(title, func(t *testing.T) {
+            got := lexer.GenMaskForInt(test.Target, test.Source)
+
+            cptest.AssertRichTextMask(t, got, test.Want)
+        })
+    }
 }

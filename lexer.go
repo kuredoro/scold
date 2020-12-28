@@ -2,6 +2,8 @@ package cptest
 
 import (
 	"bufio"
+	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -131,4 +133,36 @@ func (l *Lexer) GenMaskForString(target, source string) (mask []bool) {
 	}
 
 	return
+}
+
+func (l *Lexer) GenMaskForInt(target, source string) (mask []bool) {
+    mask = make([]bool, len(target))
+
+    if target[0] == '-' && source[0] != '-' || target[0] == '+' && source[0] == '-' {
+        mask[0] = true
+    }
+
+    targetVal, err := strconv.Atoi(target)
+    if err != nil {
+        panic(fmt.Errorf("non-integer target passed to integer's mask generator: %w", err))
+    }
+    if targetVal < 0 {
+        targetVal = -targetVal
+    }
+
+    sourceVal, err := strconv.Atoi(source)
+    if err != nil {
+        panic(fmt.Errorf("non-integer source passed to integer's mask generator: %w", err))
+    }
+    if sourceVal < 0 {
+        sourceVal = -sourceVal
+    }
+
+    if targetVal != sourceVal {
+        for i := range mask {
+            mask[i] = true
+        }
+    }
+
+    return
 }
