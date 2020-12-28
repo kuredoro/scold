@@ -101,6 +101,25 @@ func TestLexerCompare(t *testing.T) {
 		cptest.AssertDiffFailure(t, ok)
 		cptest.AssertEnrichedLexSequence(t, got, want)
 	})
+
+	t.Run("integers treated differently", func(t *testing.T) {
+		target := []string{"10", "-10", "x", "10"}
+		source := []string{"+10", "10", "10", "y"}
+
+		lexer := cptest.Lexer{}
+
+		got, ok := lexer.Compare(target, source)
+
+		want := []cptest.RichText{
+			{target[0], lexer.GenMaskForInt(target[0], source[0])},
+			{target[1], lexer.GenMaskForInt(target[1], source[1])},
+			{target[2], lexer.GenMaskForString(target[2], source[2])},
+			{target[3], lexer.GenMaskForString(target[3], source[3])},
+		}
+
+		cptest.AssertDiffFailure(t, ok)
+		cptest.AssertEnrichedLexSequence(t, got, want)
+	})
 }
 
 func TestGenMaskForString(t *testing.T) {
@@ -148,62 +167,62 @@ func TestGenMaskForString(t *testing.T) {
 }
 
 func TestGenMaskForInt(t *testing.T) {
-    lexer := &cptest.Lexer{}
+	lexer := &cptest.Lexer{}
 
-    cases := []struct{
-        Target, Source string
-        Want []bool
-    }{
-        {"999", "1000", []bool{true, true, true}},
-        {"10", "10", []bool{false, false}},
-        {"+10", "10", []bool{false, false, false}},
-        {"10", "+10", []bool{false, false}},
-        {"-10", "10", []bool{true, false, false}},
-        {"10", "-10", []bool{false, false}},
-        {"+10", "+10", []bool{false, false, false}},
-        {"-10", "-10", []bool{false, false, false}},
-        {"+10", "-10", []bool{true, false, false}},
-        {"-10", "+10", []bool{true, false, false}},
-    }
+	cases := []struct {
+		Target, Source string
+		Want           []bool
+	}{
+		{"999", "1000", []bool{true, true, true}},
+		{"10", "10", []bool{false, false}},
+		{"+10", "10", []bool{false, false, false}},
+		{"10", "+10", []bool{false, false}},
+		{"-10", "10", []bool{true, false, false}},
+		{"10", "-10", []bool{false, false}},
+		{"+10", "+10", []bool{false, false, false}},
+		{"-10", "-10", []bool{false, false, false}},
+		{"+10", "-10", []bool{true, false, false}},
+		{"-10", "+10", []bool{true, false, false}},
+	}
 
-    for _, test := range cases {
-        title := fmt.Sprintf("%s against %s", test.Target, test.Source)
-        t.Run(title, func(t *testing.T) {
-            got := lexer.GenMaskForInt(test.Target, test.Source)
+	for _, test := range cases {
+		title := fmt.Sprintf("%s against %s", test.Target, test.Source)
+		t.Run(title, func(t *testing.T) {
+			got := lexer.GenMaskForInt(test.Target, test.Source)
 
-            cptest.AssertRichTextMask(t, got, test.Want)
-        })
-    }
+			cptest.AssertRichTextMask(t, got, test.Want)
+		})
+	}
 }
 
 func TestIsIntLexeme(t *testing.T) {
-    cases := []struct{
-        Str string
-        Want bool
-    }{
-        {"10", true},
-        {"+10", true},
-        {"-10", true},
-        {"++10", false},
-        {"--10", false},
-        {"-10-", false},
-        {"10+-", false},
-        {"0", true},
-        {strings.Repeat("1", cptest.VALID_INT_MAX_LEN), true},
-        {strings.Repeat("1", cptest.VALID_INT_MAX_LEN + 1), false},
-    }
+	cases := []struct {
+		Str  string
+		Want bool
+	}{
+		{"10", true},
+		{"+10", true},
+		{"-10", true},
+		{"++10", false},
+		{"--10", false},
+		{"-10-", false},
+		{"10+-", false},
+		{"0", true},
+		{strings.Repeat("1", cptest.VALID_INT_MAX_LEN), true},
+		{strings.Repeat("1", cptest.VALID_INT_MAX_LEN+1), false},
+	}
 
-    for _, test := range cases {
-        t.Run(test.Str, func(t *testing.T) {
-            got := cptest.IsIntLexeme(test.Str)
+	for _, test := range cases {
+		t.Run(test.Str, func(t *testing.T) {
+			got := cptest.IsIntLexeme(test.Str)
 
-            if got != test.Want {
-                if test.Want {
-                    t.Errorf("got '%s' is not INT, but it is", test.Str)
-                } else {
-                    t.Errorf("got '%s' is INT, but it isn't", test.Str)
-                }
-            }
-        })
-    }
+			if got != test.Want {
+				if test.Want {
+					t.Errorf("got '%s' is not INT, but it is", test.Str)
+				} else {
+					t.Errorf("got '%s' is INT, but it isn't", test.Str)
+				}
+			}
+		})
+	}
 }

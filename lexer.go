@@ -2,7 +2,6 @@ package cptest
 
 import (
 	"bufio"
-	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -11,23 +10,27 @@ import (
 
 var VALID_INT_MAX_LEN = 10
 
+type LexemeType int
+
 const (
-    INTXM = iota
+	STRXM LexemeType = iota
+	INTXM
+	FINALXM
 )
 
-var TypeCheckers = []func(string) bool{
-    IsIntLexeme,
-}
-
 func IsIntLexeme(xm string) bool {
-    _, isInt := strconv.Atoi(xm)
+	_, isInt := strconv.Atoi(xm)
 
-    return isInt == nil && len(xm) <= VALID_INT_MAX_LEN
+	return isInt == nil && len(xm) <= VALID_INT_MAX_LEN
 }
 
-type LexComparison struct {
-	Got  []RichText
-	Want []RichText
+var TypeCheckers = []func(string) bool{
+	IsIntLexeme,
+}
+
+var MaskGenerators = map[LexemeType]func(*Lexer, string, string) []bool{
+	STRXM: (*Lexer).GenMaskForString,
+	INTXM: (*Lexer).GenMaskForInt,
 }
 
 // IDEA: Add map[string]interface{} for custom configs from outside of library.
@@ -104,7 +107,16 @@ func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
 
 	for i, xm := range target[:commonLen] {
 		rts[i].Str = xm
-		rts[i].Mask = l.GenMaskForString(xm, source[i])
+
+		targetType := DeduceLexemeType(xm)
+		sourceType := DeduceLexemeType(source[i])
+
+		commonType := targetType
+		if sourceType < commonType {
+			commonType = sourceType
+		}
+
+		rts[i].Mask = MaskGenerators[commonType](l, xm, source[i])
 
 		maskEmpty := true
 		for _, bit := range rts[i].Mask {
@@ -133,6 +145,17 @@ func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
 	return
 }
 
+func DeduceLexemeType(xm string) LexemeType {
+	for i := int(STRXM) + 1; i != int(FINALXM); i++ {
+        // As any lexeme *is* a string, the function IsStringLexeme is omitted.
+		if !TypeCheckers[i - 1](xm) {
+			return LexemeType(i - 1)
+		}
+	}
+
+	return LexemeType(FINALXM - 1)
+}
+
 func (l *Lexer) GenMaskForString(target, source string) (mask []bool) {
 	commonLen := len(target)
 	if len(source) < commonLen {
@@ -153,33 +176,27 @@ func (l *Lexer) GenMaskForString(target, source string) (mask []bool) {
 }
 
 func (l *Lexer) GenMaskForInt(target, source string) (mask []bool) {
-    mask = make([]bool, len(target))
+	mask = make([]bool, len(target))
 
-    if target[0] == '-' && source[0] != '-' || target[0] == '+' && source[0] == '-' {
-        mask[0] = true
-    }
+	if target[0] == '-' && source[0] != '-' || target[0] == '+' && source[0] == '-' {
+		mask[0] = true
+	}
 
-    targetVal, err := strconv.Atoi(target)
-    if err != nil {
-        panic(fmt.Errorf("non-integer target passed to integer's mask generator: %w", err))
-    }
-    if targetVal < 0 {
-        targetVal = -targetVal
-    }
+	targetVal, _ := strconv.Atoi(target)
+	if targetVal < 0 {
+		targetVal = -targetVal
+	}
 
-    sourceVal, err := strconv.Atoi(source)
-    if err != nil {
-        panic(fmt.Errorf("non-integer source passed to integer's mask generator: %w", err))
-    }
-    if sourceVal < 0 {
-        sourceVal = -sourceVal
-    }
+	sourceVal, _ := strconv.Atoi(source)
+	if sourceVal < 0 {
+		sourceVal = -sourceVal
+	}
 
-    if targetVal != sourceVal {
-        for i := range mask {
-            mask[i] = true
-        }
-    }
+	if targetVal != sourceVal {
+		for i := range mask {
+			mask[i] = true
+		}
+	}
 
-    return
+	return
 }
