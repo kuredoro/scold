@@ -2,6 +2,7 @@ package cptest_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/kuredoro/cptest"
@@ -171,6 +172,38 @@ func TestGenMaskForInt(t *testing.T) {
             got := lexer.GenMaskForInt(test.Target, test.Source)
 
             cptest.AssertRichTextMask(t, got, test.Want)
+        })
+    }
+}
+
+func TestIsIntLexeme(t *testing.T) {
+    cases := []struct{
+        Str string
+        Want bool
+    }{
+        {"10", true},
+        {"+10", true},
+        {"-10", true},
+        {"++10", false},
+        {"--10", false},
+        {"-10-", false},
+        {"10+-", false},
+        {"0", true},
+        {strings.Repeat("1", cptest.VALID_INT_MAX_LEN), true},
+        {strings.Repeat("1", cptest.VALID_INT_MAX_LEN + 1), false},
+    }
+
+    for _, test := range cases {
+        t.Run(test.Str, func(t *testing.T) {
+            got := cptest.IsIntLexeme(test.Str)
+
+            if got != test.Want {
+                if test.Want {
+                    t.Errorf("got '%s' is not INT, but it is", test.Str)
+                } else {
+                    t.Errorf("got '%s' is INT, but it isn't", test.Str)
+                }
+            }
         })
     }
 }
