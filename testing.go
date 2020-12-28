@@ -112,7 +112,7 @@ func AssertErrorLines(t *testing.T, errs []error, lines []int) {
 	}
 
 	for i := range lines {
-        err := errs[i]
+		err := errs[i]
 		var e *LinedError
 		if !errors.As(err, &e) {
 			t.Errorf("got error without line info, want one with line %d. Error: %v", lines[i], err)

@@ -19,9 +19,30 @@ const (
 )
 
 func IsIntLexeme(xm string) bool {
-	_, isInt := strconv.Atoi(xm)
+	_, err := strconv.Atoi(xm)
 
-	return isInt == nil && len(xm) <= VALID_INT_MAX_LEN
+	return err == nil && len(xm) <= VALID_INT_MAX_LEN
+}
+
+func IsFloatLexeme(xm string) bool {
+	if xm[0] == '+' || xm[0] == '-' {
+		xm = xm[1:]
+	}
+
+	parts := strings.Split(xm, ".")
+
+	// 123.456.789 and others
+	if len(parts) > 2 {
+		return false
+	}
+
+	for _, r := range xm {
+		if !('0' <= r && r <= '9') && r != '.' {
+			return false
+		}
+	}
+
+	return xm != "."
 }
 
 var TypeCheckers = []func(string) bool{
@@ -147,8 +168,8 @@ func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
 
 func DeduceLexemeType(xm string) LexemeType {
 	for i := int(STRXM) + 1; i != int(FINALXM); i++ {
-        // As any lexeme *is* a string, the function IsStringLexeme is omitted.
-		if !TypeCheckers[i - 1](xm) {
+		// As any lexeme *is* a string, the function IsStringLexeme is omitted.
+		if !TypeCheckers[i-1](xm) {
 			return LexemeType(i - 1)
 		}
 	}

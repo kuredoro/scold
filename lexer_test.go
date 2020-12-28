@@ -166,6 +166,39 @@ func TestGenMaskForString(t *testing.T) {
 	})
 }
 
+func TestIsIntLexeme(t *testing.T) {
+	cases := []struct {
+		Str  string
+		Want bool
+	}{
+		{"10", true},
+		{"+10", true},
+		{"-10", true},
+		{"++10", false},
+		{"--10", false},
+		{"-10-", false},
+		{"10+-", false},
+		{"0", true},
+		{"0xa", false},
+		{strings.Repeat("1", cptest.VALID_INT_MAX_LEN), true},
+		{strings.Repeat("1", cptest.VALID_INT_MAX_LEN+1), false},
+	}
+
+	for _, test := range cases {
+		t.Run(test.Str, func(t *testing.T) {
+			got := cptest.IsIntLexeme(test.Str)
+
+			if got != test.Want {
+				if test.Want {
+					t.Errorf("got '%s' is not INT, but it is", test.Str)
+				} else {
+					t.Errorf("got '%s' is INT, but it isn't", test.Str)
+				}
+			}
+		})
+	}
+}
+
 func TestGenMaskForInt(t *testing.T) {
 	lexer := &cptest.Lexer{}
 
@@ -195,32 +228,34 @@ func TestGenMaskForInt(t *testing.T) {
 	}
 }
 
-func TestIsIntLexeme(t *testing.T) {
+func TestIsFloatLexeme(t *testing.T) {
 	cases := []struct {
 		Str  string
 		Want bool
 	}{
 		{"10", true},
-		{"+10", true},
-		{"-10", true},
-		{"++10", false},
-		{"--10", false},
-		{"-10-", false},
-		{"10+-", false},
-		{"0", true},
-		{strings.Repeat("1", cptest.VALID_INT_MAX_LEN), true},
-		{strings.Repeat("1", cptest.VALID_INT_MAX_LEN+1), false},
+		{"10.0", true},
+		{"10.", true},
+		{".10", true},
+		{"-.0", true},
+		{".", false},
+		{".10.", false},
+		{"+10.0", true},
+		{"-10.0", true},
+		{"-10.123456789", true},
+		{"1e0", false},
+		{"-10e-10", false},
 	}
 
 	for _, test := range cases {
 		t.Run(test.Str, func(t *testing.T) {
-			got := cptest.IsIntLexeme(test.Str)
+			got := cptest.IsFloatLexeme(test.Str)
 
 			if got != test.Want {
 				if test.Want {
-					t.Errorf("got '%s' is not INT, but it is", test.Str)
+					t.Errorf("got '%s' is not FLOAT, but it is", test.Str)
 				} else {
-					t.Errorf("got '%s' is INT, but it isn't", test.Str)
+					t.Errorf("got '%s' is FLOAT, but it isn't", test.Str)
 				}
 			}
 		})
