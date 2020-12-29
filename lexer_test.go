@@ -216,6 +216,8 @@ func TestGenMaskForInt(t *testing.T) {
 		{"-10", "-10", []bool{false, false, false}},
 		{"+10", "-10", []bool{true, false, false}},
 		{"-10", "+10", []bool{true, false, false}},
+		{"", "10", []bool{}},
+		{"10", "", []bool{false, false}},
 	}
 
 	for _, test := range cases {
@@ -258,6 +260,42 @@ func TestIsFloatLexeme(t *testing.T) {
 					t.Errorf("got '%s' is FLOAT, but it isn't", test.Str)
 				}
 			}
+		})
+	}
+}
+
+func TestGenMaskForFloat(t *testing.T) {
+	lexer := &cptest.Lexer{
+		Precision: 2,
+	}
+
+	cases := []struct {
+		Target, Source string
+		Want           []bool
+	}{
+		{"1.0", "1.0", []bool{false, false, false}},
+		{"1.2", "1.34", []bool{false, false, true}},
+		{"1.24", "1.34", []bool{false, false, true, true}},
+		{"1.2455", "1.3456", []bool{false, false, true, true, false, false}},
+		{"1.24", "1.3", []bool{false, false, true, true}},
+		{"1.24", "2", []bool{true, false, true, true}},
+		{"1.24", "2", []bool{true, false, true, true}},
+		{"2.", "2", []bool{false, false}},
+		{"2.", "2.2", []bool{false, false}},
+		{"2.2", "2.", []bool{false, false, true}},
+		{".5", "2.5", []bool{false, false}},
+		{"2.5", ".5", []bool{true, false, false}},
+		{"0.5", ".5", []bool{false, false, false}},
+		{"-10.5", "10.0", []bool{true, false, false, false, true}},
+		{"-11.5", "10.0", []bool{true, true, true, false, true}},
+	}
+
+	for _, test := range cases {
+		title := fmt.Sprintf("%s against %s", test.Target, test.Source)
+		t.Run(title, func(t *testing.T) {
+			got := lexer.GenMaskForFloat(test.Target, test.Source)
+
+			cptest.AssertRichTextMask(t, got, test.Want)
 		})
 	}
 }
