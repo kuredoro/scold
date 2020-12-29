@@ -14,6 +14,7 @@ type LexemeType int
 
 const (
 	STRXM LexemeType = iota
+	FLOATXM
 	INTXM
 	FINALXM
 )
@@ -46,16 +47,20 @@ func IsFloatLexeme(xm string) bool {
 }
 
 var TypeCheckers = []func(string) bool{
+	IsFloatLexeme,
 	IsIntLexeme,
 }
 
 var MaskGenerators = map[LexemeType]func(*Lexer, string, string) []bool{
-	STRXM: (*Lexer).GenMaskForString,
-	INTXM: (*Lexer).GenMaskForInt,
+	STRXM:   (*Lexer).GenMaskForString,
+	FLOATXM: (*Lexer).GenMaskForFloat,
+	INTXM:   (*Lexer).GenMaskForInt,
 }
 
 // IDEA: Add map[string]interface{} for custom configs from outside of library.
-type Lexer struct{}
+type Lexer struct {
+	Precision uint
+}
 
 // ScanLexemes is a split function for bufio.Scanner. It is same as
 // bufio.ScanWords, except that it treats \n character in a special way.
@@ -199,6 +204,10 @@ func (l *Lexer) GenMaskForString(target, source string) (mask []bool) {
 func (l *Lexer) GenMaskForInt(target, source string) (mask []bool) {
 	mask = make([]bool, len(target))
 
+	if target == "" || source == "" {
+		return
+	}
+
 	if target[0] == '-' && source[0] != '-' || target[0] == '+' && source[0] == '-' {
 		mask[0] = true
 	}
@@ -218,6 +227,54 @@ func (l *Lexer) GenMaskForInt(target, source string) (mask []bool) {
 			mask[i] = true
 		}
 	}
+
+	return
+}
+
+func (l *Lexer) GenMaskForFloat(target, source string) (mask []bool) {
+	targetWhole := strings.Split(target, ".")[0]
+
+	sourceWhole := strings.Split(source, ".")[0]
+	if sourceWhole == "" {
+		sourceWhole = "0"
+	}
+
+	mask = l.GenMaskForInt(targetWhole, sourceWhole)
+
+	// dot is never colored
+	mask = append(mask, false)
+
+	tragetFracStart := strings.IndexRune(target, '.') + 1
+	if tragetFracStart == 0 {
+		tragetFracStart = len(target)
+	}
+
+	sourceFracStart := strings.IndexRune(source, '.') + 1
+	if sourceFracStart == 0 {
+		sourceFracStart = len(source)
+	}
+
+	targetFrac := target[tragetFracStart:]
+	sourceFrac := source[sourceFracStart:]
+
+	if len(targetFrac) > len(sourceFrac) {
+		sourceFrac += strings.Repeat("0", len(targetFrac)-len(sourceFrac))
+	}
+
+	fracMask := make([]bool, len(targetFrac))
+	equal := true
+
+	for i := 0; i < len(targetFrac); i++ {
+		if targetFrac[i] != sourceFrac[i] {
+			equal = false
+		}
+
+		if !equal && i < int(l.Precision) {
+			fracMask[i] = true
+		}
+	}
+
+	mask = append(mask, fracMask...)
 
 	return
 }
