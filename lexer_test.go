@@ -14,7 +14,7 @@ func TestLexerScan(t *testing.T) {
 		text := ""
 		var want []string
 
-		lexer := cptest.Lexer{}
+		lexer := &cptest.Lexer{}
 		got := lexer.Scan(text)
 
 		cptest.AssertLexemes(t, got, want)
@@ -24,7 +24,7 @@ func TestLexerScan(t *testing.T) {
 		text := "foo"
 		want := []string{"foo"}
 
-		lexer := cptest.Lexer{}
+		lexer := &cptest.Lexer{}
 		got := lexer.Scan(text)
 
 		cptest.AssertLexemes(t, got, want)
@@ -34,7 +34,7 @@ func TestLexerScan(t *testing.T) {
 		text := " foo bar   --> "
 		want := []string{"foo", "bar", "-->"}
 
-		lexer := cptest.Lexer{}
+		lexer := &cptest.Lexer{}
 		got := lexer.Scan(text)
 
 		cptest.AssertLexemes(t, got, want)
@@ -44,7 +44,7 @@ func TestLexerScan(t *testing.T) {
 		text := "one\ntwo\n\n  three \n"
 		want := []string{"one", "\n", "two", "\n", "\n", "three", "\n"}
 
-		lexer := cptest.Lexer{}
+		lexer := &cptest.Lexer{}
 		got := lexer.Scan(text)
 
 		cptest.AssertLexemes(t, got, want)
@@ -56,7 +56,7 @@ func TestLexerCompare(t *testing.T) {
 		target := []string{"x", "xar"}
 		source := []string{"one", "x"}
 
-		lexer := cptest.Lexer{}
+		lexer := &cptest.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 
@@ -73,7 +73,7 @@ func TestLexerCompare(t *testing.T) {
 		target := []string{"x"}
 		source := []string{"x", "y"}
 
-		lexer := cptest.Lexer{}
+		lexer := &cptest.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 
@@ -89,7 +89,7 @@ func TestLexerCompare(t *testing.T) {
 		target := []string{"x", "yz"}
 		source := []string{"x"}
 
-		lexer := cptest.Lexer{}
+		lexer := &cptest.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 
@@ -106,7 +106,7 @@ func TestLexerCompare(t *testing.T) {
 		target := []string{"10", "-10", "x", "10"}
 		source := []string{"+10", "10", "10", "y"}
 
-		lexer := cptest.Lexer{}
+		lexer := &cptest.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 

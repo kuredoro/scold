@@ -33,10 +33,54 @@ func ProcFuncIntegerSequence(in io.Reader, out io.Writer) error {
 	return nil
 }
 
+func ProcFuncBogusFloatingPoint(in io.Reader, out io.Writer) error {
+	var n int
+	fmt.Fscan(in, &n)
+
+    if n == 1 {
+        fmt.Fprintln(out, "1.234567")
+    } else if n == 2 {
+        fmt.Fprintln(out, "2.345678")
+    }
+
+	return nil
+}
+
 func ProcFuncAnswer(in io.Reader, out io.Writer) error {
 	fmt.Fprintln(out, 42)
 
 	return nil
+}
+
+func TestNewTestingBatch(t *testing.T) {
+    t.Run("no state altering configs", func(t *testing.T) {
+        inputs := cptest.Inputs{
+            Tests: nil,
+            Config: map[string]string{},
+        }
+
+        batch := cptest.NewTestingBatch(inputs, nil, nil)
+
+        if batch.Lx.Precision != cptest.DefaultPrecision {
+            t.Errorf("got lexer precision %d, but want default value %d", 
+                batch.Lx.Precision, cptest.DefaultPrecision)
+        }
+    })
+
+    t.Run("prec option", func(t *testing.T) {
+        inputs := cptest.Inputs{
+            Tests: nil,
+            Config: map[string]string{
+                "prec": "22",
+            },
+        }
+
+        batch := cptest.NewTestingBatch(inputs, nil, nil)
+
+        if batch.Lx.Precision != 22 {
+            t.Errorf("got lexer precision %d, but want 22", batch.Lx.Precision)
+        }
+    })
 }
 
 // IDEA: Add support for presentation errors...
@@ -113,6 +157,42 @@ func TestTestingBatch(t *testing.T) {
 		if len(batch.RichOuts[1]) != 3 || len(batch.RichOuts[2]) != 4 {
 			t.Errorf("got wrong rich outputs, %s", litter.Sdump(batch.RichOuts))
 		}
+	})
+
+	t.Run("floating point values are compared correctly", func(t *testing.T) {
+		inputs := cptest.Inputs{
+			Tests: []cptest.Test{
+				{
+					Input:  "1\n",
+					Output: "1.25\n",
+				},
+				{
+					Input:  "2\n",
+					Output: "2.5\n",
+				},
+			},
+            Config: map[string]string{
+                "prec": "1",
+            },
+		}
+
+		proc := &cptest.SpyProcesser{
+			Proc: cptest.ProcesserFunc(ProcFuncBogusFloatingPoint),
+		}
+
+		swatch := &cptest.SpyStopwatcher{}
+
+		batch := cptest.NewTestingBatch(inputs, proc, swatch)
+
+		batch.Run()
+
+		want := map[int]cptest.Verdict{
+			1: cptest.OK,
+			2: cptest.WA,
+		}
+
+		cptest.AssertVerdicts(t, batch.Verdicts, want)
+		cptest.AssertCallCount(t, proc.CallCount(), 2)
 	})
 
 	t.Run("all WA",

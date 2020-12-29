@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
+
+var DefaultPrecision uint = 6
 
 // InternalError represents an error that occured due to internal failure in
 // TestingBatch.
@@ -75,6 +78,7 @@ type TestingBatch struct {
 	Outs        map[int]string
 	RichOuts    map[int][]RichText
 	RichAnswers map[int][]RichText
+    Lx *Lexer
 
 	Verdicts map[int]Verdict
 	Times    map[int]time.Duration
@@ -89,6 +93,11 @@ type TestingBatch struct {
 // NewTestingBatch will initialize channels and maps inside TestingBatch and
 // will assign respective dependency injections.
 func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *TestingBatch {
+    precision, err := strconv.Atoi(inputs.Config["prec"])
+    if err != nil{
+        precision = int(DefaultPrecision)
+    }
+
 	return &TestingBatch{
 		inputs: inputs,
 
@@ -97,6 +106,10 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 		Outs:        make(map[int]string),
 		RichOuts:    make(map[int][]RichText),
 		RichAnswers: make(map[int][]RichText),
+
+        Lx: &Lexer{
+            Precision: uint(precision),
+        },
 
 		Verdicts: make(map[int]Verdict),
 		Times:    make(map[int]time.Duration),
@@ -175,14 +188,12 @@ func (b *TestingBatch) Run() {
 				b.Verdicts[id] = RE
 			}
 		} else {
-			lexer := Lexer{}
-
-			got := lexer.Scan(b.Outs[id])
-			want := lexer.Scan(test.Output)
+			got := b.Lx.Scan(b.Outs[id])
+			want := b.Lx.Scan(test.Output)
 
 			var okOut, okAns bool
-			b.RichOuts[id], okOut = lexer.Compare(got, want)
-			b.RichAnswers[id], okAns = lexer.Compare(want, got)
+			b.RichOuts[id], okOut = b.Lx.Compare(got, want)
+			b.RichAnswers[id], okAns = b.Lx.Compare(want, got)
 
 			same := okOut && okAns
 
