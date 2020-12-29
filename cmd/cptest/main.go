@@ -17,9 +17,8 @@ var execPath string
 func init() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(),
-			`CPTEST
-        Feed apps with fixed inputs, get their outputs and compare with
-        expected ones.
+`CPTEST
+        Feed apps fixed inputs, compare expected and their outputs.
 
 USAGE
         cptest [-i INPUTS] EXECUTABLE
@@ -38,7 +37,7 @@ AUTHOR
         https://github.com/kuredoro/cptest/issues
 
 VERSION
-        1.00z
+        1.1.0
 
 `)
 	}
@@ -100,6 +99,8 @@ func main() {
 	swatch := cptest.NewConfigurableStopwatcher(TL)
 
 	batch := cptest.NewTestingBatch(inputs, proc, swatch)
+
+    fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
 
 	batch.TestStartCallback = RunPrinter
 	batch.TestEndCallback = VerboseResultPrinter
