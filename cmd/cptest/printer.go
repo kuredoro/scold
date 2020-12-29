@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	DiffColor = aurora.ReverseFm
+	DiffColor = aurora.RedFg
 )
 
 var verdictStr = map[cptest.Verdict]aurora.Value{
 	cptest.OK: aurora.Bold("OK").Green(),
-	cptest.IE: aurora.Bold("IE"),
+	cptest.IE: aurora.Bold("IE").Bold(),
 	cptest.WA: aurora.Bold("WA").Red(),
-	cptest.RE: aurora.Bold("RE").Red(),
+	cptest.RE: aurora.Bold("RE").Magenta(),
 	cptest.TL: aurora.Bold("TL").Yellow(),
 }
 
@@ -35,7 +35,7 @@ func DumpLexemes(xms []cptest.RichText) string {
 		}
 
 		str.WriteString(xm.Colorize(DiffColor))
-        str.WriteRune(' ')
+		str.WriteRune(' ')
 	}
 
 	return str.String()
