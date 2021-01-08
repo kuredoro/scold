@@ -234,3 +234,13 @@ func AssertEnrichedLexSequence(t *testing.T, got, want []RichText) {
 		AssertRichText(t, RichText{"", []bool{}}, want[i])
 	}
 }
+
+func AssertText(t *testing.T, got, want string) {
+    t.Helper()
+
+    if got != want {
+        got = strings.ReplaceAll(got, "\n", "\\n")
+        want = strings.ReplaceAll(want, "\n", "\\n")
+        t.Errorf("got text '%s', want '%s'", got, want)
+    }
+}

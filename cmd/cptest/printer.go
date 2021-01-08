@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/kuredoro/cptest"
@@ -25,22 +24,6 @@ func RunPrinter(id int) {
 	fmt.Printf("=== RUN\tTest %d\n", id)
 }
 
-func DumpLexemes(xms []cptest.RichText) string {
-	var str strings.Builder
-
-	for _, xm := range xms {
-		if xm.Str == "\n" {
-			str.WriteRune('\n')
-			continue
-		}
-
-		str.WriteString(xm.Colorize(DiffColor))
-		str.WriteRune(' ')
-	}
-
-	return str.String()
-}
-
 func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
 	verdict := b.Verdicts[id]
 
@@ -50,12 +33,12 @@ func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
 	if verdict != cptest.OK {
 		fmt.Printf("Input:\n%s\n", test.Input)
 
-		fmt.Printf("Answer:\n%s\n", DumpLexemes(b.RichAnswers[id]))
+		fmt.Printf("Answer:\n%s\n", cptest.DumpLexemes(b.RichAnswers[id], DiffColor))
 
 		if verdict == cptest.RE {
 			fmt.Printf("Stderr:\n%s\n", b.Outs[id])
 		} else if verdict == cptest.WA {
-			fmt.Printf("Output:\n%s\n", DumpLexemes(b.RichOuts[id]))
+			fmt.Printf("Output:\n%s\n", cptest.DumpLexemes(b.RichOuts[id], DiffColor))
 		} else if verdict == cptest.IE {
 			fmt.Printf("Error:\n%v\n\n", b.Errs[id])
 		}
