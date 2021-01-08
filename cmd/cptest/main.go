@@ -1,81 +1,60 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
+	"github.com/alexflint/go-arg"
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
 )
 
 var wd = "."
 
-var inputsPath string
-var execPath string
-
-func init() {
-	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(),
-`CPTEST
-        Feed apps fixed inputs, compare expected and their outputs.
-
-USAGE
-        cptest [-i INPUTS] EXECUTABLE
-
-FLAGS
-`)
-		flag.PrintDefaults()
-
-		fmt.Fprintf(flag.CommandLine.Output(),
-			`
-AUTHOR
-        @kuredoro
-        Usage guide: https://github.com/kuredoro/cptest
-
-        Feature request or a bug report is always welcome at
-        https://github.com/kuredoro/cptest/issues
-
-VERSION
-        1.1.0
-
-`)
-	}
-
-	flag.StringVar(&inputsPath, "i", "inputs.txt", "File with the test cases")
+type args struct {
+    Inputs string `arg:"-i" default:"inputs.txt" help:"file with tests"`
+    Executable string `arg:"positional,required"`
+    NoColors bool `arg:"--no-colors" help:"disable colored output"`
 }
 
-func GetProc() (proc cptest.Processer, err error) {
+var Args args
 
-	/*
-	   This check does not work on Windows.
-	   TODO: Find fix.
-	   if err = IsExec(execPath); err != nil {
-	       return nil, err
-	   }
-	*/
+func (args) Description() string {
+    return `Feed programs fixed inputs, compare their outputs against expected ones.
 
-	return
+Author: @kuredoro
+User manual: https://github.com/kuredoro/cptest
+`
+}
+
+func (args) Version() string {
+    return "cptest 1.01z"
+}
+
+func init() {
+    arg.MustParse(&Args)
+
+    if Args.NoColors {
+        cptest.Au = aurora.NewAurora(false)
+    }
+
+    verdictStr = map[cptest.Verdict]aurora.Value{
+        cptest.OK: cptest.Au.Bold("OK").Green(),
+        cptest.IE: cptest.Au.Bold("IE").Bold(),
+        cptest.WA: cptest.Au.Bold("WA").Red(),
+        cptest.RE: cptest.Au.Bold("RE").Magenta(),
+        cptest.TL: cptest.Au.Bold("TL").Yellow(),
+    }
 }
 
 func main() {
-	flag.Parse()
-
-	if count := len(flag.Args()); count != 1 {
-		flag.Usage()
-
-		return
-	}
-
-	execPath = flag.Args()[0]
-
 	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Println("error: could not get path for current working directory")
 		return
 	}
 
-	inputsPath = joinIfRelative(wd, inputsPath)
+    inputsPath := joinIfRelative(wd, Args.Inputs)
 
 	inputs, errs := ReadInputs(inputsPath)
 	if errs != nil {
@@ -86,7 +65,7 @@ func main() {
 		return
 	}
 
-	execPath = joinIfRelative(wd, execPath)
+    execPath := joinIfRelative(wd, Args.Executable)
 	proc := &Executable{
 		Path: execPath,
 	}
@@ -115,9 +94,9 @@ func main() {
 	}
 
 	if passCount == len(batch.Verdicts) {
-		fmt.Println(aurora.Bold("OK").Green())
+		fmt.Println(cptest.Au.Bold("OK").Green())
 	} else {
-		fmt.Println(aurora.Bold("FAIL").Red())
+		fmt.Println(cptest.Au.Bold("FAIL").Red())
 		fmt.Printf("%d/%d passed\n", passCount, len(batch.Verdicts))
 	}
 }

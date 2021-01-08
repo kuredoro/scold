@@ -6,6 +6,15 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
+// Au is used to colorize output of several functions. A user of the library
+// can change the value of it to disable colored output. Refer to the aurora
+// documentation for that.
+var Au aurora.Aurora
+
+func init() {
+	Au = aurora.NewAurora(true)
+}
+
 type RichText struct {
 	Str  string
 	Mask []bool
@@ -35,7 +44,7 @@ func (rt RichText) Colorize(color aurora.Color) string {
 
 		part := rt.Str[start:end]
 		if rt.Mask[start] {
-			str.WriteString(aurora.Colorize(part, color).String())
+			str.WriteString(Au.Colorize(part, color).String())
 		} else {
 			str.WriteString(part)
 		}

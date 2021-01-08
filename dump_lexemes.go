@@ -20,9 +20,9 @@ func DumpLexemes(xms []RichText, color aurora.Color) string {
 
         if xm.Str == "\n" {
             x = -1
-            
+
             if xm.Colorful() {
-                str.WriteString(aurora.Colorize(AltLineFeed, color).String())
+                str.WriteString(Au.Colorize(AltLineFeed, color).String())
                 str.WriteRune('\n')
                 x++
                 continue
