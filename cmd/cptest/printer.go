@@ -12,13 +12,8 @@ const (
 	DiffColor = aurora.RedFg
 )
 
-var verdictStr = map[cptest.Verdict]aurora.Value{
-	cptest.OK: aurora.Bold("OK").Green(),
-	cptest.IE: aurora.Bold("IE").Bold(),
-	cptest.WA: aurora.Bold("WA").Red(),
-	cptest.RE: aurora.Bold("RE").Magenta(),
-	cptest.TL: aurora.Bold("TL").Yellow(),
-}
+// Initialized in init()
+var verdictStr map[cptest.Verdict]aurora.Value
 
 func RunPrinter(id int) {
 	fmt.Printf("=== RUN\tTest %d\n", id)
