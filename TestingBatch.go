@@ -1,8 +1,6 @@
 package cptest
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,18 +8,6 @@ import (
 )
 
 var DefaultPrecision uint = 6
-
-// InternalError represents an error that occured due to internal failure in
-// TestingBatch.
-type InternalError bool
-
-func (e InternalError) Error() string {
-	return "internal"
-}
-
-// InternalErr is a single instance of the InternalError that may be referred
-// to in errors.Is.
-const InternalErr = InternalError(true)
 
 // Verdict represents a verdict asssigned by the judge.
 type Verdict int
@@ -61,7 +47,7 @@ func TestEndStub(b *TestingBatch, test Test, id int) {}
 type TestResult struct {
 	ID  int
 	Err error
-	Out string
+	Out ProcessResult
 }
 
 // TestingBatch is responsible for running tests and evaluating the verdicts
@@ -75,7 +61,7 @@ type TestingBatch struct {
 	complete chan TestResult
 
 	Errs        map[int]error
-	Outs        map[int]string
+	Outs        map[int]ProcessResult
 	RichOuts    map[int][]RichText
 	RichAnswers map[int][]RichText
     Lx *Lexer
@@ -103,7 +89,7 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 
 		complete:    make(chan TestResult),
 		Errs:        make(map[int]error),
-		Outs:        make(map[int]string),
+		Outs:        make(map[int]ProcessResult),
 		RichOuts:    make(map[int][]RichText),
 		RichAnswers: make(map[int][]RichText),
 
@@ -127,19 +113,18 @@ func (b *TestingBatch) launchTest(id int, in string) {
 		if e := recover(); e != nil {
 			b.complete <- TestResult{
 				ID:  id,
-				Err: fmt.Errorf("%w: %v", InternalErr, e),
-				Out: "",
+				Err: fmt.Errorf("internal: %v", e),
+                Out: ProcessResult{},
 			}
 		}
 	}()
 
-	buf := &bytes.Buffer{}
-	err := b.Proc.Run(strings.NewReader(in), buf)
+	out, err := b.Proc.Run(strings.NewReader(in))
 
 	b.complete <- TestResult{
 		ID:  id,
 		Err: err,
-		Out: buf.String(),
+		Out: out,
 	}
 }
 
@@ -181,19 +166,19 @@ func (b *TestingBatch) Run() {
 		b.Outs[id] = result.Out
 		b.Times[id] = b.Swatch.Elapsed()
 
+		answerLexemes := b.Lx.Scan(test.Output)
+		b.RichAnswers[id], _ = b.Lx.Compare(answerLexemes, nil)
+
 		if err := b.Errs[id]; err != nil {
-			if errors.Is(err, InternalErr) {
-				b.Verdicts[id] = IE
-			} else {
-				b.Verdicts[id] = RE
-			}
+            b.Verdicts[id] = IE
+		} else if b.Outs[id].ExitCode != 0 {
+            b.Verdicts[id] = RE
 		} else {
-			got := b.Lx.Scan(b.Outs[id])
-			want := b.Lx.Scan(test.Output)
+			got := b.Lx.Scan(b.Outs[id].Stdout)
 
 			var okOut, okAns bool
-			b.RichOuts[id], okOut = b.Lx.Compare(got, want)
-			b.RichAnswers[id], okAns = b.Lx.Compare(want, got)
+			b.RichOuts[id], okOut = b.Lx.Compare(got, answerLexemes)
+			b.RichAnswers[id], okAns = b.Lx.Compare(answerLexemes, got)
 
 			same := okOut && okAns
 

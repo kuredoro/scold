@@ -36,7 +36,7 @@ func VerboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
 		fmt.Printf("Answer:\n%s\n", cptest.DumpLexemes(b.RichAnswers[id], DiffColor))
 
 		if verdict == cptest.RE {
-			fmt.Printf("Stderr:\n%s\n", b.Outs[id])
+			fmt.Printf("Stderr:\n%s\n", b.Outs[id].Stderr)
 		} else if verdict == cptest.WA {
 			fmt.Printf("Output:\n%s\n", cptest.DumpLexemes(b.RichOuts[id], DiffColor))
 		} else if verdict == cptest.IE {
