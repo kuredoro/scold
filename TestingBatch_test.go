@@ -1,7 +1,7 @@
 package cptest_test
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"io"
 	"testing"
@@ -11,45 +11,59 @@ import (
 	"github.com/sanity-io/litter"
 )
 
-func ProcFuncMultiply(in io.Reader, out io.Writer) error {
+func ProcFuncMultiply(in io.Reader) (cptest.ProcessResult, error) {
 	var a, b int
 	fmt.Fscan(in, &a, &b)
 
-	fmt.Fprintln(out, a*b)
-
-	return nil
+    return cptest.ProcessResult{
+        ExitCode: 0,
+        Stdout: fmt.Sprintln(a*b),
+        Stderr: "",
+    }, nil
 }
 
-func ProcFuncIntegerSequence(in io.Reader, out io.Writer) error {
+func ProcFuncIntegerSequence(in io.Reader) (cptest.ProcessResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
+    buf := &bytes.Buffer{}
 	for i := 1; i <= n; i++ {
-		fmt.Fprint(out, i, " ")
+		fmt.Fprint(buf, i, " ")
 	}
 
-	fmt.Fprintln(out)
+	fmt.Fprintln(buf)
 
-	return nil
+    return cptest.ProcessResult{
+        ExitCode: 0,
+        Stdout: buf.String(),
+        Stderr: "",
+    }, nil
 }
 
-func ProcFuncBogusFloatingPoint(in io.Reader, out io.Writer) error {
+func ProcFuncBogusFloatingPoint(in io.Reader) (cptest.ProcessResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
+    out := ""
     if n == 1 {
-        fmt.Fprintln(out, "1.234567")
+        out = "1.234567\n"
     } else if n == 2 {
-        fmt.Fprintln(out, "2.345678")
+        out = "2.345678\n"
     }
 
-	return nil
+    return cptest.ProcessResult{
+        ExitCode: 0,
+        Stdout: out,
+        Stderr: "",
+    }, nil
 }
 
-func ProcFuncAnswer(in io.Reader, out io.Writer) error {
-	fmt.Fprintln(out, 42)
-
-	return nil
+func ProcFuncAnswer(in io.Reader) (cptest.ProcessResult, error) {
+    return cptest.ProcessResult{
+        ExitCode: 0,
+        Stdout: "42",
+        Stderr: "",
+    }, nil
 }
 
 func TestNewTestingBatch(t *testing.T) {
@@ -258,21 +272,27 @@ func TestTestingBatch(t *testing.T) {
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(r io.Reader, w io.Writer) error {
+					func(r io.Reader) (cptest.ProcessResult, error) {
 						var num int
 						fmt.Fscan(r, &num)
 
 						if num == 3 {
-							return errors.New("segfault. core dumped.")
+                            return cptest.ProcessResult{
+                                ExitCode: 1,
+                                Stdout: "",
+                                Stderr: "segfault. (core dumped)",
+                            }, nil
 						}
 
 						if num == 5 {
 							panic("brrrr")
 						}
 
-						fmt.Fprintln(w, 1)
-
-						return nil
+                        return cptest.ProcessResult{
+                            ExitCode: 0,
+                            Stdout: "1\n",
+                            Stderr: "",
+                        }, nil
 					}),
 			}
 
@@ -292,6 +312,10 @@ func TestTestingBatch(t *testing.T) {
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
 			cptest.AssertCallCount(t, proc.CallCount(), 5)
+
+            if len(batch.RichAnswers[3]) == 0 || len(batch.RichAnswers[5]) == 0 {
+                t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
+            }
 		})
 
 	t.Run("test cases may be abandoned at TL",
@@ -307,15 +331,18 @@ func TestTestingBatch(t *testing.T) {
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(r io.Reader, w io.Writer) error {
+					func(r io.Reader) (cptest.ProcessResult, error) {
 						var num int
 						fmt.Fscan(r, &num)
 
 						dur := time.Duration(num)
 						time.Sleep(5 * dur * time.Millisecond)
 
-						fmt.Fprintln(w, num)
-						return nil
+                        return cptest.ProcessResult{
+                            ExitCode: 0,
+                            Stdout: fmt.Sprintln(num),
+                            Stderr: "",
+                        }, nil
 					}),
 			}
 
