@@ -7,9 +7,12 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
+    "github.com/mattn/go-colorable"
 )
 
 var wd = "."
+
+var stdout = colorable.NewColorableStdout()
 
 type args struct {
     Inputs string `arg:"-i" default:"inputs.txt" help:"file with tests"`
@@ -28,7 +31,7 @@ User manual: https://github.com/kuredoro/cptest
 }
 
 func (args) Version() string {
-    return "cptest 1.01z"
+    return "cptest 1.02a"
 }
 
 func init() {
@@ -94,9 +97,9 @@ func main() {
 	}
 
 	if passCount == len(batch.Verdicts) {
-		fmt.Println(cptest.Au.Bold("OK").Green())
+		fmt.Fprintln(stdout, cptest.Au.Bold("OK").Green())
 	} else {
-		fmt.Println(cptest.Au.Bold("FAIL").Red())
+		fmt.Fprintln(stdout, cptest.Au.Bold("FAIL").Red())
 		fmt.Printf("%d/%d passed\n", passCount, len(batch.Verdicts))
 	}
 }
