@@ -6,7 +6,7 @@ import (
 )
 
 const (
-    AltLineFeedChar = '█'
+    AltLineFeed = "\\n"
 )
 
 func DumpLexemes(xms []RichText, color aurora.Color) string {
@@ -22,7 +22,7 @@ func DumpLexemes(xms []RichText, color aurora.Color) string {
             x = -1
             
             if xm.Colorful() {
-                str.WriteString(aurora.Colorize(string(AltLineFeedChar), color).String())
+                str.WriteString(aurora.Colorize(AltLineFeed, color).String())
                 str.WriteRune('\n')
                 x++
                 continue

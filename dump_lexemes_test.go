@@ -72,7 +72,7 @@ func TestDumpLexemes(t *testing.T) {
 
         got := cptest.DumpLexemes(xms, aurora.BoldFm)
 
-        colorizedLF := aurora.Bold(string(cptest.AltLineFeedChar)).String() + "\n"
+        colorizedLF := aurora.Bold(cptest.AltLineFeed).String() + "\n"
         want := "foo" + colorizedLF + colorizedLF + aurora.Bold("bar").String() + "\n"
 
         cptest.AssertText(t, got, want)
