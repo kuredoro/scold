@@ -247,20 +247,22 @@ func (l *Lexer) GenMaskForFloat(target, source string) (mask []bool) {
 
 	mask = l.GenMaskForInt(targetWhole, sourceWhole)
 
+    if targetWhole == target {
+        return
+    }
+
 	// dot is never colored
 	mask = append(mask, false)
 
-	tragetFracStart := strings.IndexRune(target, '.') + 1
-	if tragetFracStart == 0 {
-		tragetFracStart = len(target)
-	}
+    // This one is never 0, because of the if up there that returns
+	targetFracStart := strings.IndexRune(target, '.') + 1
 
 	sourceFracStart := strings.IndexRune(source, '.') + 1
 	if sourceFracStart == 0 {
 		sourceFracStart = len(source)
 	}
 
-	targetFrac := target[tragetFracStart:]
+	targetFrac := target[targetFracStart:]
 	sourceFrac := source[sourceFracStart:]
 
 	if len(targetFrac) > len(sourceFrac) {

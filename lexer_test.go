@@ -318,6 +318,7 @@ func TestGenMaskForFloat(t *testing.T) {
 		{"1.24", "2", []bool{true, false, true, true}},
 		{"1.24", "2", []bool{true, false, true, true}},
 		{"2.", "2", []bool{false, false}},
+		{"2", "2.", []bool{false}},
 		{"2.", "2.2", []bool{false, false}},
 		{"2.2", "2.", []bool{false, false, true}},
 		{".5", "2.5", []bool{false, false}},
