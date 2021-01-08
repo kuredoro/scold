@@ -120,6 +120,43 @@ func TestLexerCompare(t *testing.T) {
 		cptest.AssertDiffFailure(t, ok)
 		cptest.AssertEnrichedLexSequence(t, got, want)
 	})
+
+	t.Run("spurious LFs are skipped in target", func(t *testing.T) {
+		target := []string{"foo", "\n", "\n", "bar"}
+		source := []string{"foo", "\n", "bar"}
+
+		lexer := &cptest.Lexer{}
+
+		got, ok := lexer.Compare(target, source)
+
+		want := []cptest.RichText{
+			{target[0], lexer.GenMaskForString(target[0], source[0])},
+			{target[1], lexer.GenMaskForString(target[1], source[1])},
+			{target[2], []bool{true}},
+			{target[3], lexer.GenMaskForString(target[3], source[2])},
+		}
+
+		cptest.AssertDiffFailure(t, ok)
+		cptest.AssertEnrichedLexSequence(t, got, want)
+	})
+
+	t.Run("spurious LFs are skipped in source", func(t *testing.T) {
+		target := []string{"foo", "\n", "bar"}
+		source := []string{"foo", "\n", "\n", "bar"}
+
+		lexer := &cptest.Lexer{}
+
+		got, ok := lexer.Compare(target, source)
+
+		want := []cptest.RichText{
+			{target[0], lexer.GenMaskForString(target[0], source[0])},
+			{target[1], lexer.GenMaskForString(target[1], source[1])},
+			{target[2], lexer.GenMaskForString(target[2], source[3])},
+		}
+
+		cptest.AssertDiffSuccess(t, ok)
+		cptest.AssertEnrichedLexSequence(t, got, want)
+	})
 }
 
 func TestGenMaskForString(t *testing.T) {

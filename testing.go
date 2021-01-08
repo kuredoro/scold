@@ -217,22 +217,15 @@ func AssertRichTextMask(t *testing.T, got, want []bool) {
 func AssertEnrichedLexSequence(t *testing.T, got, want []RichText) {
 	t.Helper()
 
-	commonLen := len(got)
-	if len(want) < commonLen {
-		commonLen = len(want)
-	}
+    gotStr := DumpLexemes(got, aurora.BoldFm)
+    gotStr = strings.ReplaceAll(gotStr, "\n", "\\n")
 
-	for i := 0; i < commonLen; i++ {
-		AssertRichText(t, got[i], want[i])
-	}
+    wantStr := DumpLexemes(want, aurora.BoldFm)
+    wantStr = strings.ReplaceAll(wantStr, "\n", "\\n")
 
-	for i := commonLen; i < len(got); i++ {
-		AssertRichText(t, got[i], RichText{"", []bool{}})
-	}
-
-	for i := commonLen; i < len(want); i++ {
-		AssertRichText(t, RichText{"", []bool{}}, want[i])
-	}
+    if gotStr != wantStr {
+        t.Errorf("got lexemes '%s', want '%s'", gotStr, wantStr)
+    }
 }
 
 func AssertText(t *testing.T, got, want string) {

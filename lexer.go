@@ -126,44 +126,38 @@ func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
 	rts = make([]RichText, len(target))
 	ok = true
 
-	commonLen := len(target)
-	if len(source) < commonLen {
-		commonLen = len(source)
-	}
+    ti, si := 0, 0
+	for ; ti < len(target) && si < len(source); ti, si = ti+1, si+1 {
+        // Skip spurious LFs
+        if source[si] != "\n" {
+            for ti < len(target) && target[ti] == "\n" {
+                rts[ti].Str = "\n"
+                rts[ti].Mask = []bool{true}
+                ok = false
+                ti++
+            }
+        } else if target[ti] != "\n" {
+            for si < len(source) && source[si] == "\n" {
+                si++
+            }
+        }
 
-	for i, xm := range target[:commonLen] {
-		rts[i].Str = xm
+        if ti == len(target) || si == len(source) {
+            break
+        }
 
-		targetType := DeduceLexemeType(xm)
-		sourceType := DeduceLexemeType(source[i])
+        xm := target[ti]
+		rts[ti].Str = xm
+		rts[ti].Mask = l.GenerateMask(xm, source[si])
 
-		commonType := targetType
-		if sourceType < commonType {
-			commonType = sourceType
-		}
-
-		rts[i].Mask = MaskGenerators[commonType](l, xm, source[i])
-
-		maskEmpty := true
-		for _, bit := range rts[i].Mask {
-			if bit == true {
-				maskEmpty = false
-				break
-			}
-		}
-
-		if !maskEmpty {
+		if rts[ti].Colorful() {
 			ok = false
 		}
 	}
 
-	for i := commonLen; i < len(target); i++ {
-		rts[i].Str = target[i]
-
-		rts[i].Mask = make([]bool, len(target[i]))
-		for mi := range rts[i].Mask {
-			rts[i].Mask[mi] = true
-		}
+	for ; ti < len(target); ti++ {
+		rts[ti].Str = target[ti]
+        rts[ti].Mask = l.GenMaskForString(target[ti], "")
 
 		ok = false
 	}
@@ -180,6 +174,18 @@ func DeduceLexemeType(xm string) LexemeType {
 	}
 
 	return LexemeType(FINALXM - 1)
+}
+
+func (l *Lexer) GenerateMask(target, source string) []bool {
+    targetType := DeduceLexemeType(target)
+    sourceType := DeduceLexemeType(source)
+
+    commonType := targetType
+    if sourceType < commonType {
+        commonType = sourceType
+    }
+
+    return MaskGenerators[commonType](l, target, source)
 }
 
 func (l *Lexer) GenMaskForString(target, source string) (mask []bool) {
