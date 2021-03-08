@@ -14,15 +14,15 @@ var wd = "."
 
 var stdout = colorable.NewColorableStdout()
 
-type args struct {
+type appArgs struct {
     Inputs string `arg:"-i" default:"inputs.txt" help:"file with tests"`
     Executable string `arg:"positional,required"`
     NoColors bool `arg:"--no-colors" help:"disable colored output"`
 }
 
-var Args args
+var args appArgs
 
-func (args) Description() string {
+func (appArgs) Description() string {
     return `Feed programs fixed inputs, compare their outputs against expected ones.
 
 Author: @kuredoro
@@ -30,14 +30,14 @@ User manual: https://github.com/kuredoro/cptest
 `
 }
 
-func (args) Version() string {
+func (appArgs) Version() string {
     return "cptest 1.02a"
 }
 
 func init() {
-    arg.MustParse(&Args)
+    arg.MustParse(&args)
 
-    if Args.NoColors {
+    if args.NoColors {
         cptest.Au = aurora.NewAurora(false)
     }
 
@@ -57,9 +57,9 @@ func main() {
 		return
 	}
 
-    inputsPath := joinIfRelative(wd, Args.Inputs)
+    inputsPath := joinIfRelative(wd, args.Inputs)
 
-	inputs, errs := ReadInputs(inputsPath)
+	inputs, errs := readInputs(inputsPath)
 	if errs != nil {
 		for _, err := range errs {
 			fmt.Printf("error: %v\n", err)
@@ -68,7 +68,7 @@ func main() {
 		return
 	}
 
-    execPath := joinIfRelative(wd, Args.Executable)
+    execPath := joinIfRelative(wd, args.Executable)
 	proc := &Executable{
 		Path: execPath,
 	}
@@ -77,15 +77,15 @@ func main() {
 		return
 	}
 
-	TL := GetTL(inputs)
+	TL := getTL(inputs)
 	swatch := cptest.NewConfigurableStopwatcher(TL)
 
 	batch := cptest.NewTestingBatch(inputs, proc, swatch)
 
     fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
 
-	batch.TestStartCallback = RunPrinter
-	batch.TestEndCallback = VerboseResultPrinter
+	batch.TestStartCallback = runPrinter
+	batch.TestEndCallback = verboseResultPrinter
 
 	batch.Run()
 
