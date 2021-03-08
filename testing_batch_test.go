@@ -15,86 +15,86 @@ func ProcFuncMultiply(in io.Reader) (cptest.ProcessResult, error) {
 	var a, b int
 	fmt.Fscan(in, &a, &b)
 
-    return cptest.ProcessResult{
-        ExitCode: 0,
-        Stdout: fmt.Sprintln(a*b),
-        Stderr: "",
-    }, nil
+	return cptest.ProcessResult{
+		ExitCode: 0,
+		Stdout:   fmt.Sprintln(a * b),
+		Stderr:   "",
+	}, nil
 }
 
 func ProcFuncIntegerSequence(in io.Reader) (cptest.ProcessResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
-    buf := &bytes.Buffer{}
+	buf := &bytes.Buffer{}
 	for i := 1; i <= n; i++ {
 		fmt.Fprint(buf, i, " ")
 	}
 
 	fmt.Fprintln(buf)
 
-    return cptest.ProcessResult{
-        ExitCode: 0,
-        Stdout: buf.String(),
-        Stderr: "",
-    }, nil
+	return cptest.ProcessResult{
+		ExitCode: 0,
+		Stdout:   buf.String(),
+		Stderr:   "",
+	}, nil
 }
 
 func ProcFuncBogusFloatingPoint(in io.Reader) (cptest.ProcessResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
-    out := ""
-    if n == 1 {
-        out = "1.234567\n"
-    } else if n == 2 {
-        out = "2.345678\n"
-    }
+	out := ""
+	if n == 1 {
+		out = "1.234567\n"
+	} else if n == 2 {
+		out = "2.345678\n"
+	}
 
-    return cptest.ProcessResult{
-        ExitCode: 0,
-        Stdout: out,
-        Stderr: "",
-    }, nil
+	return cptest.ProcessResult{
+		ExitCode: 0,
+		Stdout:   out,
+		Stderr:   "",
+	}, nil
 }
 
 func ProcFuncAnswer(in io.Reader) (cptest.ProcessResult, error) {
-    return cptest.ProcessResult{
-        ExitCode: 0,
-        Stdout: "42",
-        Stderr: "",
-    }, nil
+	return cptest.ProcessResult{
+		ExitCode: 0,
+		Stdout:   "42",
+		Stderr:   "",
+	}, nil
 }
 
 func TestNewTestingBatch(t *testing.T) {
-    t.Run("no state altering configs", func(t *testing.T) {
-        inputs := cptest.Inputs{
-            Tests: nil,
-            Config: map[string]string{},
-        }
+	t.Run("no state altering configs", func(t *testing.T) {
+		inputs := cptest.Inputs{
+			Tests:  nil,
+			Config: map[string]string{},
+		}
 
-        batch := cptest.NewTestingBatch(inputs, nil, nil)
+		batch := cptest.NewTestingBatch(inputs, nil, nil)
 
-        if batch.Lx.Precision != cptest.DefaultPrecision {
-            t.Errorf("got lexer precision %d, but want default value %d", 
-                batch.Lx.Precision, cptest.DefaultPrecision)
-        }
-    })
+		if batch.Lx.Precision != cptest.DefaultPrecision {
+			t.Errorf("got lexer precision %d, but want default value %d",
+				batch.Lx.Precision, cptest.DefaultPrecision)
+		}
+	})
 
-    t.Run("prec option", func(t *testing.T) {
-        inputs := cptest.Inputs{
-            Tests: nil,
-            Config: map[string]string{
-                "prec": "22",
-            },
-        }
+	t.Run("prec option", func(t *testing.T) {
+		inputs := cptest.Inputs{
+			Tests: nil,
+			Config: map[string]string{
+				"prec": "22",
+			},
+		}
 
-        batch := cptest.NewTestingBatch(inputs, nil, nil)
+		batch := cptest.NewTestingBatch(inputs, nil, nil)
 
-        if batch.Lx.Precision != 22 {
-            t.Errorf("got lexer precision %d, but want 22", batch.Lx.Precision)
-        }
-    })
+		if batch.Lx.Precision != 22 {
+			t.Errorf("got lexer precision %d, but want 22", batch.Lx.Precision)
+		}
+	})
 }
 
 // IDEA: Add support for presentation errors...
@@ -185,9 +185,9 @@ func TestTestingBatch(t *testing.T) {
 					Output: "2.5\n",
 				},
 			},
-            Config: map[string]string{
-                "prec": "1",
-            },
+			Config: map[string]string{
+				"prec": "1",
+			},
 		}
 
 		proc := &cptest.SpyProcesser{
@@ -277,22 +277,22 @@ func TestTestingBatch(t *testing.T) {
 						fmt.Fscan(r, &num)
 
 						if num == 3 {
-                            return cptest.ProcessResult{
-                                ExitCode: 1,
-                                Stdout: "",
-                                Stderr: "segfault. (core dumped)",
-                            }, nil
+							return cptest.ProcessResult{
+								ExitCode: 1,
+								Stdout:   "",
+								Stderr:   "segfault. (core dumped)",
+							}, nil
 						}
 
 						if num == 5 {
 							panic("brrrr")
 						}
 
-                        return cptest.ProcessResult{
-                            ExitCode: 0,
-                            Stdout: "1\n",
-                            Stderr: "",
-                        }, nil
+						return cptest.ProcessResult{
+							ExitCode: 0,
+							Stdout:   "1\n",
+							Stderr:   "",
+						}, nil
 					}),
 			}
 
@@ -313,9 +313,9 @@ func TestTestingBatch(t *testing.T) {
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
 			cptest.AssertCallCount(t, proc.CallCount(), 5)
 
-            if len(batch.RichAnswers[3]) == 0 || len(batch.RichAnswers[5]) == 0 {
-                t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
-            }
+			if len(batch.RichAnswers[3]) == 0 || len(batch.RichAnswers[5]) == 0 {
+				t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
+			}
 		})
 
 	t.Run("test cases may be abandoned at TL",
@@ -338,11 +338,11 @@ func TestTestingBatch(t *testing.T) {
 						dur := time.Duration(num)
 						time.Sleep(5 * dur * time.Millisecond)
 
-                        return cptest.ProcessResult{
-                            ExitCode: 0,
-                            Stdout: fmt.Sprintln(num),
-                            Stderr: "",
-                        }, nil
+						return cptest.ProcessResult{
+							ExitCode: 0,
+							Stdout:   fmt.Sprintln(num),
+							Stderr:   "",
+						}, nil
 					}),
 			}
 

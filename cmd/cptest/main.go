@@ -7,7 +7,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
-    "github.com/mattn/go-colorable"
+	"github.com/mattn/go-colorable"
 )
 
 var wd = "."
@@ -15,15 +15,15 @@ var wd = "."
 var stdout = colorable.NewColorableStdout()
 
 type appArgs struct {
-    Inputs string `arg:"-i" default:"inputs.txt" help:"file with tests"`
-    Executable string `arg:"positional,required"`
-    NoColors bool `arg:"--no-colors" help:"disable colored output"`
+	Inputs     string `arg:"-i" default:"inputs.txt" help:"file with tests"`
+	Executable string `arg:"positional,required"`
+	NoColors   bool   `arg:"--no-colors" help:"disable colored output"`
 }
 
 var args appArgs
 
 func (appArgs) Description() string {
-    return `Feed programs fixed inputs, compare their outputs against expected ones.
+	return `Feed programs fixed inputs, compare their outputs against expected ones.
 
 Author: @kuredoro
 User manual: https://github.com/kuredoro/cptest
@@ -31,23 +31,23 @@ User manual: https://github.com/kuredoro/cptest
 }
 
 func (appArgs) Version() string {
-    return "cptest 1.02a"
+	return "cptest 1.02a"
 }
 
 func init() {
-    arg.MustParse(&args)
+	arg.MustParse(&args)
 
-    if args.NoColors {
-        cptest.Au = aurora.NewAurora(false)
-    }
+	if args.NoColors {
+		cptest.Au = aurora.NewAurora(false)
+	}
 
-    verdictStr = map[cptest.Verdict]aurora.Value{
-        cptest.OK: cptest.Au.Bold("OK").Green(),
-        cptest.IE: cptest.Au.Bold("IE").Bold(),
-        cptest.WA: cptest.Au.Bold("WA").Red(),
-        cptest.RE: cptest.Au.Bold("RE").Magenta(),
-        cptest.TL: cptest.Au.Bold("TL").Yellow(),
-    }
+	verdictStr = map[cptest.Verdict]aurora.Value{
+		cptest.OK: cptest.Au.Bold("OK").Green(),
+		cptest.IE: cptest.Au.Bold("IE").Bold(),
+		cptest.WA: cptest.Au.Bold("WA").Red(),
+		cptest.RE: cptest.Au.Bold("RE").Magenta(),
+		cptest.TL: cptest.Au.Bold("TL").Yellow(),
+	}
 }
 
 func main() {
@@ -57,7 +57,7 @@ func main() {
 		return
 	}
 
-    inputsPath := joinIfRelative(wd, args.Inputs)
+	inputsPath := joinIfRelative(wd, args.Inputs)
 
 	inputs, errs := readInputs(inputsPath)
 	if errs != nil {
@@ -68,7 +68,7 @@ func main() {
 		return
 	}
 
-    execPath := joinIfRelative(wd, args.Executable)
+	execPath := joinIfRelative(wd, args.Executable)
 	proc := &Executable{
 		Path: execPath,
 	}
@@ -82,7 +82,7 @@ func main() {
 
 	batch := cptest.NewTestingBatch(inputs, proc, swatch)
 
-    fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
+	fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
 
 	batch.TestStartCallback = runPrinter
 	batch.TestEndCallback = verboseResultPrinter

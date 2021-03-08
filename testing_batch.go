@@ -66,7 +66,7 @@ type TestingBatch struct {
 	Outs        map[int]ProcessResult
 	RichOuts    map[int][]RichText
 	RichAnswers map[int][]RichText
-    Lx *Lexer
+	Lx          *Lexer
 
 	Verdicts map[int]Verdict
 	Times    map[int]time.Duration
@@ -81,10 +81,10 @@ type TestingBatch struct {
 // NewTestingBatch will initialize channels and maps inside TestingBatch and
 // will assign respective dependency injections.
 func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *TestingBatch {
-    precision, err := strconv.Atoi(inputs.Config["prec"])
-    if err != nil{
-        precision = int(DefaultPrecision)
-    }
+	precision, err := strconv.Atoi(inputs.Config["prec"])
+	if err != nil {
+		precision = int(DefaultPrecision)
+	}
 
 	return &TestingBatch{
 		inputs: inputs,
@@ -95,9 +95,9 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 		RichOuts:    make(map[int][]RichText),
 		RichAnswers: make(map[int][]RichText),
 
-        Lx: &Lexer{
-            Precision: uint(precision),
-        },
+		Lx: &Lexer{
+			Precision: uint(precision),
+		},
 
 		Verdicts: make(map[int]Verdict),
 		Times:    make(map[int]time.Duration),
@@ -116,7 +116,7 @@ func (b *TestingBatch) launchTest(id int, in string) {
 			b.complete <- TestResult{
 				ID:  id,
 				Err: fmt.Errorf("internal: %v", e),
-                Out: ProcessResult{},
+				Out: ProcessResult{},
 			}
 		}
 	}()
@@ -172,9 +172,9 @@ func (b *TestingBatch) Run() {
 		b.RichAnswers[id], _ = b.Lx.Compare(answerLexemes, nil)
 
 		if err := b.Errs[id]; err != nil {
-            b.Verdicts[id] = IE
+			b.Verdicts[id] = IE
 		} else if b.Outs[id].ExitCode != 0 {
-            b.Verdicts[id] = RE
+			b.Verdicts[id] = RE
 		} else {
 			got := b.Lx.Scan(b.Outs[id].Stdout)
 
