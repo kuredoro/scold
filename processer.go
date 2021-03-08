@@ -8,9 +8,9 @@ import (
 // ProcessResult contains the text printed to stdout and stderr by the process
 // and the exit code returned upon termination.
 type ProcessResult struct {
-    ExitCode int
-    Stdout string
-    Stderr string
+	ExitCode int
+	Stdout   string
+	Stderr   string
 }
 
 // Processer interface abstracts away the concept of the executable under

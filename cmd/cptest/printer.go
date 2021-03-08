@@ -34,9 +34,9 @@ func verboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
 			fmt.Printf("Stderr:\n%s\n", b.Outs[id].Stderr)
 		} else if verdict == cptest.WA {
 			fmt.Fprintf(stdout, "Output:\n%s\n", cptest.DumpLexemes(b.RichOuts[id], diffColor))
-            if b.Outs[id].Stderr != "" {
-                fmt.Printf("Stderr:\n%s\n", b.Outs[id].Stderr)
-            }
+			if b.Outs[id].Stderr != "" {
+				fmt.Printf("Stderr:\n%s\n", b.Outs[id].Stderr)
+			}
 		} else if verdict == cptest.IE {
 			fmt.Printf("Error:\n%v\n\n", b.Errs[id])
 		}

@@ -165,27 +165,27 @@ func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
 	rts = make([]RichText, len(target))
 	ok = true
 
-    ti, si := 0, 0
+	ti, si := 0, 0
 	for ; ti < len(target) && si < len(source); ti, si = ti+1, si+1 {
-        // Skip spurious LFs
-        if source[si] != "\n" {
-            for ti < len(target) && target[ti] == "\n" {
-                rts[ti].Str = "\n"
-                rts[ti].Mask = []bool{true}
-                ok = false
-                ti++
-            }
-        } else if target[ti] != "\n" {
-            for si < len(source) && source[si] == "\n" {
-                si++
-            }
-        }
+		// Skip spurious LFs
+		if source[si] != "\n" {
+			for ti < len(target) && target[ti] == "\n" {
+				rts[ti].Str = "\n"
+				rts[ti].Mask = []bool{true}
+				ok = false
+				ti++
+			}
+		} else if target[ti] != "\n" {
+			for si < len(source) && source[si] == "\n" {
+				si++
+			}
+		}
 
-        if ti == len(target) || si == len(source) {
-            break
-        }
+		if ti == len(target) || si == len(source) {
+			break
+		}
 
-        xm := target[ti]
+		xm := target[ti]
 		rts[ti].Str = xm
 		rts[ti].Mask = l.GenerateMask(xm, source[si])
 
@@ -196,7 +196,7 @@ func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
 
 	for ; ti < len(target); ti++ {
 		rts[ti].Str = target[ti]
-        rts[ti].Mask = l.GenMaskForString(target[ti], "")
+		rts[ti].Mask = l.GenMaskForString(target[ti], "")
 
 		ok = false
 	}
@@ -221,15 +221,15 @@ func DeduceLexemeType(xm string) lexemeType {
 // GenerateMask is a wrapper function that finds the common type of the two
 // lexems and generates a color mask for the target based on source.
 func (l *Lexer) GenerateMask(target, source string) []bool {
-    targetType := DeduceLexemeType(target)
-    sourceType := DeduceLexemeType(source)
+	targetType := DeduceLexemeType(target)
+	sourceType := DeduceLexemeType(source)
 
-    commonType := targetType
-    if sourceType < commonType {
-        commonType = sourceType
-    }
+	commonType := targetType
+	if sourceType < commonType {
+		commonType = sourceType
+	}
 
-    return MaskGenerators[commonType](l, target, source)
+	return MaskGenerators[commonType](l, target, source)
 }
 
 // GenMaskForString will highlight mismatching characters.
@@ -299,14 +299,14 @@ func (l *Lexer) GenMaskForFloat(target, source string) (mask []bool) {
 
 	mask = l.GenMaskForInt(targetWhole, sourceWhole)
 
-    if targetWhole == target {
-        return
-    }
+	if targetWhole == target {
+		return
+	}
 
 	// dot is never colored
 	mask = append(mask, false)
 
-    // This one is never 0, because of the if up there that returns
+	// This one is never 0, because of the if up there that returns
 	targetFracStart := strings.IndexRune(target, '.') + 1
 
 	sourceFracStart := strings.IndexRune(source, '.') + 1
