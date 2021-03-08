@@ -10,7 +10,7 @@ import (
 
 const defaultTL = 6 * time.Second
 
-func GetTL(inputs cptest.Inputs) (TL time.Duration) {
+func getTL(inputs cptest.Inputs) (TL time.Duration) {
 	TL = defaultTL
 
 	if str, exists := inputs.Config["tl"]; exists {

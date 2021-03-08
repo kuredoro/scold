@@ -17,7 +17,7 @@ func joinIfRelative(dir, file string) string {
 	return filepath.Join(dir, file)
 }
 
-func ReadInputs(inputsPath string) (cptest.Inputs, []error) {
+func readInputs(inputsPath string) (cptest.Inputs, []error) {
 	inputsFile, err := os.Open(inputsPath)
 	if err != nil {
 		return cptest.Inputs{}, []error{fmt.Errorf("load tests: %v", err)}
