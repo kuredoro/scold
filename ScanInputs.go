@@ -112,7 +112,7 @@ func ScanConfig(text string) (m map[string]string, errs []error) {
 	return
 }
 
-// SplitByInlinedPrefxN works in the same way as strings.SplitN. However,
+// SplitByInlinedPrefixN works in the same way as strings.SplitN. However,
 // it does one additional thing. It matches the *prefixes of the lines*
 // for equality with the delimeter. Upon match the entire line is discarded.
 //

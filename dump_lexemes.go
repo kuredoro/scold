@@ -5,10 +5,14 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
-const (
-    AltLineFeed = "\\n"
-)
+// AltLineFeed is the representation of LF in textual form, that replaces LF
+// when it's colorized.
+const AltLineFeed = "\\n"
 
+// DumpLexemes is used to transform array of possibly colorized lexemes into a
+// human readable format. The lexemes are separated by spaces. There are no
+// trailing spaces. Colorized newlines are replaced by printable AltLineFeed
+// string.
 func DumpLexemes(xms []RichText, color aurora.Color) string {
 	var str strings.Builder
 
