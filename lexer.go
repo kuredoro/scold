@@ -8,23 +8,42 @@ import (
 	"unicode/utf8"
 )
 
+// VALID_INT_MAX_LEN is maximum number of digits a lexeme may have to be
+// considered an int
 var VALID_INT_MAX_LEN = 10
 
-type LexemeType int
+type lexemeType int
 
+// Available lexeme types. The following invariant holds:
+// each type is a specialization of all types whose numerical value is less
+// than that of self. For example, 42 is a float and is an int, but 42.2 is
+// a float but not an int. Hence, int is a specialization of float. A type T
+// is a specialization of a type U if any value of type T is of type U also.
+//
+// The consequence is that between any two types T and U from the list
+// there's always a specialization relationship, but in gerenal, this is not
+// the case. For example: imagine a lexeme type 'hash' that classifies
+// strings of form 2400f9b. The float is not a specialization
+// of hash, because 42.2 is not a hash, and likewise the
+// hash is not a specialization of float, because 2400f9b is not a float.
 const (
-	STRXM LexemeType = iota
+	STRXM lexemeType = iota
 	FLOATXM
 	INTXM
 	FINALXM
 )
 
+// IsIntLexeme returns true if the string represents a signed integer.
+// Additionally, it should contain not more than VALID_INT_MAX_LEN digits.
 func IsIntLexeme(xm string) bool {
 	_, err := strconv.Atoi(xm)
 
 	return err == nil && len(xm) <= VALID_INT_MAX_LEN
 }
 
+// IsFloatLexeme returns true if the string represents a floating-point value.
+// Although, there can be no floating-point inside of it. A floating-point
+// value is of form int_part['.' ('0'-'9')*]
 func IsFloatLexeme(xm string) bool {
 	if xm[0] == '+' || xm[0] == '-' {
 		xm = xm[1:]
@@ -46,18 +65,32 @@ func IsFloatLexeme(xm string) bool {
 	return xm != "."
 }
 
+// TypeCheckers defines a list type checking functions (TCF).
+// The type checker for string is omitted because it always returns true.
+// Hence, the index of TCF corresponds to a type of numerical value `index+1`.
 var TypeCheckers = []func(string) bool{
 	IsFloatLexeme,
 	IsIntLexeme,
 }
 
-var MaskGenerators = map[LexemeType]func(*Lexer, string, string) []bool{
-	STRXM:   (*Lexer).GenMaskForString,
-	FLOATXM: (*Lexer).GenMaskForFloat,
-	INTXM:   (*Lexer).GenMaskForInt,
+// MaskGenerators lists all of the mask generating functions (MGF). MGFs are
+// defined only for arguments of the same type. I.e., there's no MGF for float
+// and int, only for float/float, and int/int. If differnt types must be
+// assessed, the MGF of their common type_ must be called. The common type
+// between two types T and U exists if specialization relationship between them
+// exists and is the least specialized type. The index of MGF in this array
+// corresponds to the numerical value of the type of which MGF's arguments are.
+var MaskGenerators = []func(*Lexer, string, string) []bool{
+	(*Lexer).GenMaskForString,
+	(*Lexer).GenMaskForFloat,
+	(*Lexer).GenMaskForInt,
 }
 
 // IDEA: Add map[string]interface{} for custom configs from outside of library.
+
+// Lexer is a set of settings that control lexeme scanning and comparison.
+// And the methods for scanning and comparison are conviniently methods of
+// Lexer.
 type Lexer struct {
 	Precision uint
 }
@@ -107,9 +140,9 @@ func ScanLexemes(data []byte, atEOF bool) (advance int, token []byte, err error)
 }
 
 // Scan will break the text into lexemes and return them. A lexeme
-// is either a string consisting of not unicode.IsSpace characters,
+// is either a string consisting of non-unicode.IsSpace characters,
 // or a single newline character.
-// The returned LexSequence is never nil.
+// If no lexemes found, nil is returned.
 func (l *Lexer) Scan(text string) (xms []string) {
 	r := strings.NewReader(text)
 	s := bufio.NewScanner(r)
@@ -122,6 +155,12 @@ func (l *Lexer) Scan(text string) (xms []string) {
 	return
 }
 
+// Compare compares target against source and generates colored target's
+// lexems highlighting mismatches between them. Additionally, actual
+// comparison takes place between two non-LF lexems, and the spurious LFs
+// are marked red and skipped. The function is intended to be called twice
+// for the two permutations of the arguments to get error highlighting for
+// both strings.
 func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
 	rts = make([]RichText, len(target))
 	ok = true
@@ -165,17 +204,22 @@ func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
 	return
 }
 
-func DeduceLexemeType(xm string) LexemeType {
+// DeduceLexemeType will assess the type of the lexeme by sequentially applying
+// more and more specialized type checkers starting from the least restrictive
+// one.
+func DeduceLexemeType(xm string) lexemeType {
 	for i := int(STRXM) + 1; i != int(FINALXM); i++ {
 		// As any lexeme *is* a string, the function IsStringLexeme is omitted.
 		if !TypeCheckers[i-1](xm) {
-			return LexemeType(i - 1)
+			return lexemeType(i - 1)
 		}
 	}
 
-	return LexemeType(FINALXM - 1)
+	return lexemeType(FINALXM - 1)
 }
 
+// GenerateMask is a wrapper function that finds the common type of the two
+// lexems and generates a color mask for the target based on source.
 func (l *Lexer) GenerateMask(target, source string) []bool {
     targetType := DeduceLexemeType(target)
     sourceType := DeduceLexemeType(source)
@@ -188,6 +232,7 @@ func (l *Lexer) GenerateMask(target, source string) []bool {
     return MaskGenerators[commonType](l, target, source)
 }
 
+// GenMaskForString will highlight mismatching characters.
 func (l *Lexer) GenMaskForString(target, source string) (mask []bool) {
 	commonLen := len(target)
 	if len(source) < commonLen {
@@ -207,6 +252,9 @@ func (l *Lexer) GenMaskForString(target, source string) (mask []bool) {
 	return
 }
 
+// GenMaskForInt will highlight the whole number if at least one digit
+// is different. Independently, the sign will be highlighted if it's different
+// also.
 func (l *Lexer) GenMaskForInt(target, source string) (mask []bool) {
 	mask = make([]bool, len(target))
 
@@ -237,6 +285,10 @@ func (l *Lexer) GenMaskForInt(target, source string) (mask []bool) {
 	return
 }
 
+// GenMaskForFloat uses the same logic as GenMaskForInt to highlight the
+// whole part. If at least one digit in the fractional part (part after the
+// dot) is different and its index (zero-based) is less than lexer's
+// precision, this digit is highlighted.
 func (l *Lexer) GenMaskForFloat(target, source string) (mask []bool) {
 	targetWhole := strings.Split(target, ".")[0]
 

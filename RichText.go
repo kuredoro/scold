@@ -7,19 +7,23 @@ import (
 )
 
 // Au is used to colorize output of several functions. A user of the library
-// can change the value of it to disable colored output. Refer to the aurora
-// documentation for that.
+// can change its value to disable colored output. Refer to the aurora
+// readme for that.
 var Au aurora.Aurora
 
 func init() {
 	Au = aurora.NewAurora(true)
 }
 
+// RichText represents a text data with additional color metadata in a form
+// of a bitmask. The characters may be either colored or uncolored. The _color_
+// might represent a literal color or a formatting style like bold or italics.
 type RichText struct {
 	Str  string
 	Mask []bool
 }
 
+// Colorful returns whether at least one character in Str has color.
 func (rt RichText) Colorful() bool {
 	for _, v := range rt.Mask {
 		if v {
@@ -30,6 +34,9 @@ func (rt RichText) Colorful() bool {
 	return false
 }
 
+// Colorize returns Str with ASCII escape codes actually
+// embedded inside it to enable colors. The resulting string then
+// can be printed on the screen and it'll be colorful, for example.
 func (rt RichText) Colorize(color aurora.Color) string {
 	var str strings.Builder
 

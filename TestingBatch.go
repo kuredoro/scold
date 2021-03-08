@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+// DefaultPrecision is the value the TestingBatch lexer's precision is
+// initialized with in NewTestingBatch function.
 var DefaultPrecision uint = 6
 
 // Verdict represents a verdict asssigned by the judge.
