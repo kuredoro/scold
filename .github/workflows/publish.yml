@@ -1,15 +1,20 @@
-name: "Release packages"
+name: Publish packages
+
+on:
+  workflow_dispatch:
+
 
 jobs:
   aur:
+    name: Publish on AUR
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.3.3
       - name: Publish AUR package
-        uses: KSXGitHub/github-actions-deploy-aur@2.2.5
+        uses: KSXGitHub/github-actions-deploy-aur@v2.2.5
         with:
           pkgname: cptest
-          pkgbuild: cptest/pacmans/PKGBUILD
+          pkgbuild: pacmans/PKGBUILD
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
