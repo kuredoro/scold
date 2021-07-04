@@ -31,7 +31,7 @@ User manual: https://github.com/kuredoro/cptest
 }
 
 func (appArgs) Version() string {
-	return "cptest 1.02a"
+	return "cptest 2.00b"
 }
 
 func init() {
