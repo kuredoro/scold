@@ -1,0 +1,74 @@
+name: Generate release artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Add artifacts to release
+        required: false
+        default: true
+  release:
+    types: [published]
+
+jobs:
+  latest-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.latesttag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v2.3.3
+        with:
+          fetch-depth: 0
+      - name: Get latest tag
+        id: latesttag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      - name: Print version
+        run: echo v${{ steps.latesttag.outputs.tag }}
+
+  generate:
+    needs: latest-tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.3
+      - name: Make directory for binaries
+        run: mkdir bin
+      - name: Build Windows x86
+        env:
+          GOOS: windows
+          GOARCH: "386"
+        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.windows-386.exe ./cmd/cptest
+      - name: Build Windows x86_64
+        env:
+          GOOS: windows
+          GOARCH: amd64
+        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.windows-amd64.exe ./cmd/cptest
+      - name: Build Linux x86
+        env:
+          GOOS: linux
+          GOARCH: "386"
+        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.linux-386 ./cmd/cptest
+      - name: Build Linux x86_64
+        env:
+          GOOS: linux
+          GOARCH: amd64
+        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.linux-amd64 ./cmd/cptest
+      - name: Build Mac OS X
+        env:
+          GOOS: darwin
+          GOARCH: amd64
+        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.darwin-amd64 ./cmd/cptest
+      - name: Upload artifacts to job
+        uses: actions/upload-artifact@v2
+        with:
+          name: cptest-bin
+          path: bin/
+      - name: Create release
+        uses: Roang-zero1/github-create-release-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload artifacts to release
+        uses: Roang-zero1/github-upload-release-artifacts-action@master
+        with:
+          args: bin/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
