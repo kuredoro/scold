@@ -170,11 +170,10 @@ func ScanTest(testStr string) (Test, []error) {
 // ScanInputs is the main routine for parsing inputs file. It splits the input
 // by test case separator, and tries to parse each individual test case one by
 // one. If the first meaningful test could not be parsed without errors, it is
-// interpreted as a configuration and parsed again. There may be multiple
-// configurations per file. The later ones overwrite keys set by former ones.
-// The empty tests are skipped (those that don't contain input, output and the
-// separator). If test case could not be parsed, parsing continues to the next
-// test case, but the errors are accumulated and returned together.
+// interpreted as a configuration and parsed again. The empty tests are skipped
+// (those that don't contain input, output and the separator). If test case
+// could not be parsed, parsing continues to the next test case, but the errors
+// are accumulated and returned together.
 func ScanInputs(text string) (inputs Inputs, errs []error) {
 	inputs.Config = make(map[string]string)
 
