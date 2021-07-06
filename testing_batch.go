@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -73,6 +74,9 @@ type TestingBatch struct {
 	Times    map[int]time.Duration
 
 	Proc   Processer
+    procCancels map[int]func()
+    procCancelsMu sync.Mutex
+
 	Swatch Stopwatcher
 
 	TestStartCallback TestStartCallbackFunc
@@ -104,6 +108,8 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 		Times:    make(map[int]time.Duration),
 
 		Proc:   proc,
+        procCancels: make(map[int]func()),
+
 		Swatch: swatch,
 
 		TestStartCallback: TestStartStub,
@@ -122,7 +128,13 @@ func (b *TestingBatch) launchTest(id int, in string) {
 		}
 	}()
 
-	out, err := b.Proc.Run(context.Background(), strings.NewReader(in))
+    ctx, cancel := context.WithCancel(context.Background())
+
+    b.procCancelsMu.Lock()
+    b.procCancels[id] = cancel
+    b.procCancelsMu.Unlock()
+
+	out, err := b.Proc.Run(ctx, strings.NewReader(in))
 
 	b.complete <- TestResult{
 		ID:  id,
@@ -149,14 +161,27 @@ func (b *TestingBatch) Run() {
 
 		select {
 		case tl := <-b.Swatch.TimeLimit():
+            tled := make([]int, 0, len(b.inputs.Tests))
 			for id := range b.inputs.Tests {
 				if _, finished := b.Verdicts[id+1]; !finished {
-					b.Verdicts[id+1] = TL
-					b.Times[id+1] = tl
-
-					b.TestEndCallback(b, b.inputs.Tests[id], id+1)
+                    tled = append(tled, id+1)
 				}
 			}
+
+            for _, id := range tled {
+                b.Verdicts[id] = TL
+                b.Times[id] = tl
+
+                b.procCancelsMu.Lock()
+                b.procCancels[id]()
+                b.procCancelsMu.Unlock()
+
+                b.TestEndCallback(b, b.inputs.Tests[id-1], id)
+            }
+
+            for range tled {
+                <-b.complete
+            }
 
 			return
 		case result = <-b.complete:

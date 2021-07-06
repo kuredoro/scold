@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 	"testing"
 	"time"
 
@@ -330,6 +331,7 @@ func TestTestingBatch(t *testing.T) {
 				},
 			}
 
+            var mu sync.Mutex
             killCount := 0;
 
 			proc := &cptest.SpyProcesser{
@@ -342,7 +344,9 @@ func TestTestingBatch(t *testing.T) {
                         select {
                         case <-time.After(5 * dur * time.Millisecond):
                         case <-ctx.Done():
+                            mu.Lock()
                             killCount++
+                            mu.Unlock()
                         }
 
 						return cptest.ProcessResult{
