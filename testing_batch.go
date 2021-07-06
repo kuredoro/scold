@@ -172,6 +172,10 @@ func (b *TestingBatch) Run() {
                 b.Verdicts[id] = TL
                 b.Times[id] = tl
 
+                // TODO: Possible code duplication
+                answerLexemes := b.Lx.Scan(b.inputs.Tests[id-1].Output)
+                b.RichAnswers[id], _ = b.Lx.Compare(answerLexemes, nil)
+
                 b.procCancelsMu.Lock()
                 b.procCancels[id]()
                 b.procCancelsMu.Unlock()
