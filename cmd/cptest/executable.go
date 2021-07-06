@@ -1,9 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os/exec"
 
 	"github.com/kuredoro/cptest"
@@ -13,7 +13,7 @@ type Executable struct {
 	Path string
 }
 
-func (e *Executable) Run(r io.Reader) (cptest.ProcessResult, error) {
+func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
 	cmd := exec.Command(e.Path)
 	cmd.Stdin = r
 
@@ -32,20 +32,40 @@ func (e *Executable) Run(r io.Reader) (cptest.ProcessResult, error) {
 		return cptest.ProcessResult{}, fmt.Errorf("executable: %v", err)
 	}
 
-	stdErr, err := ioutil.ReadAll(stderrPipe)
-	if err != nil {
-		return cptest.ProcessResult{}, fmt.Errorf("executable: %v", err)
-	}
+    stdout := make([]byte, 0, 1024)
+    stderr := make([]byte, 0, 1024)
+    stdoutComplete := make(chan error)
+    stderrComplete := make(chan error)
 
-	stdOut, err := ioutil.ReadAll(stdoutPipe)
-	if err != nil {
-		return cptest.ProcessResult{}, fmt.Errorf("executable: %v", err)
-	}
+    go listenPipe(stdoutPipe, &stdout, stdoutComplete)
+    go listenPipe(stderrPipe, &stderr, stderrComplete)
+
+    for doneCount := 0; doneCount != 2; {
+        select {
+        case <-ctx.Done():
+            // When process is killed the pipes are closed. the listenPipes
+            // will receive EOF and return nil.
+            cmd.Process.Kill()
+        case err := <-stdoutComplete:
+            if err != nil {
+                return cptest.ProcessResult{}, fmt.Errorf("executable: stdout: %v", err)
+            }
+            doneCount++
+        case err := <-stderrComplete:
+            if err != nil {
+                return cptest.ProcessResult{}, fmt.Errorf("executable: stderr: %v", err)
+            }
+            doneCount++
+        }
+    }
+
+    close(stdoutComplete)
+    close(stderrComplete)
 
 	out := cptest.ProcessResult{
 		ExitCode: 0,
-		Stdout:   string(stdOut),
-		Stderr:   string(stdErr),
+		Stdout:   string(stdout),
+		Stderr:   string(stderr),
 	}
 
 	err = cmd.Wait()
@@ -60,4 +80,22 @@ func (e *Executable) Run(r io.Reader) (cptest.ProcessResult, error) {
 	}
 
 	return out, nil
+}
+
+func listenPipe(pipe io.Reader, out *[]byte, done chan error) {
+    buf := make([]byte, 1024)
+    for {
+        n, err := pipe.Read(buf)
+        *out = append(*out, buf[:n]...)
+
+        if err != nil && err != io.EOF {
+            done <- err
+            return
+        }
+
+        if err == io.EOF {
+            done <- nil
+            return
+        }
+    }
 }
