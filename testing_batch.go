@@ -172,9 +172,14 @@ func (b *TestingBatch) Run() {
                 b.Verdicts[id] = TL
                 b.Times[id] = tl
 
-                // TODO: Possible code duplication
                 answerLexemes := b.Lx.Scan(b.inputs.Tests[id-1].Output)
-                b.RichAnswers[id], _ = b.Lx.Compare(answerLexemes, nil)
+
+                rich := make([]RichText, len(answerLexemes))
+                for i, xm := range answerLexemes {
+                    rich[i] = RichText{xm, make([]bool, len(xm))}
+                }
+
+                b.RichAnswers[id] = rich
 
                 b.procCancelsMu.Lock()
                 b.procCancels[id]()
