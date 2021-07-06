@@ -2,6 +2,7 @@ package cptest_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"testing"
@@ -11,7 +12,7 @@ import (
 	"github.com/sanity-io/litter"
 )
 
-func ProcFuncMultiply(in io.Reader) (cptest.ProcessResult, error) {
+func ProcFuncMultiply(ctx context.Context, in io.Reader) (cptest.ProcessResult, error) {
 	var a, b int
 	fmt.Fscan(in, &a, &b)
 
@@ -22,7 +23,7 @@ func ProcFuncMultiply(in io.Reader) (cptest.ProcessResult, error) {
 	}, nil
 }
 
-func ProcFuncIntegerSequence(in io.Reader) (cptest.ProcessResult, error) {
+func ProcFuncIntegerSequence(ctx context.Context, in io.Reader) (cptest.ProcessResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
@@ -40,7 +41,7 @@ func ProcFuncIntegerSequence(in io.Reader) (cptest.ProcessResult, error) {
 	}, nil
 }
 
-func ProcFuncBogusFloatingPoint(in io.Reader) (cptest.ProcessResult, error) {
+func ProcFuncBogusFloatingPoint(ctx context.Context, in io.Reader) (cptest.ProcessResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
@@ -58,7 +59,7 @@ func ProcFuncBogusFloatingPoint(in io.Reader) (cptest.ProcessResult, error) {
 	}, nil
 }
 
-func ProcFuncAnswer(in io.Reader) (cptest.ProcessResult, error) {
+func ProcFuncAnswer(ctx context.Context, in io.Reader) (cptest.ProcessResult, error) {
 	return cptest.ProcessResult{
 		ExitCode: 0,
 		Stdout:   "42",
@@ -129,7 +130,7 @@ func TestTestingBatch(t *testing.T) {
 		}
 
 		cptest.AssertVerdicts(t, batch.Verdicts, want)
-		cptest.AssertCallCount(t, proc.CallCount(), 2)
+		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 	})
 
 	t.Run("outputs are compared lexeme-wise", func(t *testing.T) {
@@ -162,7 +163,7 @@ func TestTestingBatch(t *testing.T) {
 		}
 
 		cptest.AssertVerdicts(t, batch.Verdicts, want)
-		cptest.AssertCallCount(t, proc.CallCount(), 2)
+		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 
 		if len(batch.RichAnswers[1]) != 3 || len(batch.RichAnswers[2]) != 4 {
 			t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
@@ -206,7 +207,7 @@ func TestTestingBatch(t *testing.T) {
 		}
 
 		cptest.AssertVerdicts(t, batch.Verdicts, want)
-		cptest.AssertCallCount(t, proc.CallCount(), 2)
+		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 	})
 
 	t.Run("all WA",
@@ -240,7 +241,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
-			cptest.AssertCallCount(t, proc.CallCount(), 2)
+			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		})
 
 	t.Run("runtime error and internal error",
@@ -272,7 +273,7 @@ func TestTestingBatch(t *testing.T) {
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(r io.Reader) (cptest.ProcessResult, error) {
+					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
 						var num int
 						fmt.Fscan(r, &num)
 
@@ -311,7 +312,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
-			cptest.AssertCallCount(t, proc.CallCount(), 5)
+			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 5)
 
 			if len(batch.RichAnswers[3]) == 0 || len(batch.RichAnswers[5]) == 0 {
 				t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
@@ -329,14 +330,20 @@ func TestTestingBatch(t *testing.T) {
 				},
 			}
 
+            killCount := 0;
+
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(r io.Reader) (cptest.ProcessResult, error) {
+					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
 						var num int
 						fmt.Fscan(r, &num)
 
 						dur := time.Duration(num)
-						time.Sleep(5 * dur * time.Millisecond)
+                        select {
+                        case <-time.After(5 * dur * time.Millisecond):
+                        case <-ctx.Done():
+                            killCount++
+                        }
 
 						return cptest.ProcessResult{
 							ExitCode: 0,
@@ -369,7 +376,8 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
-			cptest.AssertCallCount(t, proc.CallCount(), 4)
+			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 4)
+			cptest.AssertCallCount(t, "process cancel", killCount, 2)
 			cptest.AssertTimes(t, batch.Times, timesWant)
 		})
 }

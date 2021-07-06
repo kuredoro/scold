@@ -1,6 +1,7 @@
 package cptest
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -121,7 +122,7 @@ func (b *TestingBatch) launchTest(id int, in string) {
 		}
 	}()
 
-	out, err := b.Proc.Run(strings.NewReader(in))
+	out, err := b.Proc.Run(context.Background(), strings.NewReader(in))
 
 	b.complete <- TestResult{
 		ID:  id,
