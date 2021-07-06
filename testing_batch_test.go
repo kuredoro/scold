@@ -331,8 +331,8 @@ func TestTestingBatch(t *testing.T) {
 				},
 			}
 
-            var mu sync.Mutex
-            killCount := 0;
+			var mu sync.Mutex
+			killCount := 0
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
@@ -341,13 +341,13 @@ func TestTestingBatch(t *testing.T) {
 						fmt.Fscan(r, &num)
 
 						dur := time.Duration(num)
-                        select {
-                        case <-time.After(5 * dur * time.Millisecond):
-                        case <-ctx.Done():
-                            mu.Lock()
-                            killCount++
-                            mu.Unlock()
-                        }
+						select {
+						case <-time.After(5 * dur * time.Millisecond):
+						case <-ctx.Done():
+							mu.Lock()
+							killCount++
+							mu.Unlock()
+						}
 
 						return cptest.ProcessResult{
 							ExitCode: 0,
@@ -384,12 +384,7 @@ func TestTestingBatch(t *testing.T) {
 			cptest.AssertCallCount(t, "process cancel", killCount, 2)
 			cptest.AssertTimes(t, batch.Times, timesWant)
 
-            if _, exists := batch.RichAnswers[3]; !exists {
-                t.Error("rich output for TLed test 3 does not exist");
-            }
-
-            if _, exists := batch.RichAnswers[4]; !exists {
-                t.Error("rich output for TLed test 4 does not exist");
-            }
+			cptest.AssertEnrichedLexSequence(t, batch.RichAnswers[3], []cptest.RichText{{"3", []bool{false}}, {"\n", []bool{false}}})
+			cptest.AssertEnrichedLexSequence(t, batch.RichAnswers[4], []cptest.RichText{{"4", []bool{false}}, {"\n", []bool{false}}})
 		})
 }
