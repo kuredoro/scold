@@ -83,11 +83,11 @@ func AssertVerdicts(t *testing.T, got, want map[int]Verdict) {
 
 // AssertCallCount checks that the received and expected number of calls are
 // equal.
-func AssertCallCount(t *testing.T, got, want int) {
+func AssertCallCount(t *testing.T, funcName string, got, want int) {
 	t.Helper()
 
 	if got != want {
-		t.Errorf("test was called %d times, want %d", got, want)
+		t.Errorf("%s was called %d times, want %d", funcName, got, want)
 	}
 }
 
