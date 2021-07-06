@@ -383,5 +383,13 @@ func TestTestingBatch(t *testing.T) {
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 4)
 			cptest.AssertCallCount(t, "process cancel", killCount, 2)
 			cptest.AssertTimes(t, batch.Times, timesWant)
+
+            if _, exists := batch.RichAnswers[3]; !exists {
+                t.Error("rich output for TLed test 3 does not exist");
+            }
+
+            if _, exists := batch.RichAnswers[4]; !exists {
+                t.Error("rich output for TLed test 4 does not exist");
+            }
 		})
 }
