@@ -11,10 +11,11 @@ import (
 
 type Executable struct {
 	Path string
+    Args []string
 }
 
 func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
-	cmd := exec.Command(e.Path)
+	cmd := exec.Command(e.Path, e.Args...)
 	cmd.Stdin = r
 
 	stdoutPipe, err := cmd.StdoutPipe()
