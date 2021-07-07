@@ -1,0 +1,6 @@
+ver2.01a
+--> * if executable not found, an error message is emitted before any tests are run
+--> + if executable is not in the current directory, it is looked up in PATH
++ processes are killed on TL
++ cli accepts positional arguments that are passed to the executable
+* on TL the answer is printed
