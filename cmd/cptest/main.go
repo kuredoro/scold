@@ -16,8 +16,9 @@ var stdout = colorable.NewColorableStdout()
 
 type appArgs struct {
 	Inputs     string `arg:"-i" default:"inputs.txt" help:"file with tests"`
-	Executable string `arg:"positional,required"`
 	NoColors   bool   `arg:"--no-colors" help:"disable colored output"`
+	Executable string `arg:"positional,required"`
+    Args   []string `arg:"positional"`
 }
 
 var args appArgs
@@ -71,6 +72,7 @@ func main() {
 	execPath := joinIfRelative(wd, args.Executable)
 	proc := &Executable{
 		Path: execPath,
+        Args: args.Args,
 	}
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
