@@ -43,7 +43,7 @@ func findFile(userPath string) (string, error) {
 	base := filepath.Base(userPath)
 
 	// If only the file name supplied, search in PATH
-	if filepath.Dir(userPath) == "." {
+	if base == userPath {
 		extraPaths := getPath()
 		for _, path := range extraPaths {
 			candidates = append(candidates, filepath.Join(path, base))
@@ -56,7 +56,7 @@ func findFile(userPath string) (string, error) {
 		}
 	}
 
-	if filepath.Dir(userPath) == "." {
+	if base == userPath {
 		return "", fmt.Errorf("%s is absent in current working directory and in PATH", userPath)
 	}
 
