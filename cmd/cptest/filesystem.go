@@ -4,18 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 
 	"github.com/kuredoro/cptest"
 )
-
-func joinIfRelative(dir, file string) string {
-	if file != "" && file[0] == '/' {
-		return file
-	}
-
-	return filepath.Join(dir, file)
-}
 
 func readInputs(inputsPath string) (cptest.Inputs, []error) {
 	inputsFile, err := os.Open(inputsPath)
