@@ -11,7 +11,7 @@ import (
 
 type Executable struct {
 	Path string
-    Args []string
+	Args []string
 }
 
 func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
@@ -33,35 +33,35 @@ func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ProcessResult
 		return cptest.ProcessResult{}, fmt.Errorf("executable: %v", err)
 	}
 
-    stdout := make([]byte, 0, 1024)
-    stderr := make([]byte, 0, 1024)
-    stdoutComplete := make(chan error)
-    stderrComplete := make(chan error)
+	stdout := make([]byte, 0, 1024)
+	stderr := make([]byte, 0, 1024)
+	stdoutComplete := make(chan error)
+	stderrComplete := make(chan error)
 
-    go listenPipe(stdoutPipe, &stdout, stdoutComplete)
-    go listenPipe(stderrPipe, &stderr, stderrComplete)
+	go listenPipe(stdoutPipe, &stdout, stdoutComplete)
+	go listenPipe(stderrPipe, &stderr, stderrComplete)
 
-    for doneCount := 0; doneCount != 2; {
-        select {
-        case <-ctx.Done():
-            // When process is killed the pipes are closed. the listenPipes
-            // will receive EOF and return nil.
-            cmd.Process.Kill()
-        case err := <-stdoutComplete:
-            if err != nil {
-                return cptest.ProcessResult{}, fmt.Errorf("executable: stdout: %v", err)
-            }
-            doneCount++
-        case err := <-stderrComplete:
-            if err != nil {
-                return cptest.ProcessResult{}, fmt.Errorf("executable: stderr: %v", err)
-            }
-            doneCount++
-        }
-    }
+	for doneCount := 0; doneCount != 2; {
+		select {
+		case <-ctx.Done():
+			// When process is killed the pipes are closed. the listenPipes
+			// will receive EOF and return nil.
+			cmd.Process.Kill()
+		case err := <-stdoutComplete:
+			if err != nil {
+				return cptest.ProcessResult{}, fmt.Errorf("executable: stdout: %v", err)
+			}
+			doneCount++
+		case err := <-stderrComplete:
+			if err != nil {
+				return cptest.ProcessResult{}, fmt.Errorf("executable: stderr: %v", err)
+			}
+			doneCount++
+		}
+	}
 
-    close(stdoutComplete)
-    close(stderrComplete)
+	close(stdoutComplete)
+	close(stderrComplete)
 
 	out := cptest.ProcessResult{
 		ExitCode: 0,
@@ -84,19 +84,19 @@ func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ProcessResult
 }
 
 func listenPipe(pipe io.Reader, out *[]byte, done chan error) {
-    buf := make([]byte, 1024)
-    for {
-        n, err := pipe.Read(buf)
-        *out = append(*out, buf[:n]...)
+	buf := make([]byte, 1024)
+	for {
+		n, err := pipe.Read(buf)
+		*out = append(*out, buf[:n]...)
 
-        if err != nil && err != io.EOF {
-            done <- err
-            return
-        }
+		if err != nil && err != io.EOF {
+			done <- err
+			return
+		}
 
-        if err == io.EOF {
-            done <- nil
-            return
-        }
-    }
+		if err == io.EOF {
+			done <- nil
+			return
+		}
+	}
 }

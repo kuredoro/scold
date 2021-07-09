@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-    "path/filepath"
+	"path/filepath"
 
 	"github.com/alexflint/go-arg"
 	"github.com/kuredoro/cptest"
@@ -13,10 +13,10 @@ import (
 var stdout = colorable.NewColorableStdout()
 
 type appArgs struct {
-	Inputs     string `arg:"-i" default:"inputs.txt" help:"file with tests"`
-	NoColors   bool   `arg:"--no-colors" help:"disable colored output"`
-	Executable string `arg:"positional,required"`
-    Args   []string `arg:"positional"`
+	Inputs     string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
+	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
+	Executable string   `arg:"positional,required"`
+	Args       []string `arg:"positional"`
 }
 
 var args appArgs
@@ -51,10 +51,10 @@ func init() {
 
 func main() {
 	inputsPath, err := filepath.Abs(args.Inputs)
-    if err != nil {
-        fmt.Printf("error: retreive inputs absolute path: %v\n", err)
-        return
-    }
+	if err != nil {
+		fmt.Printf("error: retreive inputs absolute path: %v\n", err)
+		return
+	}
 
 	inputs, errs := readInputs(inputsPath)
 	if errs != nil {
@@ -66,14 +66,14 @@ func main() {
 	}
 
 	execPath, err := findFile(args.Executable)
-    if err != nil {
-        fmt.Printf("error: find executable: %v\n", err)
-        return
-    }
+	if err != nil {
+		fmt.Printf("error: find executable: %v\n", err)
+		return
+	}
 
 	proc := &Executable{
 		Path: execPath,
-        Args: args.Args,
+		Args: args.Args,
 	}
 
 	TL := getTL(inputs)
