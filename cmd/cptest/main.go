@@ -2,15 +2,13 @@ package main
 
 import (
 	"fmt"
-	"os"
+    "path/filepath"
 
 	"github.com/alexflint/go-arg"
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
 	"github.com/mattn/go-colorable"
 )
-
-var wd = "."
 
 var stdout = colorable.NewColorableStdout()
 
@@ -52,13 +50,11 @@ func init() {
 }
 
 func main() {
-	wd, err := os.Getwd()
-	if err != nil {
-		fmt.Println("error: could not get path for current working directory")
-		return
-	}
-
-	inputsPath := joinIfRelative(wd, args.Inputs)
+	inputsPath, err := filepath.Abs(args.Inputs)
+    if err != nil {
+        fmt.Printf("error: retreive inputs absolute path: %v", err)
+        return
+    }
 
 	inputs, errs := readInputs(inputsPath)
 	if errs != nil {
@@ -69,14 +65,15 @@ func main() {
 		return
 	}
 
-	execPath := joinIfRelative(wd, args.Executable)
+	execPath, err := filepath.Abs(args.Executable)
+    if err != nil {
+        fmt.Printf("error: retreive executable absolute path: %v", err)
+        return
+    }
+
 	proc := &Executable{
 		Path: execPath,
         Args: args.Args,
-	}
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-		return
 	}
 
 	TL := getTL(inputs)
