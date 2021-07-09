@@ -22,6 +22,11 @@ func getPath() []string {
 }
 
 func findFile(userPath string) (string, error) {
+    // Ability to omit .exe prefix on Windows.
+    if runtime.GOOS == "windows" && filepath.Ext(userPath) == "" {
+        userPath += ".exe"
+    }
+
     absPath, err := filepath.Abs(userPath)
     if err != nil {
         fmt.Printf("warning: could not retrieve executables absolute path: %v. Will look in PATH", err)
@@ -38,8 +43,6 @@ func findFile(userPath string) (string, error) {
     for _, path := range extraPaths {
         candidates = append(candidates, filepath.Join(path, base))
     }
-
-    fmt.Printf("%#v\n", candidates)
 
     for _, cand := range candidates {
         if _, err := os.Stat(cand); err == nil {
