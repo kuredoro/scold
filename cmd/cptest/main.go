@@ -52,7 +52,7 @@ func init() {
 func main() {
 	inputsPath, err := filepath.Abs(args.Inputs)
     if err != nil {
-        fmt.Printf("error: retreive inputs absolute path: %v", err)
+        fmt.Printf("error: retreive inputs absolute path: %v\n", err)
         return
     }
 
@@ -65,9 +65,9 @@ func main() {
 		return
 	}
 
-	execPath, err := filepath.Abs(args.Executable)
+	execPath, err := findFile(args.Executable)
     if err != nil {
-        fmt.Printf("error: retreive executable absolute path: %v", err)
+        fmt.Printf("error: find executable: %v\n", err)
         return
     }
 
