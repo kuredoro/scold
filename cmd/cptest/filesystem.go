@@ -39,9 +39,12 @@ func findFile(userPath string) (string, error) {
 
     base := filepath.Base(userPath)
 
-    extraPaths := getPath()
-    for _, path := range extraPaths {
-        candidates = append(candidates, filepath.Join(path, base))
+    // If only the file name supplied, search in PATH
+    if filepath.Dir(userPath) == "." {
+        extraPaths := getPath()
+        for _, path := range extraPaths {
+            candidates = append(candidates, filepath.Join(path, base))
+        }
     }
 
     for _, cand := range candidates {
