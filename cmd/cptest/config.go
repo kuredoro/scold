@@ -17,7 +17,6 @@ func getTL(inputs cptest.Inputs) (TL time.Duration) {
 		sec, err := strconv.ParseFloat(str, 64)
 		if err != nil {
 			fmt.Printf("warning: time limit %q is of incorrect format: %v\n", str, err)
-			fmt.Printf("using default time limit: %v\n", defaultTL)
 			return
 		}
 
@@ -25,6 +24,5 @@ func getTL(inputs cptest.Inputs) (TL time.Duration) {
 		return
 	}
 
-	fmt.Printf("using default time limit: %v\n", defaultTL)
 	return
 }
