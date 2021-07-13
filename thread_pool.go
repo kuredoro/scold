@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
     "fmt"
+    "sync"
 
 	"github.com/shettyh/threadpool"
 )
@@ -42,6 +43,7 @@ func (p *ThreadPool) Execute(task Runnable) error {
 
 type SpyThreadPool struct {
     DirtyThreads map[int]struct{}
+    mu sync.Mutex
 
     threadPool *threadpool.ThreadPool
 }
@@ -58,7 +60,7 @@ func NewSpyThreadPool(threadCount int) *SpyThreadPool {
 func goid() int {
     var buf [64]byte
     n := runtime.Stack(buf[:], false)
-    idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), "gorountine "))[0]
+    idField := strings.Fields(string(buf[:n]))[1]
     id, err := strconv.Atoi(idField)
     if err != nil {
         panic(fmt.Sprintf("cannot get gorountine id: %v", err))
@@ -69,7 +71,10 @@ func goid() int {
 
 func (p *SpyThreadPool) Execute(task Runnable) error {
     return p.threadPool.Execute(RunnableFunc(func() {
+        p.mu.Lock()
         p.DirtyThreads[goid()] = struct{}{}
+        p.mu.Unlock()
+
         time.Sleep(5 * time.Millisecond)
         
         task.Run()
