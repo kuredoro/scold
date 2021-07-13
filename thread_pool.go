@@ -23,7 +23,21 @@ func (f RunnableFunc) Run() {
 
 // WorkerPoll is an interface that abstracts the notion of a thread pool.
 type WorkerPool interface {
-    Execute(task Runnable)
+    Execute(task Runnable) error
+}
+
+type ThreadPool struct {
+    threadPool *threadpool.ThreadPool
+}
+
+func NewThreadPool(count int) *ThreadPool {
+    return &ThreadPool{
+        threadPool: threadpool.NewThreadPool(count, int64(count)),
+    }
+}
+
+func (p *ThreadPool) Execute(task Runnable) error {
+    return p.threadPool.Execute(threadpool.Runnable(task))
 }
 
 type SpyThreadPool struct {
@@ -53,8 +67,8 @@ func goid() int {
     return id
 }
 
-func (p *SpyThreadPool) Execute(task Runnable) {
-    p.Execute(RunnableFunc(func() {
+func (p *SpyThreadPool) Execute(task Runnable) error {
+    return p.threadPool.Execute(RunnableFunc(func() {
         p.DirtyThreads[goid()] = struct{}{}
         time.Sleep(5 * time.Millisecond)
         

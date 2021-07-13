@@ -26,11 +26,10 @@ func TestAcceptanceSimple(t *testing.T) {
 	cptest.AssertNoErrors(t, err)
 
 	proc := cptest.ProcesserFunc(ProcFuncMultiply)
-
 	swatch := cptest.NewConfigurableStopwatcher(0)
+    pool := cptest.NewThreadPool(3)
 
-	batch := cptest.NewTestingBatch(inputs, proc, swatch)
-
+	batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 	batch.Run()
 
 	want := map[int]cptest.Verdict{
