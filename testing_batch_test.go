@@ -75,7 +75,7 @@ func TestNewTestingBatch(t *testing.T) {
 			Config: map[string]string{},
 		}
 
-		batch := cptest.NewTestingBatch(inputs, nil, nil)
+		batch := cptest.NewTestingBatch(inputs, nil, nil, nil)
 
 		if batch.Lx.Precision != cptest.DefaultPrecision {
 			t.Errorf("got lexer precision %d, but want default value %d",
@@ -91,7 +91,7 @@ func TestNewTestingBatch(t *testing.T) {
 			},
 		}
 
-		batch := cptest.NewTestingBatch(inputs, nil, nil)
+		batch := cptest.NewTestingBatch(inputs, nil, nil, nil)
 
 		if batch.Lx.Precision != 22 {
 			t.Errorf("got lexer precision %d, but want 22", batch.Lx.Precision)
@@ -120,12 +120,9 @@ func TestTestingBatch(t *testing.T) {
 		}
 
 		swatch := &cptest.SpyStopwatcher{}
-
         pool := cptest.NewSpyThreadPool(2)
 
-		batch := cptest.NewTestingBatch(inputs, proc, swatch)
-        batch.ThreadPool = pool
-
+		batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 		batch.Run()
 
 		want := map[int]cptest.Verdict{
@@ -157,9 +154,9 @@ func TestTestingBatch(t *testing.T) {
 		}
 
 		swatch := &cptest.SpyStopwatcher{}
+        pool := cptest.NewSpyThreadPool(2)
 
-		batch := cptest.NewTestingBatch(inputs, proc, swatch)
-
+		batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 		batch.Run()
 
 		want := map[int]cptest.Verdict{
@@ -169,6 +166,7 @@ func TestTestingBatch(t *testing.T) {
 
 		cptest.AssertVerdicts(t, batch.Verdicts, want)
 		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+        cptest.AssertThreadCount(t, pool, 2)
 
 		if len(batch.RichAnswers[1]) != 3 || len(batch.RichAnswers[2]) != 4 {
 			t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
@@ -201,9 +199,9 @@ func TestTestingBatch(t *testing.T) {
 		}
 
 		swatch := &cptest.SpyStopwatcher{}
+        pool := cptest.NewSpyThreadPool(2)
 
-		batch := cptest.NewTestingBatch(inputs, proc, swatch)
-
+		batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 		batch.Run()
 
 		want := map[int]cptest.Verdict{
@@ -213,6 +211,7 @@ func TestTestingBatch(t *testing.T) {
 
 		cptest.AssertVerdicts(t, batch.Verdicts, want)
 		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+        cptest.AssertThreadCount(t, pool, 2)
 	})
 
 	t.Run("all WA",
@@ -235,9 +234,9 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			swatch := &cptest.SpyStopwatcher{}
+            pool := cptest.NewSpyThreadPool(2)
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch)
-
+			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 			batch.Run()
 
 			want := map[int]cptest.Verdict{
@@ -247,6 +246,7 @@ func TestTestingBatch(t *testing.T) {
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+            cptest.AssertThreadCount(t, pool, 2)
 		})
 
 	t.Run("runtime error and internal error",
@@ -303,9 +303,9 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			swatch := &cptest.SpyStopwatcher{}
+            pool := cptest.NewSpyThreadPool(5)
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch)
-
+			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 			batch.Run()
 
 			want := map[int]cptest.Verdict{
@@ -318,6 +318,7 @@ func TestTestingBatch(t *testing.T) {
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 5)
+            cptest.AssertThreadCount(t, pool, 5)
 
 			if len(batch.RichAnswers[3]) == 0 || len(batch.RichAnswers[5]) == 0 {
 				t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
@@ -364,9 +365,9 @@ func TestTestingBatch(t *testing.T) {
 			swatch := &cptest.SpyStopwatcher{
 				TLAtCall: 3,
 			}
+            pool := cptest.NewSpyThreadPool(4)
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch)
-
+			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 			batch.Run()
 
 			testsWant := map[int]cptest.Verdict{
@@ -384,6 +385,8 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
+            cptest.AssertThreadCount(t, pool, 4)
+
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 4)
 			cptest.AssertCallCount(t, "process cancel", killCount, 2)
 			cptest.AssertTimes(t, batch.Times, timesWant)

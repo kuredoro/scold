@@ -87,7 +87,7 @@ type TestingBatch struct {
 
 // NewTestingBatch will initialize channels and maps inside TestingBatch and
 // will assign respective dependency injections.
-func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *TestingBatch {
+func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher, pool WorkerPool) *TestingBatch {
 	precision, err := strconv.Atoi(inputs.Config["prec"])
 	if err != nil {
 		precision = int(DefaultPrecision)
@@ -111,6 +111,8 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher) *Testing
 
 		Proc:   proc,
         procCancels: make(map[int]func()),
+
+        ThreadPool: pool,
 
 		Swatch: swatch,
 
