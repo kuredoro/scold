@@ -77,6 +77,8 @@ type TestingBatch struct {
     procCancels map[int]func()
     procCancelsMu sync.Mutex
 
+    ThreadPool WorkerPool
+
 	Swatch Stopwatcher
 
 	TestStartCallback TestStartCallbackFunc

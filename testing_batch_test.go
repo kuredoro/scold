@@ -121,7 +121,10 @@ func TestTestingBatch(t *testing.T) {
 
 		swatch := &cptest.SpyStopwatcher{}
 
+        pool := cptest.NewSpyThreadPool(2)
+
 		batch := cptest.NewTestingBatch(inputs, proc, swatch)
+        batch.ThreadPool = pool
 
 		batch.Run()
 
@@ -132,6 +135,7 @@ func TestTestingBatch(t *testing.T) {
 
 		cptest.AssertVerdicts(t, batch.Verdicts, want)
 		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+        cptest.AssertThreadCount(t, pool, 2)
 	})
 
 	t.Run("outputs are compared lexeme-wise", func(t *testing.T) {
