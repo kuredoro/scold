@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"runtime"
 
 	"github.com/alexflint/go-arg"
 	"github.com/kuredoro/cptest"
@@ -15,6 +16,7 @@ var stdout = colorable.NewColorableStdout()
 type appArgs struct {
 	Inputs     string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
 	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
+    Jobs       int      `arg:"-j" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
 	Executable string   `arg:"positional,required"`
 	Args       []string `arg:"positional"`
 }
@@ -39,6 +41,10 @@ func init() {
 	if args.NoColors {
 		cptest.Au = aurora.NewAurora(false)
 	}
+
+    if args.Jobs == 0 {
+        args.Jobs = runtime.NumCPU()
+    }
 
 	verdictStr = map[cptest.Verdict]aurora.Value{
 		cptest.OK: cptest.Au.Bold("OK").Green(),
@@ -78,10 +84,17 @@ func main() {
 
 	TL := getTL(inputs)
 	swatch := cptest.NewConfigurableStopwatcher(TL)
+    pool := cptest.NewThreadPool(args.Jobs)
 
-	batch := cptest.NewTestingBatch(inputs, proc, swatch)
+	batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 
+    if TL == 0 {
+        fmt.Println("time limit: infinity")
+    } else {
+        fmt.Printf("time limit: %v\n", TL)
+    }
 	fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
+    fmt.Printf("job count: %d\n", args.Jobs)
 
 	batch.TestStartCallback = runPrinter
 	batch.TestEndCallback = verboseResultPrinter
