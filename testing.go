@@ -237,3 +237,12 @@ func AssertText(t *testing.T, got, want string) {
 		t.Errorf("got text '%s', want '%s'", got, want)
 	}
 }
+
+func AssertThreadCount(t *testing.T, pool *SpyThreadPool, want int) {
+    t.Helper()
+
+    got := len(pool.DirtyThreads)
+    if got != want {
+        t.Errorf("got %d threads used, want %d", got, want)
+    }
+}
