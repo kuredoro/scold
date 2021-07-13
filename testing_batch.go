@@ -175,6 +175,10 @@ func (b *TestingBatch) Run() {
 		case tl := <-b.Swatch.TimeLimit():
             tled := make([]int, 0, len(b.inputs.Tests))
 			for id := range b.inputs.Tests {
+                if id < nextTestID {
+                    break
+                }
+
 				if _, finished := b.Verdicts[id+1]; !finished {
                     tled = append(tled, id+1)
 				}
