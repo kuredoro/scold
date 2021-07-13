@@ -154,10 +154,18 @@ func (b *TestingBatch) launchTest(id int, in string) {
 // each not-yet-judged test is assigned TL verdict and the ResultPrinter is
 // also called on each test.
 func (b *TestingBatch) Run() {
-	for i, test := range b.inputs.Tests {
-		b.TestStartCallback(i + 1)
+    nextTestID := 0
+	for ; nextTestID < len(b.inputs.Tests); nextTestID += 1 {
+        id := nextTestID
+        err := b.ThreadPool.Execute(RunnableFunc(func(){
+            b.launchTest(id+1, b.inputs.Tests[id].Input)
+        }))
 
-		go b.launchTest(i+1, test.Input)
+        if err != nil {
+            break
+        }
+
+		b.TestStartCallback(nextTestID + 1)
 	}
 
 	for range b.inputs.Tests {
@@ -199,6 +207,18 @@ func (b *TestingBatch) Run() {
 			return
 		case result = <-b.complete:
 		}
+
+        if nextTestID < len(b.inputs.Tests) {
+            id := nextTestID
+            err := b.ThreadPool.Execute(RunnableFunc(func(){
+                b.launchTest(id+1, b.inputs.Tests[id].Input)
+            }))
+
+            if err == nil {
+                nextTestID++
+                b.TestStartCallback(nextTestID + 1)
+            }
+        }
 
 		id := result.ID
 		test := b.inputs.Tests[id-1]

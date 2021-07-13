@@ -303,7 +303,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			swatch := &cptest.SpyStopwatcher{}
-            pool := cptest.NewSpyThreadPool(5)
+            pool := cptest.NewSpyThreadPool(3)
 
 			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 			batch.Run()
@@ -318,7 +318,7 @@ func TestTestingBatch(t *testing.T) {
 
 			cptest.AssertVerdicts(t, batch.Verdicts, want)
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 5)
-            cptest.AssertThreadCount(t, pool, 5)
+            cptest.AssertThreadCount(t, pool, 3)
 
 			if len(batch.RichAnswers[3]) == 0 || len(batch.RichAnswers[5]) == 0 {
 				t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
