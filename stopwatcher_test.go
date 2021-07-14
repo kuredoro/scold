@@ -1,12 +1,15 @@
 package cptest_test
 
+/*
 import (
 	"testing"
 	"time"
 
 	"github.com/kuredoro/cptest"
 )
+*/
 
+/*
 func TestSpyStopwatcher(t *testing.T) {
 
 	t.Run("5 calls",
@@ -68,7 +71,9 @@ func TestSpyStopwatcher(t *testing.T) {
 			}
 		})
 }
+*/
 
+/*
 func TestConfigurableStopwatcher(t *testing.T) {
 
 	t.Run("timeout after specified time",
@@ -135,3 +140,4 @@ func TestConfigurableStopwatcher(t *testing.T) {
 			}
 		})
 }
+*/

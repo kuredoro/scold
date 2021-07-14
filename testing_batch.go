@@ -140,6 +140,8 @@ func (b *TestingBatch) launchTest(id int, in string) {
 
 	out, err := b.Proc.Run(ctx, strings.NewReader(in))
 
+    fmt.Printf("Received %#v\n", out)
+
 	b.complete <- TestResult{
 		ID:  id,
 		Err: err,
@@ -172,13 +174,9 @@ func (b *TestingBatch) Run() {
 		var result TestResult
 
 		select {
-		case tl := <-b.Swatch.TimeLimit():
+		case tl := <-b.Swatch.TimeLimit(b.Swatch.Now()):
             tled := make([]int, 0, len(b.inputs.Tests))
 			for id := range b.inputs.Tests {
-                if id < nextTestID {
-                    break
-                }
-
 				if _, finished := b.Verdicts[id+1]; !finished {
                     tled = append(tled, id+1)
 				}
@@ -186,7 +184,7 @@ func (b *TestingBatch) Run() {
 
             for _, id := range tled {
                 b.Verdicts[id] = TL
-                b.Times[id] = tl
+                b.Times[id] = tl.Sub(b.Swatch.Now())
 
                 answerLexemes := b.Lx.Scan(b.inputs.Tests[id-1].Output)
 
@@ -198,7 +196,9 @@ func (b *TestingBatch) Run() {
                 b.RichAnswers[id] = rich
 
                 b.procCancelsMu.Lock()
-                b.procCancels[id]()
+                if _, exists := b.procCancels[id]; exists {
+                    b.procCancels[id]()
+                }
                 b.procCancelsMu.Unlock()
 
                 b.TestEndCallback(b, b.inputs.Tests[id-1], id)
@@ -211,6 +211,8 @@ func (b *TestingBatch) Run() {
 			return
 		case result = <-b.complete:
 		}
+
+        fmt.Printf("b.complete %#v\n", result)
 
         if nextTestID < len(b.inputs.Tests) {
             id := nextTestID
@@ -229,7 +231,7 @@ func (b *TestingBatch) Run() {
 
 		b.Errs[id] = result.Err
 		b.Outs[id] = result.Out
-		b.Times[id] = b.Swatch.Elapsed()
+		b.Times[id] = b.Swatch.Elapsed(b.Swatch.Now())
 
 		answerLexemes := b.Lx.Scan(test.Output)
 		b.RichAnswers[id], _ = b.Lx.Compare(answerLexemes, nil)
