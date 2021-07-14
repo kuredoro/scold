@@ -1,42 +1,47 @@
 package cptest
 
-import "time"
+import (
+	"time"
+
+	"github.com/jonboulle/clockwork"
+)
 
 // Stopwatcher abstracts away the concept of the stopwatch.
 // At any time, one can look up the elapsed time. Additionally, one
 // can be notified when the time is up.
 type Stopwatcher interface {
-	Elapsed() time.Duration
-	TimeLimit() <-chan time.Duration
+    Now() time.Time
+	Elapsed(since time.Time) time.Duration
+	TimeLimit(since time.Time) <-chan time.Time
 }
 
 // SpyStopwatcher implements Stopwatcher but instead of real time substitutes
 // index sequence numbers. If time limit equals zero, then the time limit will
 // never fire.
 type SpyStopwatcher struct {
-	TLAtCall  int
-	callCount int
+	TL  time.Duration
+	Clock clockwork.Clock
+}
+
+func (s *SpyStopwatcher) Now() time.Time {
+    return s.Clock.Now()
 }
 
 // Elapsed will return the number of seconds that equals to the number of
 // calls made to the TimeLimit method.
-func (s *SpyStopwatcher) Elapsed() time.Duration {
-
-	return time.Duration(s.callCount) * time.Second
+func (s *SpyStopwatcher) Elapsed(since time.Time) time.Duration {
+	return s.Clock.Since(since)
 }
 
 // TimeLimit returns a channel that sends the TLAtCall number of seconds
 // back at the TLAtCall-th call to the TimeLimit method.
-func (s *SpyStopwatcher) TimeLimit() <-chan time.Duration {
-	s.callCount++
+func (s *SpyStopwatcher) TimeLimit(since time.Time) <-chan time.Time {
+    if s.TL == 0 {
+        ch := make(chan time.Time, 1)
+        return ch
+    }
 
-	ch := make(chan time.Duration, 1)
-
-	if s.TLAtCall != 0 && s.TLAtCall <= s.callCount {
-		ch <- time.Duration(s.TLAtCall) * time.Second
-	}
-
-	return ch
+	return s.Clock.After(since.Add(s.TL).Sub(s.Clock.Now()))
 }
 
 // ConfigurableStopwatcher is an implementation of the Stopwatcher that

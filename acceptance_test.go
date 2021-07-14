@@ -1,5 +1,6 @@
 package cptest_test
 
+/*
 import (
 	"testing"
 
@@ -40,3 +41,4 @@ func TestAcceptanceSimple(t *testing.T) {
 
 	cptest.AssertVerdicts(t, batch.Verdicts, want)
 }
+*/
