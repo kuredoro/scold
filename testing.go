@@ -241,6 +241,9 @@ func AssertText(t *testing.T, got, want string) {
 func AssertThreadCount(t *testing.T, pool *SpyThreadPool, want int) {
     t.Helper()
 
+    pool.mu.Lock()
+    defer pool.mu.Unlock()
+
     got := len(pool.DirtyThreads)
     if got != want {
         t.Errorf("got %d threads used, want %d", got, want)
