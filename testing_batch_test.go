@@ -333,10 +333,8 @@ func TestTestingBatch(t *testing.T) {
 }
 */
 
-
 func TestTestingBatch2(t *testing.T) {
-
-	t.Run("single TL",
+	t.Run("single TL (proc doesn't run because it didn't have time to dispatch)",
 		func(t *testing.T) {
 			inputs := cptest.Inputs{
 				Tests: []cptest.Test{
@@ -352,7 +350,7 @@ func TestTestingBatch2(t *testing.T) {
 				Proc: cptest.ProcesserFunc(
 					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
 						<-ctx.Done()
-                        killCount++
+						killCount++
 
 						return cptest.ProcessResult{
 							ExitCode: 0,
@@ -377,9 +375,81 @@ func TestTestingBatch2(t *testing.T) {
 				wg.Done()
 			}()
 
-            //clock.BlockUntil(1)
-            time.Sleep(20 * time.Millisecond)
-            clock.Advance(3 * time.Second)
+			clock.BlockUntil(1)
+			clock.Advance(3 * time.Second)
+
+			wg.Wait()
+
+			testsWant := map[int]cptest.Verdict{
+				1: cptest.TL,
+			}
+
+			timesWant := map[int]time.Duration{
+				1: 3 * time.Second,
+			}
+
+			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
+			cptest.AssertThreadCount(t, pool, 1)
+
+			// Should be too fast for anyone to be killed.
+			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 0)
+			cptest.AssertCallCount(t, "process cancel", killCount, 0)
+			cptest.AssertTimes(t, batch.Times, timesWant)
+		})
+
+	t.Run("single TL (proc runs)",
+		func(t *testing.T) {
+			inputs := cptest.Inputs{
+				Tests: []cptest.Test{
+					{"\n", "bar\n"},
+				},
+			}
+
+			clock := clockwork.NewFakeClock()
+
+			killCount := 0
+
+			proc := &cptest.SpyProcesser{
+				Proc: cptest.ProcesserFunc(
+					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
+						select {
+						case <-clock.After(5 * time.Second):
+						case <-ctx.Done():
+							killCount++
+                            return cptest.ProcessResult{
+                                ExitCode: 0,
+                                Stdout:   "",
+                                Stderr:   "",
+                            }, cptest.TLError
+						}
+
+						return cptest.ProcessResult{
+							ExitCode: 0,
+							Stdout:   "",
+							Stderr:   "",
+						}, nil
+
+					}),
+			}
+
+			swatch := &cptest.SpyStopwatcher{
+				Clock: clock,
+				TL:    3 * time.Second,
+			}
+			pool := cptest.NewSpyThreadPool(1)
+
+			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+			go func() {
+				batch.Run()
+				wg.Done()
+			}()
+
+			//clock.BlockUntil(1)
+			clock.BlockUntil(2)
+			clock.Advance(3 * time.Second)
 
 			wg.Wait()
 
@@ -395,13 +465,13 @@ func TestTestingBatch2(t *testing.T) {
 			cptest.AssertThreadCount(t, pool, 1)
 
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 1)
-			//cptest.AssertCallCount(t, "process cancel", killCount, 1)
+			cptest.AssertCallCount(t, "process cancel", killCount, 1)
 			cptest.AssertTimes(t, batch.Times, timesWant)
 		})
 
 	t.Run("test cases may be abandoned at TL",
 		func(t *testing.T) {
-            return
+			return
 			inputs := cptest.Inputs{
 				Tests: []cptest.Test{
 					{"1\n", "1\n"},
@@ -413,7 +483,7 @@ func TestTestingBatch2(t *testing.T) {
 
 			clock := clockwork.NewFakeClock()
 			clock.Advance(1 * time.Second)
-            fmt.Fprintf(os.Stderr, "!!!!!!!!!!!!!!!!!!!!!!!!!! Now: %v\n", clock.Now())
+			fmt.Fprintf(os.Stderr, "!!!!!!!!!!!!!!!!!!!!!!!!!! Now: %v\n", clock.Now())
 
 			advanceTicks := []time.Duration{time.Second, time.Second, 3 * time.Second, time.Second}
 			doneHandler := func(b *cptest.TestingBatch, t cptest.Test, id int) {
@@ -465,17 +535,17 @@ func TestTestingBatch2(t *testing.T) {
 			}()
 
 			//clock.BlockUntil(1)
-            clock.BlockUntil(1)
+			clock.BlockUntil(1)
 			clock.Advance(20 * time.Second)
-            clock.BlockUntil(1)
+			clock.BlockUntil(1)
 			clock.Advance(20 * time.Second)
-            clock.BlockUntil(1)
+			clock.BlockUntil(1)
 			clock.Advance(20 * time.Second)
-            clock.BlockUntil(1)
+			clock.BlockUntil(1)
 			clock.Advance(20 * time.Second)
-            clock.BlockUntil(1)
+			clock.BlockUntil(1)
 			clock.Advance(20 * time.Second)
-            clock.BlockUntil(1)
+			clock.BlockUntil(1)
 			clock.Advance(20 * time.Second)
 
 			//wg.Wait()

@@ -142,11 +142,21 @@ func (b *TestingBatch) launchTest(id int, in string) {
 		}
 	}()
 
-    fmt.Printf("launchTest: id=%d\n", id)
+	fmt.Printf("launchTest: id=%d\n", id)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	b.procCancelsMu.Lock()
-	b.procCancels[id] = cancel
+    if _, exists := b.procCancels[id]; !exists {
+        b.procCancels[id] = cancel
+    } else {
+        b.procCancelsMu.Unlock()
+        cancel()
+        b.complete <- TestResult{
+            ID: id,
+            Err: TLError,
+        }
+        return
+    }
 	b.procCancelsMu.Unlock()
 
 	out, err := b.Proc.Run(ctx, strings.NewReader(in))
@@ -178,68 +188,59 @@ func (b *TestingBatch) nextOldestRunning(previous int) int {
 // each not-yet-judged test is assigned TL verdict and the ResultPrinter is
 // also called on each test.
 func (b *TestingBatch) Run() {
-	nextTestIndex := 0
-	for ; nextTestIndex < len(b.inputs.Tests); nextTestIndex += 1 {
-		id := nextTestIndex
+    nextTestID := 1
+	for ; nextTestID-1 < len(b.inputs.Tests); nextTestID++ {
+        // Local variable is deliberate, since RunnableFunc below will capture
+        // variables by reference, nextTestID will be len(b.inputs.Tests)+1 when
+        // the worker picks up the job, and so cause panic
+        id := nextTestID
 		err := b.ThreadPool.Execute(RunnableFunc(func() {
-			b.launchTest(id+1, b.inputs.Tests[id].Input)
+			b.launchTest(id, b.inputs.Tests[id-1].Input)
 		}))
 
 		if err != nil {
 			break
 		}
 
-		b.TestStartCallback(nextTestIndex + 1)
-		b.startTimes[id+1] = b.Swatch.Now()
+		b.TestStartCallback(id)
+		b.startTimes[id] = b.Swatch.Now()
 	}
 
 	oldestRunningID := 1
-	for range b.inputs.Tests {
+	for len(b.Verdicts) != len(b.inputs.Tests) {
 		var result TestResult
 
 		select {
-		case tl := <-b.Swatch.TimeLimit(b.startTimes[oldestRunningID]):
-			id := oldestRunningID
-			b.Verdicts[id] = TL
-			b.Times[id] = tl.Sub(b.startTimes[id])
-
-			answerLexemes := b.Lx.Scan(b.inputs.Tests[id-1].Output)
-
-			rich := make([]RichText, len(answerLexemes))
-			for i, xm := range answerLexemes {
-				rich[i] = RichText{xm, make([]bool, len(xm))}
-			}
-
-			b.RichAnswers[id] = rich
-
-			b.TestEndCallback(b, b.inputs.Tests[id-1], id)
-
-			oldestRunningID = b.nextOldestRunning(oldestRunningID)
-
+		case <-b.Swatch.TimeLimit(b.startTimes[oldestRunningID]):
 			b.procCancelsMu.Lock()
-			b.procCancels[id]()
-			b.procCancelsMu.Unlock()
-            continue
-		case result = <-b.complete:
-		}
 
-		// TODO: REFACTOR remove tl branch
-		if result.Err == TLError {
+            if cancel, exists := b.procCancels[oldestRunningID]; exists {
+                cancel()
+            } else {
+                // Notify the launchTest func not to run the thread
+                b.procCancels[oldestRunningID] = func() {}
+            }
+
+			b.procCancelsMu.Unlock()
+
+            oldestRunningID = b.nextOldestRunning(oldestRunningID)
 			continue
+		case result = <-b.complete:
 		}
 
 		fmt.Printf("b.complete %#v\n", result)
 
-		if nextTestIndex < len(b.inputs.Tests) {
-			id := nextTestIndex+1
+        // A worker is now free, run another test if any
+		if nextTestID-1 < len(b.inputs.Tests) {
+            id := nextTestID
 			err := b.ThreadPool.Execute(RunnableFunc(func() {
 				b.launchTest(id, b.inputs.Tests[id-1].Input)
 			}))
 
 			if err == nil {
-				nextTestIndex++
 				b.TestStartCallback(id)
-                b.startTimes[id] = b.Swatch.Now()
+				b.startTimes[id] = b.Swatch.Now()
+				nextTestID++
 			}
 		}
 
@@ -248,12 +249,14 @@ func (b *TestingBatch) Run() {
 
 		b.Errs[id] = result.Err
 		b.Outs[id] = result.Out
-		b.Times[id] = b.Swatch.Elapsed(b.Swatch.Now())
+		b.Times[id] = b.Swatch.Elapsed(b.startTimes[id])
 
 		answerLexemes := b.Lx.Scan(test.Output)
 		b.RichAnswers[id], _ = b.Lx.Compare(answerLexemes, nil)
 
-		if err := b.Errs[id]; err != nil {
+		if result.Err == TLError {
+			b.Verdicts[id] = TL
+		} else if result.Err != nil {
 			b.Verdicts[id] = IE
 		} else if b.Outs[id].ExitCode != 0 {
 			b.Verdicts[id] = RE
@@ -274,6 +277,5 @@ func (b *TestingBatch) Run() {
 		}
 
 		b.TestEndCallback(b, test, id)
-		oldestRunningID = b.nextOldestRunning(oldestRunningID)
 	}
 }
