@@ -1,6 +1,7 @@
 package cptest
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jonboulle/clockwork"
@@ -24,6 +25,7 @@ type SpyStopwatcher struct {
 }
 
 func (s *SpyStopwatcher) Now() time.Time {
+    fmt.Printf("Return now: %v\n", s.Clock.Now())
     return s.Clock.Now()
 }
 
@@ -35,11 +37,17 @@ func (s *SpyStopwatcher) Elapsed(since time.Time) time.Duration {
 
 // TimeLimit returns a channel that sends the TLAtCall number of seconds
 // back at the TLAtCall-th call to the TimeLimit method.
+// -----------------------
+// Returns a channel that will never fire if configured with TL = 0 or
+// if since is zero-initialized.
 func (s *SpyStopwatcher) TimeLimit(since time.Time) <-chan time.Time {
-    if s.TL == 0 {
+    fmt.Printf("TimeLimit(%v)\n", since)
+    fmt.Printf("TimeLimit(%v) after %v\n", since, since.Add(s.TL).Sub(s.Clock.Now()))
+    if s.TL == 0 || since == (time.Time{}) {
         ch := make(chan time.Time, 1)
         return ch
     }
+
 
 	return s.Clock.After(since.Add(s.TL).Sub(s.Clock.Now()))
 }
