@@ -416,11 +416,11 @@ func TestTestingBatch2(t *testing.T) {
 						case <-clock.After(5 * time.Second):
 						case <-ctx.Done():
 							killCount++
-                            return cptest.ProcessResult{
-                                ExitCode: 0,
-                                Stdout:   "",
-                                Stderr:   "",
-                            }, cptest.TLError
+							return cptest.ProcessResult{
+								ExitCode: 0,
+								Stdout:   "",
+								Stderr:   "",
+							}, cptest.TLError
 						}
 
 						return cptest.ProcessResult{
@@ -447,7 +447,6 @@ func TestTestingBatch2(t *testing.T) {
 				wg.Done()
 			}()
 
-			//clock.BlockUntil(1)
 			clock.BlockUntil(2)
 			clock.Advance(3 * time.Second)
 
@@ -466,6 +465,82 @@ func TestTestingBatch2(t *testing.T) {
 
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 1)
 			cptest.AssertCallCount(t, "process cancel", killCount, 1)
+			cptest.AssertTimes(t, batch.Times, timesWant)
+		})
+
+	t.Run("two TL, thread count 1",
+		func(t *testing.T) {
+			inputs := cptest.Inputs{
+				Tests: []cptest.Test{
+					{"\n", "bar\n"},
+					{"\n", "bar\n"},
+				},
+			}
+
+			clock := clockwork.NewFakeClock()
+
+			killCount := 0
+
+			proc := &cptest.SpyProcesser{
+				Proc: cptest.ProcesserFunc(
+					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
+						select {
+						case <-clock.After(5 * time.Second):
+						case <-ctx.Done():
+							killCount++
+							return cptest.ProcessResult{
+								ExitCode: 0,
+								Stdout:   "",
+								Stderr:   "",
+							}, cptest.TLError
+						}
+
+						return cptest.ProcessResult{
+							ExitCode: 0,
+							Stdout:   "",
+							Stderr:   "",
+						}, nil
+
+					}),
+			}
+
+			swatch := &cptest.SpyStopwatcher{
+				Clock: clock,
+				TL:    3 * time.Second,
+			}
+			pool := cptest.NewSpyThreadPool(1)
+
+			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+			go func() {
+				batch.Run()
+				wg.Done()
+			}()
+
+			clock.BlockUntil(2)
+			clock.Advance(3 * time.Second)
+			clock.BlockUntil(3)
+			clock.Advance(3 * time.Second)
+
+			wg.Wait()
+
+			testsWant := map[int]cptest.Verdict{
+				1: cptest.TL,
+				2: cptest.TL,
+			}
+
+			timesWant := map[int]time.Duration{
+				1: 3 * time.Second,
+				2: 3 * time.Second,
+			}
+
+			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
+			cptest.AssertThreadCount(t, pool, 1)
+
+			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+			cptest.AssertCallCount(t, "process cancel", killCount, 2)
 			cptest.AssertTimes(t, batch.Times, timesWant)
 		})
 

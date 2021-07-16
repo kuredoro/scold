@@ -189,7 +189,7 @@ func (b *TestingBatch) nextOldestRunning(previous int) int {
 // also called on each test.
 func (b *TestingBatch) Run() {
     nextTestID := 1
-	for ; nextTestID-1 < len(b.inputs.Tests); nextTestID++ {
+	for ; nextTestID-1 < len(b.inputs.Tests) && nextTestID-1 < b.ThreadPool.WorkerCount(); nextTestID++ {
         // Local variable is deliberate, since RunnableFunc below will capture
         // variables by reference, nextTestID will be len(b.inputs.Tests)+1 when
         // the worker picks up the job, and so cause panic
@@ -201,6 +201,8 @@ func (b *TestingBatch) Run() {
 		if err != nil {
 			break
 		}
+
+        fmt.Printf("pre launch nextTestID=%d\n", nextTestID)
 
 		b.TestStartCallback(id)
 		b.startTimes[id] = b.Swatch.Now()
@@ -229,6 +231,7 @@ func (b *TestingBatch) Run() {
 		}
 
 		fmt.Printf("b.complete %#v\n", result)
+		fmt.Printf("nextTestID=%d len(tests)=%d\n", nextTestID, len(b.inputs.Tests))
 
         // A worker is now free, run another test if any
 		if nextTestID-1 < len(b.inputs.Tests) {
