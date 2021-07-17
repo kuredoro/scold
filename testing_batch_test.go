@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
 	"strconv"
 	"sync"
 	"testing"
@@ -20,8 +19,6 @@ import (
 func ProcFuncMultiply(ctx context.Context, in io.Reader) (cptest.ProcessResult, error) {
 	var a, b int
 	fmt.Fscan(in, &a, &b)
-
-	fmt.Printf("multiply %d * %d\n", a, b)
 
 	return cptest.ProcessResult{
 		ExitCode: 0,
@@ -353,7 +350,7 @@ func TestTestingBatch(t *testing.T) {
 							ExitCode: 0,
 							Stdout:   "",
 							Stderr:   "",
-						}, cptest.TLError
+						}, nil
 					}),
 			}
 
@@ -656,7 +653,7 @@ func TestTestingBatch(t *testing.T) {
 								ExitCode: 0,
 								Stdout:   "",
 								Stderr:   "",
-							}, cptest.TLError
+							}, nil
 						}
 
 						return cptest.ProcessResult{
@@ -674,12 +671,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 			pool := cptest.NewSpyThreadPool(2)
 
-			// Time:   1234
-			// test 1: -
-			// test 2: --
-			// test 3:  -
-			// test 4:   --
-			doneCh := make(chan struct{})
+			doneCh := make(chan struct{}, 1)
 			done := func(b *cptest.TestingBatch, t cptest.Test, id int) {
 				doneCh <- (struct{}{})
 			}
@@ -694,23 +686,24 @@ func TestTestingBatch(t *testing.T) {
 				wg.Done()
 			}()
 
+			// Time:   12345
+			// test 1: --
+			// test 2: ---
+			// test 3:   --
+			// test 4:    ---
 			clock.BlockUntil(3)
 			clock.Advance(2 * time.Second)
-            fmt.Printf("done -> advance %v\n", 2 * time.Second)
-
 
 			advances := []time.Duration{time.Second, time.Second, 2 * time.Second}
-			blocks := []int{4, 5, 4}
+			blocks := []int{4, 5, 5}
 			for i := range advances {
 				<-doneCh
-                fmt.Printf("done. waiting...\n")
 				clock.BlockUntil(blocks[i])
 
-				fmt.Printf("done -> advance %v\n", advances[i])
 				clock.Advance(advances[i])
 				if i == 2 {
                     time.Sleep(200 * time.Millisecond)
-					return
+					break
 				}
 			}
 
@@ -724,13 +717,11 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			timesWant := map[int]time.Duration{
-				1: 1 * time.Second,
+				1: 2 * time.Second,
 				2: 3 * time.Second,
-				3: 1 * time.Second,
+				3: 2 * time.Second,
 				4: 3 * time.Second,
 			}
-
-			fmt.Printf("Verdicts: %#v\n", batch.Verdicts)
 
 			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
 			cptest.AssertThreadCount(t, pool, 2)
