@@ -1,17 +1,16 @@
 #include <iostream>
 #include <cmath>
+#include <chrono>
+#include <thread>
 
 int main()
 {
-    int a, b;
-    std::cin >> a >> b;
+    int a;
+    std::cin >> a;
 
-    double x = 50;
-    for (int i = 0; i < 10000000; i++)
-    {
-        x = std::cos(x);
-    }
+    for (int i = 0; i < a * 500'000; i++)
+        std::cos(50.0);
 
-    std::cout << a + b << '\n';
+    std::cout << a << '\n';
     return 0;
 }
