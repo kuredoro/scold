@@ -1,7 +1,6 @@
 package cptest
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/jonboulle/clockwork"
@@ -25,7 +24,6 @@ type ConfigurableStopwatcher struct {
 
 // Now will returns time point since internal's clock epoch.
 func (s *ConfigurableStopwatcher) Now() time.Time {
-	fmt.Printf("Return now: %v\n", s.Clock.Now())
 	return s.Clock.Now()
 }
 
@@ -44,13 +42,10 @@ func (s *ConfigurableStopwatcher) Elapsed(since time.Time) time.Duration {
 // just like time.After, but you can specify the *time* after which you want to
 // be notified.
 func (s *ConfigurableStopwatcher) TimeLimit(since time.Time) <-chan time.Time {
-	fmt.Printf("TimeLimit(%v)\n", since)
 	if s.TL == 0 || since == (time.Time{}) {
 		ch := make(chan time.Time, 1)
 		return ch
 	}
-
-	fmt.Printf("TimeLimit(%v) after %v (with now=%v)\n", since, since.Add(s.TL).Sub(s.Clock.Now()), s.Clock.Now())
 
 	return s.Clock.After(since.Add(s.TL).Sub(s.Clock.Now()))
 }

@@ -142,7 +142,6 @@ func (b *TestingBatch) launchTest(id int, in string) {
 		}
 	}()
 
-	fmt.Printf("launchTest: id=%d\n", id)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	b.procCancelsMu.Lock()
@@ -161,7 +160,9 @@ func (b *TestingBatch) launchTest(id int, in string) {
 
 	out, err := b.Proc.Run(ctx, strings.NewReader(in))
 
-	fmt.Printf("Received %#v, err=%v\n", out, err)
+    if ctx.Err() != nil {
+        err = TLError
+    }
 
 	b.complete <- TestResult{
 		ID:  id,
@@ -202,8 +203,6 @@ func (b *TestingBatch) Run() {
 			break
 		}
 
-		fmt.Printf("pre launch nextTestID=%d\n", nextTestID)
-
 		b.TestStartCallback(id)
 		b.startTimes[id] = b.Swatch.Now()
 	}
@@ -229,9 +228,6 @@ func (b *TestingBatch) Run() {
 			continue
 		case result = <-b.complete:
 		}
-
-		fmt.Printf("b.complete %#v\n", result)
-		fmt.Printf("nextTestID=%d len(tests)=%d\n", nextTestID, len(b.inputs.Tests))
 
 		// A worker is now free, run another test if any
 		if nextTestID-1 < len(b.inputs.Tests) {
