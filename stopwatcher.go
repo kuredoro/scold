@@ -16,23 +16,27 @@ type Stopwatcher interface {
 	TimeLimit(since time.Time) <-chan time.Time
 }
 
-// SpyStopwatcher implements Stopwatcher but instead of real time substitutes
+// ConfigurableStopwatcher implements Stopwatcher but instead of real time substitutes
 // index sequence numbers. If time limit equals zero, then the time limit will
 // never fire.
-type SpyStopwatcher struct {
+type ConfigurableStopwatcher struct {
 	TL  time.Duration
 	Clock clockwork.Clock
 }
 
-func (s *SpyStopwatcher) Now() time.Time {
+func (s *ConfigurableStopwatcher) Now() time.Time {
     fmt.Printf("Return now: %v\n", s.Clock.Now())
     return s.Clock.Now()
 }
 
 // Elapsed will return the number of seconds that equals to the number of
 // calls made to the TimeLimit method.
-func (s *SpyStopwatcher) Elapsed(since time.Time) time.Duration {
-	return s.Clock.Since(since)
+func (s *ConfigurableStopwatcher) Elapsed(since time.Time) time.Duration {
+    if s.Clock.Now().After(since) {
+        return s.Clock.Since(since)
+    }
+
+    return 0
 }
 
 // TimeLimit returns a channel that sends the TLAtCall number of seconds
@@ -40,59 +44,14 @@ func (s *SpyStopwatcher) Elapsed(since time.Time) time.Duration {
 // -----------------------
 // Returns a channel that will never fire if configured with TL = 0 or
 // if since is zero-initialized.
-func (s *SpyStopwatcher) TimeLimit(since time.Time) <-chan time.Time {
+func (s *ConfigurableStopwatcher) TimeLimit(since time.Time) <-chan time.Time {
     fmt.Printf("TimeLimit(%v)\n", since)
-    fmt.Printf("TimeLimit(%v) after %v\n", since, since.Add(s.TL).Sub(s.Clock.Now()))
     if s.TL == 0 || since == (time.Time{}) {
         ch := make(chan time.Time, 1)
         return ch
     }
 
+    fmt.Printf("TimeLimit(%v) after %v (with now=%v)\n", since, since.Add(s.TL).Sub(s.Clock.Now()), s.Clock.Now())
 
 	return s.Clock.After(since.Add(s.TL).Sub(s.Clock.Now()))
-}
-
-// ConfigurableStopwatcher is an implementation of the Stopwatcher that
-// uses real time.
-type ConfigurableStopwatcher struct {
-	tlChan    <-chan time.Duration
-	startTime time.Time
-}
-
-// NewConfigurableStopwatcher will return an initialized
-// ConfigurableStopwatcher with the desired time limit. If time limit
-// specified is zero or negative, the time limit will never fire.
-func NewConfigurableStopwatcher(TL time.Duration) *ConfigurableStopwatcher {
-	tlChan := make(chan time.Duration)
-
-	go func() {
-		if TL <= time.Duration(0) {
-			return
-		}
-
-		start := time.Now()
-		after := <-time.After(TL)
-		realTL := after.Sub(start)
-		tlChan <- realTL
-	}()
-
-	return &ConfigurableStopwatcher{
-		tlChan:    tlChan,
-		startTime: time.Now(),
-	}
-
-}
-
-// Elapsed returns the true number of seconds since the initialization of
-// the ConfigurableStopwatcher.
-func (s *ConfigurableStopwatcher) Elapsed() time.Duration {
-	return time.Since(s.startTime)
-}
-
-// TimeLimit returns a channel that will send back the number of seconds
-// passed since beginning until the time limit was fired. The returned
-// value may not equal to the time limit ConfigurableStopwatcher was
-// initialized with.
-func (s *ConfigurableStopwatcher) TimeLimit() <-chan time.Duration {
-	return s.tlChan
 }

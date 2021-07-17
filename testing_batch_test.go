@@ -360,7 +360,7 @@ func TestTestingBatch2(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.SpyStopwatcher{
+			swatch := &cptest.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
@@ -432,7 +432,7 @@ func TestTestingBatch2(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.SpyStopwatcher{
+			swatch := &cptest.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
@@ -504,7 +504,7 @@ func TestTestingBatch2(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.SpyStopwatcher{
+			swatch := &cptest.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
@@ -583,7 +583,7 @@ func TestTestingBatch2(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.SpyStopwatcher{
+			swatch := &cptest.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
@@ -671,7 +671,7 @@ func TestTestingBatch2(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.SpyStopwatcher{
+			swatch := &cptest.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
