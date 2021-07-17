@@ -555,7 +555,7 @@ func TestTestingBatch2(t *testing.T) {
 
 			clock := clockwork.NewFakeClock()
 
-            var mu sync.Mutex
+			var mu sync.Mutex
 			killCount := 0
 
 			proc := &cptest.SpyProcesser{
@@ -564,9 +564,9 @@ func TestTestingBatch2(t *testing.T) {
 						select {
 						case <-clock.After(5 * time.Second):
 						case <-ctx.Done():
-                            mu.Lock()
+							mu.Lock()
 							killCount++
-                            mu.Unlock()
+							mu.Unlock()
 							return cptest.ProcessResult{
 								ExitCode: 0,
 								Stdout:   "",
@@ -620,7 +620,6 @@ func TestTestingBatch2(t *testing.T) {
 			cptest.AssertCallCount(t, "process cancel", killCount, 2)
 			cptest.AssertTimes(t, batch.Times, timesWant)
 		})
-
 
 	t.Run("test cases may be abandoned at TL",
 		func(t *testing.T) {
