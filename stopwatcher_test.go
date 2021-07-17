@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"context"
 	"github.com/jonboulle/clockwork"
 	"github.com/kuredoro/cptest"
-	"context"
 )
 
 func TestConfigurableStopwatcher(t *testing.T) {

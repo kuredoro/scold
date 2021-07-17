@@ -146,17 +146,17 @@ func (b *TestingBatch) launchTest(id int, in string) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	b.procCancelsMu.Lock()
-    if _, exists := b.procCancels[id]; !exists {
-        b.procCancels[id] = cancel
-    } else {
-        b.procCancelsMu.Unlock()
-        cancel()
-        b.complete <- TestResult{
-            ID: id,
-            Err: TLError,
-        }
-        return
-    }
+	if _, exists := b.procCancels[id]; !exists {
+		b.procCancels[id] = cancel
+	} else {
+		b.procCancelsMu.Unlock()
+		cancel()
+		b.complete <- TestResult{
+			ID:  id,
+			Err: TLError,
+		}
+		return
+	}
 	b.procCancelsMu.Unlock()
 
 	out, err := b.Proc.Run(ctx, strings.NewReader(in))
@@ -188,12 +188,12 @@ func (b *TestingBatch) nextOldestRunning(previous int) int {
 // each not-yet-judged test is assigned TL verdict and the ResultPrinter is
 // also called on each test.
 func (b *TestingBatch) Run() {
-    nextTestID := 1
+	nextTestID := 1
 	for ; nextTestID-1 < len(b.inputs.Tests) && nextTestID-1 < b.ThreadPool.WorkerCount(); nextTestID++ {
-        // Local variable is deliberate, since RunnableFunc below will capture
-        // variables by reference, nextTestID will be len(b.inputs.Tests)+1 when
-        // the worker picks up the job, and so cause panic
-        id := nextTestID
+		// Local variable is deliberate, since RunnableFunc below will capture
+		// variables by reference, nextTestID will be len(b.inputs.Tests)+1 when
+		// the worker picks up the job, and so cause panic
+		id := nextTestID
 		err := b.ThreadPool.Execute(RunnableFunc(func() {
 			b.launchTest(id, b.inputs.Tests[id-1].Input)
 		}))
@@ -202,7 +202,7 @@ func (b *TestingBatch) Run() {
 			break
 		}
 
-        fmt.Printf("pre launch nextTestID=%d\n", nextTestID)
+		fmt.Printf("pre launch nextTestID=%d\n", nextTestID)
 
 		b.TestStartCallback(id)
 		b.startTimes[id] = b.Swatch.Now()
@@ -216,16 +216,16 @@ func (b *TestingBatch) Run() {
 		case <-b.Swatch.TimeLimit(b.startTimes[oldestRunningID]):
 			b.procCancelsMu.Lock()
 
-            if cancel, exists := b.procCancels[oldestRunningID]; exists {
-                cancel()
-            } else {
-                // Notify the launchTest func not to run the thread
-                b.procCancels[oldestRunningID] = func() {}
-            }
+			if cancel, exists := b.procCancels[oldestRunningID]; exists {
+				cancel()
+			} else {
+				// Notify the launchTest func not to run the thread
+				b.procCancels[oldestRunningID] = func() {}
+			}
 
 			b.procCancelsMu.Unlock()
 
-            oldestRunningID = b.nextOldestRunning(oldestRunningID)
+			oldestRunningID = b.nextOldestRunning(oldestRunningID)
 			continue
 		case result = <-b.complete:
 		}
@@ -233,9 +233,9 @@ func (b *TestingBatch) Run() {
 		fmt.Printf("b.complete %#v\n", result)
 		fmt.Printf("nextTestID=%d len(tests)=%d\n", nextTestID, len(b.inputs.Tests))
 
-        // A worker is now free, run another test if any
+		// A worker is now free, run another test if any
 		if nextTestID-1 < len(b.inputs.Tests) {
-            id := nextTestID
+			id := nextTestID
 			err := b.ThreadPool.Execute(RunnableFunc(func() {
 				b.launchTest(id, b.inputs.Tests[id-1].Input)
 			}))
