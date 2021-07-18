@@ -6,6 +6,7 @@ import (
 
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
+    "github.com/atomicgo/cursor"
 )
 
 const diffColor = aurora.RedFg
@@ -36,6 +37,7 @@ func verboseResultPrinterWorker() {
 func printVerboseResult(res *TestResultNotification) {
     b := res.batch
     id := res.id
+    cursor.ClearLinesUp(1)
 
 	verdict := b.Verdicts[id]
 
@@ -60,4 +62,9 @@ func printVerboseResult(res *TestResultNotification) {
 			fmt.Printf("Error:\n%v\n\n", b.Errs[id])
 		}
 	}
+
+    fmt.Println()
+    progressBar.Increment()
+    progressBarRefresh <- struct{}{}
+    time.Sleep(time.Millisecond)
 }
