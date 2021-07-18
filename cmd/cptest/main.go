@@ -4,13 +4,20 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+    "os"
 
 	"github.com/alexflint/go-arg"
+	"github.com/atomicgo/cursor"
 	"github.com/jonboulle/clockwork"
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
 	"github.com/mattn/go-colorable"
+	"github.com/vbauerster/mpb/v7"
+	"github.com/vbauerster/mpb/v7/decor"
 )
+
+var progressBar *mpb.Bar
+var progressBarRefresh = make(chan interface{})
 
 var stdout = colorable.NewColorableStdout()
 
@@ -102,11 +109,33 @@ func main() {
 
 	batch.TestEndCallback = verboseResultPrinter
 
+    var testingName string
+    if args.NoColors {
+        testingName = "    Testing"
+    } else {
+        testingName = aurora.Bold(aurora.Cyan("    Testing")).String()
+    }
+    progress := mpb.New(mpb.WithWidth(20), mpb.WithManualRefresh(progressBarRefresh), mpb.WithOutput(os.Stdout))
+    progressBar = progress.Add(int64(len(inputs.Tests)),
+        mpb.NewBarFiller(mpb.BarStyle().Padding(" ")),
+        mpb.PrependDecorators(
+            decor.Name(testingName),
+        ),
+        mpb.AppendDecorators(
+            decor.CurrentNoUnit("%d"),
+            decor.Name("/"),
+            decor.TotalNoUnit("%d"),
+        ),
+    )
+    progressBarRefresh <- struct{}{}
 
     go verboseResultPrinterWorker()
 	batch.Run()
 
+    progress.Wait()
     close(printQueue)
+
+    cursor.ClearLinesUp(1)
 
 	passCount := 0
 	for _, v := range batch.Verdicts {
