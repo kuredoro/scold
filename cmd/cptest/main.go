@@ -21,6 +21,7 @@ var stdout = colorable.NewColorableStdout()
 type appArgs struct {
 	Inputs     string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
 	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
+    NoProgress bool     `arg:"--no-progress" help:"disable progress bar"`
     Jobs       int      `arg:"-j" placeholder:"COUNT" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
 	Executable string   `arg:"positional,required"`
     Args       []string `arg:"positional" placeholder:"ARG"`
@@ -119,8 +120,10 @@ func main() {
         Header: testingHeader,
     }
 
-    fmt.Fprint(stdout, progressBar.String())
-    cursor.StartOfLine()
+    if !args.NoProgress {
+        fmt.Fprint(stdout, progressBar.String())
+        cursor.StartOfLine()
+    }
 
     var wg sync.WaitGroup
     wg.Add(1)
@@ -134,11 +137,13 @@ func main() {
     close(printQueue)
     wg.Wait()
 
-    cursor.ClearLine()
-    // wtf knows what's the behavior of the cursor packaage
-    // Why it's outputting everything fine in verbose printer but here,
-    // it clears the line but doesn't move the cursor???
-    cursor.StartOfLine()
+    if !args.NoProgress {
+        cursor.ClearLine()
+        // wtf knows what's the behavior of the cursor packaage
+        // Why it's outputting everything fine in verbose printer but here,
+        // it clears the line but doesn't move the cursor???
+        cursor.StartOfLine()
+    }
 
 	passCount := 0
 	for _, v := range batch.Verdicts {
