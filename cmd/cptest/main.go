@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"sync"
 
 	"github.com/alexflint/go-arg"
 	"github.com/atomicgo/cursor"
@@ -121,15 +122,22 @@ func main() {
     fmt.Fprint(stdout, progressBar.String())
     cursor.StartOfLine()
 
-    go verboseResultPrinterWorker()
+    var wg sync.WaitGroup
+    wg.Add(1)
+    go func() {
+        verboseResultPrinterWorker()
+        wg.Done()
+    }()
+
 	batch.Run()
 
     close(printQueue)
+    wg.Wait()
 
     cursor.ClearLine()
     // wtf knows what's the behavior of the cursor packaage
     // Why it's outputting everything fine in verbose printer but here,
-    // it clear the line but doesn't move the cursor???
+    // it clears the line but doesn't move the cursor???
     cursor.StartOfLine()
 
 	passCount := 0
@@ -143,6 +151,6 @@ func main() {
 		fmt.Fprintln(stdout, cptest.Au.Bold("OK").Green())
 	} else {
 		fmt.Fprintln(stdout, cptest.Au.Bold("FAIL").Red())
-		fmt.Printf("%d/%d passed\n", passCount, len(batch.Verdicts))
+		fmt.Fprintf(stdout, "%d/%d passed\n", passCount, len(batch.Verdicts))
 	}
 }
