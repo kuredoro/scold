@@ -65,11 +65,17 @@ func printVerboseResult(res *TestResultNotification) {
 		}
 	}
 
-    progressBar.Current++
+    if !args.NoProgress {
+        progressBar.Current++
 
-    fmt.Fprint(str, progressBar.String())
+        fmt.Fprint(str, progressBar.String())
 
-    cursor.ClearLine()
+        cursor.ClearLine()
+    }
+
     fmt.Fprintf(stdout, str.String())
-    cursor.StartOfLine()
+
+    if !args.NoProgress {
+        cursor.StartOfLine()
+    }
 }
