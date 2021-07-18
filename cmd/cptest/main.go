@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/alexflint/go-arg"
+	"github.com/jonboulle/clockwork"
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
 	"github.com/mattn/go-colorable"
@@ -18,7 +19,7 @@ type appArgs struct {
 	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
     Jobs       int      `arg:"-j" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
 	Executable string   `arg:"positional,required"`
-	Args       []string `arg:"positional"`
+    Args       []string `arg:"positional" placeholder:"ARG"`
 }
 
 var args appArgs
@@ -83,7 +84,10 @@ func main() {
 	}
 
 	TL := getTL(inputs)
-	swatch := cptest.NewConfigurableStopwatcher(TL)
+    swatch := &cptest.ConfigurableStopwatcher{
+        TL: TL,
+        Clock: clockwork.NewRealClock(),
+    }
     pool := cptest.NewThreadPool(args.Jobs)
 
 	batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
