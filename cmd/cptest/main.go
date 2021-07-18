@@ -27,7 +27,7 @@ var args appArgs
 func (appArgs) Description() string {
 	return `Feed programs fixed inputs, compare their outputs against expected ones.
 
-Author: @kuredoro
+Author: @kuredoro (github, twitter)
 User manual: https://github.com/kuredoro/cptest
 `
 }
@@ -100,10 +100,13 @@ func main() {
 	fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
     fmt.Printf("job count: %d\n", args.Jobs)
 
-	batch.TestStartCallback = runPrinter
 	batch.TestEndCallback = verboseResultPrinter
 
+
+    go verboseResultPrinterWorker()
 	batch.Run()
+
+    close(printQueue)
 
 	passCount := 0
 	for _, v := range batch.Verdicts {

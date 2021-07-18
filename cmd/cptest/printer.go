@@ -13,18 +13,37 @@ const diffColor = aurora.RedFg
 // Initialized in init()
 var verdictStr map[cptest.Verdict]aurora.Value
 
-func runPrinter(id int) {
-	fmt.Printf("=== RUN\tTest %d\n", id)
+type TestResultNotification struct {
+    batch *cptest.TestingBatch
+    test cptest.Test
+    id int
 }
 
+// printQueue facilitates synchronized output of the test results, since End
+// callback can be called simultaneously.
+var printQueue = make(chan *TestResultNotification, 100)
+
 func verboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
+    printQueue <- &TestResultNotification{b, test, id}
+}
+
+func verboseResultPrinterWorker() {
+    for result := range printQueue {
+        printVerboseResult(result)
+    }
+}
+
+func printVerboseResult(res *TestResultNotification) {
+    b := res.batch
+    id := res.id
+
 	verdict := b.Verdicts[id]
 
 	seconds := b.Times[id].Round(time.Millisecond).Seconds()
 	fmt.Fprintf(stdout, "--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], id, seconds)
 
 	if verdict != cptest.OK {
-		fmt.Printf("Input:\n%s\n", test.Input)
+		fmt.Printf("Input:\n%s\n", res.test.Input)
 
 		fmt.Fprintf(stdout, "Answer:\n%s\n", cptest.DumpLexemes(b.RichAnswers[id], diffColor))
 
