@@ -114,6 +114,7 @@ func main() {
 
     progressBar = &ProgressBar{
         Total: len(inputs.Tests),
+        Width: 20,
         Header: testingName,
     }
 
@@ -126,6 +127,9 @@ func main() {
     close(printQueue)
 
     cursor.ClearLine()
+    // wtf knows what's the behavior of the cursor packaage
+    // Why it's outputting everything fine in verbose printer but here,
+    // it clear the line but doesn't move the cursor???
     cursor.StartOfLine()
 
 	passCount := 0
