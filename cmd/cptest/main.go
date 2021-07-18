@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
-    "os"
 
 	"github.com/alexflint/go-arg"
 	"github.com/atomicgo/cursor"
@@ -12,12 +11,9 @@ import (
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
 	"github.com/mattn/go-colorable"
-	"github.com/vbauerster/mpb/v7"
-	"github.com/vbauerster/mpb/v7/decor"
 )
 
-var progressBar *mpb.Bar
-var progressBarRefresh = make(chan interface{})
+var progressBar *ProgressBar
 
 var stdout = colorable.NewColorableStdout()
 
@@ -115,27 +111,22 @@ func main() {
     } else {
         testingName = aurora.Bold(aurora.Cyan("    Testing")).String()
     }
-    progress := mpb.New(mpb.WithWidth(20), mpb.WithManualRefresh(progressBarRefresh), mpb.WithOutput(os.Stdout))
-    progressBar = progress.Add(int64(len(inputs.Tests)),
-        mpb.NewBarFiller(mpb.BarStyle().Padding(" ")),
-        mpb.PrependDecorators(
-            decor.Name(testingName),
-        ),
-        mpb.AppendDecorators(
-            decor.CurrentNoUnit("%d"),
-            decor.Name("/"),
-            decor.TotalNoUnit("%d"),
-        ),
-    )
-    progressBarRefresh <- struct{}{}
+
+    progressBar = &ProgressBar{
+        Total: len(inputs.Tests),
+        Header: testingName,
+    }
+
+    fmt.Fprint(stdout, progressBar.String())
+    cursor.StartOfLine()
 
     go verboseResultPrinterWorker()
 	batch.Run()
 
-    progress.Wait()
     close(printQueue)
 
-    cursor.ClearLinesUp(1)
+    cursor.ClearLine()
+    cursor.StartOfLine()
 
 	passCount := 0
 	for _, v := range batch.Verdicts {

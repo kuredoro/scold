@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
+    "strings"
 
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
@@ -37,34 +38,38 @@ func verboseResultPrinterWorker() {
 func printVerboseResult(res *TestResultNotification) {
     b := res.batch
     id := res.id
-    cursor.ClearLinesUp(1)
+
+    str := &strings.Builder{}
 
 	verdict := b.Verdicts[id]
 
 	seconds := b.Times[id].Round(time.Millisecond).Seconds()
-	fmt.Fprintf(stdout, "--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], id, seconds)
+	fmt.Fprintf(str, "--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], id, seconds)
 
 	if verdict != cptest.OK {
-		fmt.Printf("Input:\n%s\n", res.test.Input)
+		fmt.Fprintf(str, "Input:\n%s\n", res.test.Input)
 
-		fmt.Fprintf(stdout, "Answer:\n%s\n", cptest.DumpLexemes(b.RichAnswers[id], diffColor))
+		fmt.Fprintf(str, "Answer:\n%s\n", cptest.DumpLexemes(b.RichAnswers[id], diffColor))
 
 		if verdict == cptest.RE {
-			fmt.Printf("Exit code: %d\n\n", b.Outs[id].ExitCode)
-			fmt.Printf("Output:\n%s\n", b.Outs[id].Stdout)
-			fmt.Printf("Stderr:\n%s\n", b.Outs[id].Stderr)
+			fmt.Fprintf(str, "Exit code: %d\n\n", b.Outs[id].ExitCode)
+			fmt.Fprintf(str, "Output:\n%s\n", b.Outs[id].Stdout)
+			fmt.Fprintf(str, "Stderr:\n%s\n", b.Outs[id].Stderr)
 		} else if verdict == cptest.WA {
-			fmt.Fprintf(stdout, "Output:\n%s\n", cptest.DumpLexemes(b.RichOuts[id], diffColor))
+			fmt.Fprintf(str, "Output:\n%s\n", cptest.DumpLexemes(b.RichOuts[id], diffColor))
 			if b.Outs[id].Stderr != "" {
-				fmt.Printf("Stderr:\n%s\n", b.Outs[id].Stderr)
+				fmt.Fprintf(str, "Stderr:\n%s\n", b.Outs[id].Stderr)
 			}
 		} else if verdict == cptest.IE {
-			fmt.Printf("Error:\n%v\n\n", b.Errs[id])
+			fmt.Fprintf(str, "Error:\n%v\n\n", b.Errs[id])
 		}
 	}
 
-    fmt.Println()
-    progressBar.Increment()
-    progressBarRefresh <- struct{}{}
-    time.Sleep(time.Millisecond)
+    progressBar.Current++
+
+    fmt.Fprint(str, progressBar.String())
+
+    cursor.ClearLine()
+    fmt.Fprintf(stdout, str.String())
+    cursor.StartOfLine()
 }
