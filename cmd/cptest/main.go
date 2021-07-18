@@ -21,7 +21,7 @@ var stdout = colorable.NewColorableStdout()
 type appArgs struct {
 	Inputs     string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
 	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
-    Jobs       int      `arg:"-j" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
+    Jobs       int      `arg:"-j" placeholder:"COUNT" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
 	Executable string   `arg:"positional,required"`
     Args       []string `arg:"positional" placeholder:"ARG"`
 }
@@ -106,17 +106,17 @@ func main() {
 
 	batch.TestEndCallback = verboseResultPrinter
 
-    var testingName string
+    var testingHeader string
     if args.NoColors {
-        testingName = "    Testing"
+        testingHeader = "    Testing"
     } else {
-        testingName = aurora.Bold(aurora.Cyan("    Testing")).String()
+        testingHeader = aurora.Bold(aurora.Cyan("    Testing")).String()
     }
 
     progressBar = &ProgressBar{
         Total: len(inputs.Tests),
         Width: 20,
-        Header: testingName,
+        Header: testingHeader,
     }
 
     fmt.Fprint(stdout, progressBar.String())
