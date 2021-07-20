@@ -52,31 +52,22 @@ func mustParse(dest *appArgs) {
     cliArgs := os.Args[1:]
 
     for end := 0; end != len(cliArgs)+1; end++ {
-
-        fmt.Printf("parsing: %v\n", cliArgs[:end])
-
-        // Skip flags until we find a bare string, the executable
+        // Skip flags until we find a bare string, possibly the executable.
+        // But let parser.Parse to execute at least once.
         if end != 0 && cliArgs[end-1][0] == '-' {
             continue
         }
 
         err = parser.Parse(cliArgs[:end])
         if err != nil {
-            fmt.Printf("error: %v\n", err)
             continue
         }
 
-        fmt.Printf("Args: %#v\n", dest)
-
-        fmt.Printf("Executable parsed, scraping arguments\n")
-
         dest.Args = cliArgs[end:]
-
-        fmt.Printf("Final args: %#v\n", dest)
         break
     }
 
-    // It will handle help and version arguments
+    // It will handle help and version arguments.
     if err != nil {
         arg.MustParse(dest)
     }
