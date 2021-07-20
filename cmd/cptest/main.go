@@ -71,8 +71,9 @@ func mustParse(dest *appArgs) {
         break
     }
 
+    // It will handle help and version arguments
     if err != nil {
-        parser.Fail(err.Error())
+        arg.MustParse(dest)
     }
 }
 
