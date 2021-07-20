@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -41,8 +42,42 @@ func (appArgs) Version() string {
 	return "cptest 2.01a"
 }
 
+func mustParse(dest *appArgs) {
+    parser, err := arg.NewParser(arg.Config{}, dest)
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "error: couldn't initialize command line argument parser")
+        os.Exit(-1)
+    }
+
+    cliArgs := os.Args[1:]
+
+    for end := 1; end != len(cliArgs)+1; end++ {
+
+        fmt.Printf("parsing: %v\n", cliArgs[:end])
+
+        err = parser.Parse(cliArgs[:end])
+        if err != nil {
+            fmt.Printf("error: %v\n", err)
+            continue
+        }
+
+        fmt.Printf("Args: %#v\n", dest)
+
+        fmt.Printf("Executable parsed, scraping arguments\n")
+
+        dest.Args = cliArgs[end:]
+
+        fmt.Printf("Final args: %#v\n", dest)
+        break
+    }
+
+    if err != nil {
+        parser.Fail(err.Error())
+    }
+}
+
 func init() {
-	arg.MustParse(&args)
+	mustParse(&args)
 
 	if args.NoColors {
 		cptest.Au = aurora.NewAurora(false)
