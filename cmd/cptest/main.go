@@ -51,9 +51,14 @@ func mustParse(dest *appArgs) {
 
     cliArgs := os.Args[1:]
 
-    for end := 1; end != len(cliArgs)+1; end++ {
+    for end := 0; end != len(cliArgs)+1; end++ {
 
         fmt.Printf("parsing: %v\n", cliArgs[:end])
+
+        // Skip flags until we find a bare string, the executable
+        if end != 0 && cliArgs[end-1][0] == '-' {
+            continue
+        }
 
         err = parser.Parse(cliArgs[:end])
         if err != nil {
