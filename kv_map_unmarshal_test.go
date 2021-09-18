@@ -3,6 +3,7 @@ package cptest_test
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/kuredoro/cptest"
@@ -173,15 +174,15 @@ func TestKVMapUnmarshal(t *testing.T) {
 		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
 
 		wantErrs := []error{
-			&cptest.NotValueOfType{reflect.Int8, "-129"},
-			&cptest.NotValueOfType{reflect.Int16, "40000"},
-			&cptest.NotValueOfType{reflect.Int32, "-3000000000"},
-			&cptest.NotValueOfType{reflect.Int64, "10000000000000000000"},
-			&cptest.NotValueOfType{reflect.Uint, "０"},
-			&cptest.NotValueOfType{reflect.Uint8, "300"},
-			&cptest.NotValueOfType{reflect.Uint16, "67000"},
-			&cptest.NotValueOfType{reflect.Uint32, "5000000000"},
-			&cptest.NotValueOfType{reflect.Uint64, "20000000000000000000"},
+			&cptest.NotValueOfType{reflect.Int8.String(), "-129", nil},
+			&cptest.NotValueOfType{reflect.Int16.String(), "40000", nil},
+			&cptest.NotValueOfType{reflect.Int32.String(), "-3000000000", nil},
+			&cptest.NotValueOfType{reflect.Int64.String(), "10000000000000000000", nil},
+			&cptest.NotValueOfType{reflect.Uint.String(), "０", nil},
+			&cptest.NotValueOfType{reflect.Uint8.String(), "300", nil},
+			&cptest.NotValueOfType{reflect.Uint16.String(), "67000", nil},
+			&cptest.NotValueOfType{reflect.Uint32.String(), "5000000000", nil},
+			&cptest.NotValueOfType{reflect.Uint64.String(), "20000000000000000000", nil},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -229,8 +230,8 @@ func TestKVMapUnmarshal(t *testing.T) {
 		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
 
 		wantErrs := []error{
-			&cptest.NotValueOfType{reflect.Float32, "3.402824E+38"},
-			&cptest.NotValueOfType{reflect.Float64, "-2.7976931348623157E+308"},
+			&cptest.NotValueOfType{reflect.Float32.String(), "3.402824E+38", nil},
+			&cptest.NotValueOfType{reflect.Float64.String(), "-2.7976931348623157E+308", nil},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -297,7 +298,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 			}
 
 			errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
-			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool, step.value}})
+			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool.String(), step.value, nil}})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
 
@@ -318,7 +319,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 			}
 
 			errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
-			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool, step.value}})
+			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool.String(), step.value, nil}})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
 	})
@@ -395,4 +396,111 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &target3) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
 	})
+
+	t.Run("pointer to deserializable type that was allocated", func(t *testing.T) {
+		//(&d).FromString("5s")
+
+		target := struct {
+			Dur *Duration
+		}{&Duration{time.Second}}
+
+		kvm := map[string]string{
+			"Dur": "5s",
+		}
+
+		err := cptest.KVMapUnmarshal(kvm, &target)
+
+		td.CmpNoError(t, err)
+		td.Cmp(t, target, struct{ Dur *Duration }{&Duration{5 * time.Second}})
+	})
+
+	t.Run("pointer to deserializable type that was NOT allocated should allocate it", func(t *testing.T) {
+		target := struct {
+			Dur *Duration
+		}{}
+
+		kvm := map[string]string{
+			"Dur": "5s",
+		}
+
+		err := cptest.KVMapUnmarshal(kvm, &target)
+
+		td.CmpNoError(t, err)
+		td.Cmp(t, target, struct{ Dur *Duration }{&Duration{5 * time.Second}})
+	})
+
+	t.Run("plain deserializable type should be filled anyway", func(t *testing.T) {
+		target := struct {
+			Dur Duration
+		}{}
+
+		kvm := map[string]string{
+			"Dur": "5s",
+		}
+
+		err := cptest.KVMapUnmarshal(kvm, &target)
+
+		td.CmpNoError(t, err)
+		td.Cmp(t, target, struct{ Dur Duration }{Duration{5 * time.Second}})
+	})
+
+	t.Run("error if user-defined type failed to parse input (non-pointer version)", func(t *testing.T) {
+		target := struct {
+			Dur Duration
+		}{}
+
+		kvm := map[string]string{
+			"Dur": "5sus",
+		}
+
+		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+
+        td.Cmp(t, errs.Errors, []error{
+            &cptest.NotValueOfType{"Duration", "5sus", nil},
+        })
+		td.Cmp(t, target, struct{ Dur Duration }{})
+	})
+
+	t.Run("error if user-defined type failed to parse input (empty pointer version)", func(t *testing.T) {
+		target := struct {
+			Dur *Duration
+		}{}
+
+		kvm := map[string]string{
+			"Dur": "5sus",
+		}
+
+		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+
+        td.Cmp(t, errs.Errors, []error{
+            &cptest.NotValueOfType{"Duration", "5sus", nil},
+        })
+		td.Cmp(t, target, struct{ Dur *Duration }{})
+	})
+
+	t.Run("error if user-defined type failed to parse input (valid pointer version)", func(t *testing.T) {
+        dur := &Duration{time.Second}
+		target := struct {
+			Dur *Duration
+		}{dur}
+
+		kvm := map[string]string{
+			"Dur": "5sus",
+		}
+
+		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+
+        td.Cmp(t, errs.Errors, []error{
+            &cptest.NotValueOfType{"Duration", "5sus", nil},
+        })
+		td.Cmp(t, target, struct{ Dur *Duration }{dur})
+	})
+}
+
+type Duration struct{ time.Duration }
+
+func (d *Duration) FromString(str string) error {
+	dur, err := time.ParseDuration(str)
+	*d = Duration{dur}
+	return err
 }
