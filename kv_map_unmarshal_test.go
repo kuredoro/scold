@@ -1,7 +1,7 @@
 package cptest_test
 
 import (
-	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/go-multierror"
@@ -95,40 +95,13 @@ func TestKVMapUnmarshal(t *testing.T) {
 
         td.CmpError(t, errs)
 
-        wantMissingFields := map[string]struct{}{
-            "Foo": {},
-            "Bar": {},
-            "AGAIN?": {},
+        wantErrors := []error{
+            &cptest.MissingFieldError{"Foo"},
+            &cptest.MissingFieldError{"Bar"},
+            &cptest.MissingFieldError{"AGAIN?"},
         }
 
-        gotMissingFields := map[string]struct{}{}
-        for _, err := range errs.Errors {
-            var fieldError *cptest.MissingFieldError
-            if !errors.As(err, &fieldError) {
-                t.Errorf("error list contains an error of type different than MissingFieldError (%#v)", err)
-                continue
-            }
-
-            missingField := fieldError.FieldName
-
-            _, inInput := kvm[missingField]
-            if !inInput {
-                t.Errorf("error list contains an error for a missing field %q that wasn't specified in the input map", missingField)
-                continue
-            }
-
-            _, seenBefore := gotMissingFields[missingField]
-            if seenBefore {
-                t.Errorf("error list contains a duplicate of an error for a missing field %q", missingField)
-                continue
-            }
-
-            gotMissingFields[missingField] = struct{}{}
-        }
-
-        if len(gotMissingFields) != len(wantMissingFields) {
-            t.Errorf("Some missing fields weren't detected: got %v, want %v", gotMissingFields, wantMissingFields)
-        }
+        td.Cmp(t, errs.Errors, wantErrors)
     })
 
     t.Run("int fields, no error", func(t *testing.T) {
