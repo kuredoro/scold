@@ -194,7 +194,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 		kvm := map[string]string{
 			"Foo":    "42",
 			"Bar":    "ハロー",
-			"AGAIN?": "435",
+			"": "えっ？",
 		}
 
 		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
@@ -204,7 +204,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 		wantErrs := []error{
 			&cptest.MissingFieldError{"Foo"},
 			&cptest.MissingFieldError{"Bar"},
-			&cptest.MissingFieldError{"AGAIN?"},
+			&cptest.MissingFieldError{""},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
