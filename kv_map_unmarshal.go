@@ -129,6 +129,14 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
             } else if field.Kind() == reflect.Float64 {
 				field.Set(reflect.ValueOf(float64(parsed)))
             }
+        } else if field.Kind() == reflect.Bool {
+            parsed, err := strconv.ParseBool(v)
+            if err != nil {
+				errs = multierror.Append(errs, &NotValueOfType{field.Kind(), v})
+				continue
+            }
+
+            field.Set(reflect.ValueOf(parsed))
 		} else {
 			// ...
 		}
