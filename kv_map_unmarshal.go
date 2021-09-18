@@ -68,7 +68,6 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 	var errs *multierror.Error
 
 	for k, v := range kvm {
-		// What if k empty?
 		field := val.FieldByName(k)
 
 		if !field.IsValid() {
