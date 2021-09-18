@@ -233,121 +233,94 @@ func TestKVMapUnmarshal(t *testing.T) {
 			&cptest.NotValueOfType{reflect.Float64, "-2.7976931348623157E+308"},
 		}
 
-		td.Cmp(t, errs.Errors, wantErrs)
+		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
 		td.Cmp(t, target, want)
 	})
 
 	t.Run("bool field, no error", func(t *testing.T) {
 		type structType struct {
-			B         bool
+			B bool
 		}
 
 		target := structType{false}
 
-        sequence := []struct{
-            value string
-            want structType
-        }{
-            {"true", structType{true}},
-            {"false", structType{false}},
-            {"1", structType{true}},
-            {"0", structType{false}},
-            {"T", structType{true}},
-            {"F", structType{false}},
-            {"t", structType{true}},
-            {"f", structType{false}},
-            {"True", structType{true}},
-            {"False", structType{false}},
-            {"TRUE", structType{true}},
-            {"FALSE", structType{false}},
-            {"t", structType{true}},
-            {"f", structType{false}},
-        }
+		sequence := []struct {
+			value string
+			want  structType
+		}{
+			{"true", structType{true}},
+			{"false", structType{false}},
+			{"1", structType{true}},
+			{"0", structType{false}},
+			{"T", structType{true}},
+			{"F", structType{false}},
+			{"t", structType{true}},
+			{"f", structType{false}},
+			{"True", structType{true}},
+			{"False", structType{false}},
+			{"TRUE", structType{true}},
+			{"FALSE", structType{false}},
+			{"t", structType{true}},
+			{"f", structType{false}},
+		}
 
-        for _, step := range sequence {
-            kvm := map[string]string{
-                "B": step.value,
-            }
+		for _, step := range sequence {
+			kvm := map[string]string{
+				"B": step.value,
+			}
 
-            err := cptest.KVMapUnmarshal(kvm, &target)
-            td.CmpNoError(t, err)
-            td.Cmp(t, target, step.want, "for value %q", step.value)
-        }
+			err := cptest.KVMapUnmarshal(kvm, &target)
+			td.CmpNoError(t, err)
+			td.Cmp(t, target, step.want, "for value %q", step.value)
+		}
 	})
 
 	t.Run("bool field, bogus values", func(t *testing.T) {
 		type structType struct {
-			B         bool
+			B bool
 		}
 
 		target := structType{false}
 
-        seq1 := []struct{
-            value string
-            want structType
-        }{
-            {"tRuE", structType{false}},
-            {"2", structType{false}},
-            {"~OwO~", structType{false}},
-        }
-
-        for _, step := range seq1 {
-            kvm := map[string]string{
-                "B": step.value,
-            }
-
-            errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
-            td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool, step.value}})
-            td.Cmp(t, target, step.want, "for value %q", step.value)
-        }
-
-        target = structType{true}
-
-        seq2 := []struct{
-            value string
-            want structType
-        }{
-            {"fAlSe", structType{true}},
-            {"00", structType{true}},
-            {"x_x", structType{true}},
-        }
-
-        for _, step := range seq2 {
-            kvm := map[string]string{
-                "B": step.value,
-            }
-
-            errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
-            td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool, step.value}})
-            td.Cmp(t, target, step.want, "for value %q", step.value)
-        }
-	})
-
-	t.Run("float fields, values out of range or bogus", func(t *testing.T) {
-		type structType struct {
-			F32       float32
-			Untouched int
-			F64       float64
+		seq1 := []struct {
+			value string
+			want  structType
+		}{
+			{"tRuE", structType{false}},
+			{"2", structType{false}},
+			{"~OwO~", structType{false}},
 		}
 
-		target := structType{1.0, 0, 2.0}
+		for _, step := range seq1 {
+			kvm := map[string]string{
+				"B": step.value,
+			}
 
-		kvm := map[string]string{
-			"F32": "3.402824E+38",
-			"F64": "-2.7976931348623157E+308",
+			errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool, step.value}})
+			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
 
-		want := structType{1.0, 0, 2.0}
+		target = structType{true}
 
-		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
-
-		wantErrs := []error{
-			&cptest.NotValueOfType{reflect.Float32, "3.402824E+38"},
-			&cptest.NotValueOfType{reflect.Float64, "-2.7976931348623157E+308"},
+		seq2 := []struct {
+			value string
+			want  structType
+		}{
+			{"fAlSe", structType{true}},
+			{"00", structType{true}},
+			{"x_x", structType{true}},
 		}
 
-		td.Cmp(t, errs.Errors, wantErrs)
-		td.Cmp(t, target, want)
+		for _, step := range seq2 {
+			kvm := map[string]string{
+				"B": step.value,
+			}
+
+			errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool, step.value}})
+			td.Cmp(t, target, step.want, "for value %q", step.value)
+		}
 	})
 
 	t.Run("report missing fields", func(t *testing.T) {
@@ -370,5 +343,33 @@ func TestKVMapUnmarshal(t *testing.T) {
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
+	})
+
+	t.Run("plain struct fields cause panic", func(t *testing.T) {
+		target1 := struct {
+			Info struct{ Age int }
+		}{}
+
+		kvm := map[string]string{
+			"Info": "my age is over 9000",
+		}
+
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &target1) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: ""})
+
+		type InfoType struct{ Age int }
+
+		target2 := struct {
+			Info InfoType
+		}{}
+
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &target2) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
+
+		type Numbers []int
+
+		target3 := struct {
+			Info Numbers
+		}{}
+
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &target3) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
 	})
 }
