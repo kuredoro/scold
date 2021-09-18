@@ -48,38 +48,29 @@ func TestKVMapUnmarshal(t *testing.T) {
 	t.Run("unmarshal only works on structs or pointers to them", func(t *testing.T) {
 		kvm := map[string]string{}
 
-		err := cptest.KVMapUnmarshal(kvm, 42)
-		td.CmpError(t, err, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, 42) }, cptest.NotAStructLike)
 
 		i := 42
-		err = cptest.KVMapUnmarshal(kvm, &i)
-		td.CmpError(t, err, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &i) }, cptest.NotAStructLike)
 
-		err = cptest.KVMapUnmarshal(kvm, "foo")
-		td.CmpError(t, err, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, "foo") }, cptest.NotAStructLike)
 
 		str := "foo"
-		err = cptest.KVMapUnmarshal(kvm, &str)
-		td.CmpError(t, err, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &str) }, cptest.NotAStructLike)
 
-		err = cptest.KVMapUnmarshal(kvm, []int{1, 2, 3})
-		td.CmpError(t, err, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, []int{1, 2, 3}) }, cptest.NotAStructLike)
 
-		err = cptest.KVMapUnmarshal(kvm, [...]int{1, 2, 3})
-		td.CmpError(t, err, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, [...]int{1, 2, 3}) }, cptest.NotAStructLike)
 
-		err = cptest.KVMapUnmarshal(kvm, kvm)
-		td.CmpError(t, err, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, kvm) }, cptest.NotAStructLike)
 
-		err = cptest.KVMapUnmarshal(kvm, func() {})
-		td.CmpError(t, err, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, func() {}) }, cptest.NotAStructLike)
 
-		err = cptest.KVMapUnmarshal(kvm, make(chan int))
-		td.CmpError(t, err, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, make(chan int)) }, cptest.NotAStructLike)
 
 		// ---
 
-		err = cptest.KVMapUnmarshal(kvm, struct{}{})
+        err := cptest.KVMapUnmarshal(kvm, struct{}{})
 		td.CmpNoError(t, err)
 
 		test := struct{}{}
@@ -106,7 +97,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 			&cptest.MissingFieldError{"AGAIN?"},
 		}
 
-		td.Cmp(t, errs.Errors, wantErrs)
+		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
 	})
 
 	t.Run("int fields, no error", func(t *testing.T) {
@@ -195,5 +186,27 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
 		td.Cmp(t, target, want)
+	})
+
+	t.Run("report missing fields", func(t *testing.T) {
+		target := struct{}{}
+
+		kvm := map[string]string{
+			"Foo":    "42",
+			"Bar":    "ハロー",
+			"AGAIN?": "435",
+		}
+
+		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+
+		td.CmpError(t, errs)
+
+		wantErrs := []error{
+			&cptest.MissingFieldError{"Foo"},
+			&cptest.MissingFieldError{"Bar"},
+			&cptest.MissingFieldError{"AGAIN?"},
+		}
+
+		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
 	})
 }
