@@ -22,10 +22,10 @@ var stdout = colorable.NewColorableStdout()
 type appArgs struct {
 	Inputs     string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
 	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
-    NoProgress bool     `arg:"--no-progress" help:"disable progress bar"`
-    Jobs       int      `arg:"-j" placeholder:"COUNT" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
+	NoProgress bool     `arg:"--no-progress" help:"disable progress bar"`
+	Jobs       int      `arg:"-j" placeholder:"COUNT" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
 	Executable string   `arg:"positional,required"`
-    Args       []string `arg:"positional" placeholder:"ARG"`
+	Args       []string `arg:"positional" placeholder:"ARG"`
 }
 
 var args appArgs
@@ -43,34 +43,34 @@ func (appArgs) Version() string {
 }
 
 func mustParse(dest *appArgs) {
-    parser, err := arg.NewParser(arg.Config{}, dest)
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "error: couldn't initialize command line argument parser")
-        os.Exit(-1)
-    }
+	parser, err := arg.NewParser(arg.Config{}, dest)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: couldn't initialize command line argument parser")
+		os.Exit(-1)
+	}
 
-    cliArgs := os.Args[1:]
+	cliArgs := os.Args[1:]
 
-    for end := 0; end != len(cliArgs)+1; end++ {
-        // Skip flags until we find a bare string, possibly the executable.
-        // But let parser.Parse to execute at least once.
-        if end != 0 && cliArgs[end-1][0] == '-' {
-            continue
-        }
+	for end := 0; end != len(cliArgs)+1; end++ {
+		// Skip flags until we find a bare string, possibly the executable.
+		// But let parser.Parse to execute at least once.
+		if end != 0 && cliArgs[end-1][0] == '-' {
+			continue
+		}
 
-        err = parser.Parse(cliArgs[:end])
-        if err != nil {
-            continue
-        }
+		err = parser.Parse(cliArgs[:end])
+		if err != nil {
+			continue
+		}
 
-        dest.Args = cliArgs[end:]
-        break
-    }
+		dest.Args = cliArgs[end:]
+		break
+	}
 
-    // It will handle help and version arguments.
-    if err != nil {
-        arg.MustParse(dest)
-    }
+	// It will handle help and version arguments.
+	if err != nil {
+		arg.MustParse(dest)
+	}
 }
 
 func init() {
@@ -80,9 +80,9 @@ func init() {
 		cptest.Au = aurora.NewAurora(false)
 	}
 
-    if args.Jobs == 0 {
-        args.Jobs = runtime.NumCPU()
-    }
+	if args.Jobs == 0 {
+		args.Jobs = runtime.NumCPU()
+	}
 
 	verdictStr = map[cptest.Verdict]aurora.Value{
 		cptest.OK: cptest.Au.Bold("OK").Green(),
@@ -121,61 +121,61 @@ func main() {
 	}
 
 	TL := getTL(inputs)
-    swatch := &cptest.ConfigurableStopwatcher{
-        TL: TL,
-        Clock: clockwork.NewRealClock(),
-    }
-    pool := cptest.NewThreadPool(args.Jobs)
+	swatch := &cptest.ConfigurableStopwatcher{
+		TL:    TL,
+		Clock: clockwork.NewRealClock(),
+	}
+	pool := cptest.NewThreadPool(args.Jobs)
 
 	batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 
-    if TL == 0 {
-        fmt.Println("time limit: infinity")
-    } else {
-        fmt.Printf("time limit: %v\n", TL)
-    }
+	if TL == 0 {
+		fmt.Println("time limit: infinity")
+	} else {
+		fmt.Printf("time limit: %v\n", TL)
+	}
 	fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
-    fmt.Printf("job count: %d\n", args.Jobs)
+	fmt.Printf("job count: %d\n", args.Jobs)
 
 	batch.TestEndCallback = verboseResultPrinter
 
-    var testingHeader string
-    if args.NoColors {
-        testingHeader = "    Testing"
-    } else {
-        testingHeader = aurora.Bold(aurora.Cyan("    Testing")).String()
-    }
+	var testingHeader string
+	if args.NoColors {
+		testingHeader = "    Testing"
+	} else {
+		testingHeader = aurora.Bold(aurora.Cyan("    Testing")).String()
+	}
 
-    progressBar = &ProgressBar{
-        Total: len(inputs.Tests),
-        Width: 20,
-        Header: testingHeader,
-    }
+	progressBar = &ProgressBar{
+		Total:  len(inputs.Tests),
+		Width:  20,
+		Header: testingHeader,
+	}
 
-    if !args.NoProgress {
-        fmt.Fprint(stdout, progressBar.String())
-        cursor.StartOfLine()
-    }
+	if !args.NoProgress {
+		fmt.Fprint(stdout, progressBar.String())
+		cursor.StartOfLine()
+	}
 
-    var wg sync.WaitGroup
-    wg.Add(1)
-    go func() {
-        verboseResultPrinterWorker()
-        wg.Done()
-    }()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		verboseResultPrinterWorker()
+		wg.Done()
+	}()
 
 	batch.Run()
 
-    close(printQueue)
-    wg.Wait()
+	close(printQueue)
+	wg.Wait()
 
-    if !args.NoProgress {
-        cursor.ClearLine()
-        // wtf knows what's the behavior of the cursor packaage
-        // Why it's outputting everything fine in verbose printer but here,
-        // it clears the line but doesn't move the cursor???
-        cursor.StartOfLine()
-    }
+	if !args.NoProgress {
+		cursor.ClearLine()
+		// wtf knows what's the behavior of the cursor packaage
+		// Why it's outputting everything fine in verbose printer but here,
+		// it clears the line but doesn't move the cursor???
+		cursor.StartOfLine()
+	}
 
 	passCount := 0
 	for _, v := range batch.Verdicts {
