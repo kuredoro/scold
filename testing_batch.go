@@ -154,9 +154,9 @@ func (b *TestingBatch) launchTest(id int, in string) {
 
 	out, err := b.Proc.Run(ctx, strings.NewReader(in))
 
-    if ctx.Err() != nil {
-        err = TLError
-    }
+	if ctx.Err() != nil {
+		err = TLError
+	}
 
 	b.complete <- TestResult{
 		ID:  id,
