@@ -237,6 +237,119 @@ func TestKVMapUnmarshal(t *testing.T) {
 		td.Cmp(t, target, want)
 	})
 
+	t.Run("bool field, no error", func(t *testing.T) {
+		type structType struct {
+			B         bool
+		}
+
+		target := structType{false}
+
+        sequence := []struct{
+            value string
+            want structType
+        }{
+            {"true", structType{true}},
+            {"false", structType{false}},
+            {"1", structType{true}},
+            {"0", structType{false}},
+            {"T", structType{true}},
+            {"F", structType{false}},
+            {"t", structType{true}},
+            {"f", structType{false}},
+            {"True", structType{true}},
+            {"False", structType{false}},
+            {"TRUE", structType{true}},
+            {"FALSE", structType{false}},
+            {"t", structType{true}},
+            {"f", structType{false}},
+        }
+
+        for _, step := range sequence {
+            kvm := map[string]string{
+                "B": step.value,
+            }
+
+            err := cptest.KVMapUnmarshal(kvm, &target)
+            td.CmpNoError(t, err)
+            td.Cmp(t, target, step.want, "for value %q", step.value)
+        }
+	})
+
+	t.Run("bool field, bogus values", func(t *testing.T) {
+		type structType struct {
+			B         bool
+		}
+
+		target := structType{false}
+
+        seq1 := []struct{
+            value string
+            want structType
+        }{
+            {"tRuE", structType{false}},
+            {"2", structType{false}},
+            {"~OwO~", structType{false}},
+        }
+
+        for _, step := range seq1 {
+            kvm := map[string]string{
+                "B": step.value,
+            }
+
+            errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+            td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool, step.value}})
+            td.Cmp(t, target, step.want, "for value %q", step.value)
+        }
+
+        target = structType{true}
+
+        seq2 := []struct{
+            value string
+            want structType
+        }{
+            {"fAlSe", structType{true}},
+            {"00", structType{true}},
+            {"x_x", structType{true}},
+        }
+
+        for _, step := range seq2 {
+            kvm := map[string]string{
+                "B": step.value,
+            }
+
+            errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+            td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool, step.value}})
+            td.Cmp(t, target, step.want, "for value %q", step.value)
+        }
+	})
+
+	t.Run("float fields, values out of range or bogus", func(t *testing.T) {
+		type structType struct {
+			F32       float32
+			Untouched int
+			F64       float64
+		}
+
+		target := structType{1.0, 0, 2.0}
+
+		kvm := map[string]string{
+			"F32": "3.402824E+38",
+			"F64": "-2.7976931348623157E+308",
+		}
+
+		want := structType{1.0, 0, 2.0}
+
+		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+
+		wantErrs := []error{
+			&cptest.NotValueOfType{reflect.Float32, "3.402824E+38"},
+			&cptest.NotValueOfType{reflect.Float64, "-2.7976931348623157E+308"},
+		}
+
+		td.Cmp(t, errs.Errors, wantErrs)
+		td.Cmp(t, target, want)
+	})
+
 	t.Run("report missing fields", func(t *testing.T) {
 		target := struct{}{}
 
