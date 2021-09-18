@@ -345,6 +345,29 @@ func TestKVMapUnmarshal(t *testing.T) {
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
 	})
 
+	t.Run("string fields", func(t *testing.T) {
+		type testType struct {
+			Foo       string
+			Bar       string
+			Zap       string
+			Untouched string
+		}
+
+		target := testType{}
+
+		kvm := map[string]string{
+			"Foo": "42",
+			"Bar": "ハロー",
+			"Zap": "",
+		}
+
+		err := cptest.KVMapUnmarshal(kvm, &target)
+
+		td.CmpNoError(t, err)
+
+		td.Cmp(t, target, testType{"42", "ハロー", "", ""})
+	})
+
 	t.Run("plain struct fields cause panic", func(t *testing.T) {
 		target1 := struct {
 			Info struct{ Age int }
