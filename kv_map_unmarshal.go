@@ -50,8 +50,9 @@ func (e *MissingFieldError) Error() string {
 }
 
 type NotValueOfType struct {
-	Type  reflect.Kind
-	Value string
+	Type   string
+	Value  string
+	Reason error
 }
 
 func (e *NotValueOfType) Error() string {
@@ -60,6 +61,10 @@ func (e *NotValueOfType) Error() string {
 
 func (e *NotValueOfType) Equal(other *NotValueOfType) bool {
 	return e.Type == other.Type && e.Value == other.Value
+}
+
+func (e *NotValueOfType) Unwrap() error {
+    return e.Reason
 }
 
 type NotStringUnmarshalableType struct {
@@ -99,10 +104,46 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 			continue
 		}
 
+		// A user-defined type should contain FromString method
+        // XXX: Should do via interfaces
+        fromStringMethod := field.MethodByName("FromString")
+        if !fromStringMethod.IsValid() {
+            fromStringMethod = field.Addr().MethodByName("FromString")
+
+            // If we found conversion method on a pointer, then we should work
+            // on the pointer to the field further.
+            if fromStringMethod.IsValid() {
+                field = field.Addr()
+            }
+        }
+
+        if fromStringMethod.IsValid() {
+            // Make sure that the field is allocated, so that the FromString
+            // method had a place to write back to. But also remember if we
+            // changed the field, so to revert it back if error occurs.
+            wasNil := false
+            if field.IsNil() {
+                field.Set(reflect.New(field.Type().Elem()))
+                wasNil = true
+            }
+
+			output := fromStringMethod.Call([]reflect.Value{reflect.ValueOf(v)})
+
+			if !output[0].IsNil() {
+				err := output[0].Interface().(error)
+				errs = multierror.Append(errs, &NotValueOfType{field.Type().Elem().Name(), v, err})
+
+                if wasNil {
+                    field.Set(reflect.Zero(field.Type()))
+                }
+			}
+			continue
+		}
+
 		if bitSize, found := intParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseInt(v, 10, bitSize)
 			if err != nil {
-				errs = multierror.Append(errs, &NotValueOfType{field.Kind(), v})
+				errs = multierror.Append(errs, &NotValueOfType{field.Kind().String(), v, err})
 				continue
 			}
 
@@ -121,7 +162,7 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 		} else if bitSize, found := uintParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseUint(v, 10, bitSize)
 			if err != nil {
-				errs = multierror.Append(errs, &NotValueOfType{field.Kind(), v})
+				errs = multierror.Append(errs, &NotValueOfType{field.Kind().String(), v, err})
 				continue
 			}
 
@@ -139,7 +180,7 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 		} else if bitSize, found := floatParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseFloat(v, bitSize)
 			if err != nil {
-				errs = multierror.Append(errs, &NotValueOfType{field.Kind(), v})
+				errs = multierror.Append(errs, &NotValueOfType{field.Kind().String(), v, err})
 				continue
 			}
 
@@ -153,7 +194,7 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 		} else if field.Kind() == reflect.Bool {
 			parsed, err := strconv.ParseBool(v)
 			if err != nil {
-				errs = multierror.Append(errs, &NotValueOfType{field.Kind(), v})
+				errs = multierror.Append(errs, &NotValueOfType{field.Kind().String(), v, err})
 				continue
 			}
 
