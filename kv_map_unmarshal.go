@@ -1,8 +1,10 @@
 package cptest
 
 import (
-    //"fmt"
-    "reflect"
+	"fmt"
+	"reflect"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 const(
@@ -11,6 +13,14 @@ const(
     // them, so they are considered struct-like.
     NotAStructLike = StringError("not a struct-like")
 )
+
+type MissingFieldError struct {
+    FieldName string
+}
+
+func (e *MissingFieldError) Error() string {
+    return fmt.Sprintf("struct field %q doesn't exist", e.FieldName)
+}
 
 type KVMap = map[string]string
 
@@ -25,5 +35,17 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
         return NotAStructLike
     }
 
-    return nil
+    var errs *multierror.Error
+
+    for k := range kvm {
+        // What if k empty?
+        field := val.FieldByName(k)
+
+        if !field.IsValid() {
+            errs = multierror.Append(errs, &MissingFieldError{k})
+            continue
+        }
+    }
+
+    return errs.ErrorOrNil()
 }
