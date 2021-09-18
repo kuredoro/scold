@@ -27,12 +27,6 @@ const (
 	TL
 )
 
-type StringError string
-
-func (e StringError) Error() string {
-	return string(e)
-}
-
 const TLError StringError = "Time limit exceeded"
 
 // TestStartCallbackFunc represents a function to be called before a test

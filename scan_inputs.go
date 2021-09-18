@@ -6,19 +6,10 @@ import (
 	"strings"
 )
 
-// InputsError represents an error produced while scanning inputs file.
-type InputsError string
-
-func (e InputsError) Error() string {
-	return string(e)
-}
-
 // A set of errors that may be produced during scanning of the inputs file.
-// These replace sentinel errors making the errors be comparable with equals
-// operator.
 const (
-	IOSeparatorMissing = InputsError("IO separator missing")
-	KeyMissing         = InputsError("key cannot be empty")
+	IOSeparatorMissing = StringError("IO separator missing")
+	KeyMissing         = StringError("key cannot be empty")
 )
 
 // LinedError appends line information to the error message. It is mainly used
