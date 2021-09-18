@@ -62,7 +62,7 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 	}
 
 	if val.Kind() != reflect.Struct {
-		return NotAStructLike
+		panic(NotAStructLike)
 	}
 
 	var errs *multierror.Error
