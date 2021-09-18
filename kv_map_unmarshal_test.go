@@ -83,13 +83,12 @@ func TestKVMapUnmarshal(t *testing.T) {
     })
 
     t.Run("report missing fields", func(t *testing.T) {
-        target := struct{Exists int}{42}
+        target := struct{}{}
 
         kvm := map[string]string{
             "Foo": "42",
             "Bar": "ハロー",
             "AGAIN?": "435",
-            "Exists": "Whaa?",
         }
 
         errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
@@ -132,23 +131,41 @@ func TestKVMapUnmarshal(t *testing.T) {
         }
     })
 
-    // t.Run("int fields no error", func(t *testing.T) {
-    //     type structType struct{
-    //         Untouched int
-    //         I int
-    //     }
+    t.Run("int fields, no error", func(t *testing.T) {
+        type structType struct{
+            Untouched int
+            I int
+            Ui uint
+            I8 int8
+            I16 int16
+            I32 int32
+            I64 int64
+            U8 uint8
+            U16 uint16
+            U32 uint32
+            U64 uint64
+        }
 
-    //     target := structType{42, 1}
+        target := structType{42, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-    //     kvm := map[string]string{
-    //         "I": "42",
-    //     }
+        kvm := map[string]string{
+            "I": "42",
+            "I8": "127",
+            "I16": "-32000",
+            "I32": "-2000000000",
+            "I64": "18000000000",
+            "Ui": "12",
+            "U8": "255",
+            "U16": "65000",
+            "U32": "4000000000",
+            "U64": "32000000000",
+        }
 
-    //     want := structType{42, 42}
+        want := structType{42, 42, 12, 127, -32000, -2000000000, 18000000000, 255, 65000, 4000000000, 32000000000}
 
-    //     err := cptest.KVMapUnmarshal(kvm, &target)
+        err := cptest.KVMapUnmarshal(kvm, &target)
 
-    //     td.CmpNoError(t, err)
-    //     td.Cmp(t, target, want)
-    // })
+        td.CmpNoError(t, err)
+        td.Cmp(t, target, want)
+    })
 }
