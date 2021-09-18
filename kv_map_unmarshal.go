@@ -36,6 +36,11 @@ var floatParsers = map[reflect.Kind]int{
 	reflect.Float64: 64,
 }
 
+var complexParsers = map[reflect.Kind]int{
+	reflect.Complex64:  64,
+	reflect.Complex128: 128,
+}
+
 type MissingFieldError struct {
 	FieldName string
 }
@@ -143,6 +148,8 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 			} else if field.Kind() == reflect.Float64 {
 				field.Set(reflect.ValueOf(float64(parsed)))
 			}
+		} else if _, found := complexParsers[field.Kind()]; found {
+			panic("Unmarshaling complex numbers from strings is not implemented")
 		} else if field.Kind() == reflect.Bool {
 			parsed, err := strconv.ParseBool(v)
 			if err != nil {
@@ -151,6 +158,8 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 			}
 
 			field.Set(reflect.ValueOf(parsed))
+		} else if field.Kind() == reflect.String {
+			field.Set(reflect.ValueOf(v))
 		} else {
 			panic(&NotStringUnmarshalableType{Field: k, Type: field.Kind(), TypeName: field.Type().Name()})
 		}
