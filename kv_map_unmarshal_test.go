@@ -70,7 +70,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		// ---
 
-        err := cptest.KVMapUnmarshal(kvm, struct{}{})
+		err := cptest.KVMapUnmarshal(kvm, struct{}{})
 		td.CmpNoError(t, err)
 
 		test := struct{}{}
@@ -188,13 +188,62 @@ func TestKVMapUnmarshal(t *testing.T) {
 		td.Cmp(t, target, want)
 	})
 
+	t.Run("float fields, no error", func(t *testing.T) {
+		type structType struct {
+			F32       float32
+			Untouched int
+			F64       float64
+		}
+
+		target := structType{1.0, 0, 2.0}
+
+		kvm := map[string]string{
+			"F32": "42.00",
+			"F64": "1e9",
+		}
+
+		want := structType{42.0, 0, 1e9}
+
+		err := cptest.KVMapUnmarshal(kvm, &target)
+
+		td.CmpNoError(t, err)
+		td.Cmp(t, target, want)
+	})
+
+	t.Run("float fields, values out of range or bogus", func(t *testing.T) {
+		type structType struct {
+			F32       float32
+			Untouched int
+			F64       float64
+		}
+
+		target := structType{1.0, 0, 2.0}
+
+		kvm := map[string]string{
+			"F32": "3.402824E+38",
+			"F64": "-2.7976931348623157E+308",
+		}
+
+		want := structType{1.0, 0, 2.0}
+
+		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+
+		wantErrs := []error{
+			&cptest.NotValueOfType{reflect.Float32, "3.402824E+38"},
+			&cptest.NotValueOfType{reflect.Float64, "-2.7976931348623157E+308"},
+		}
+
+		td.Cmp(t, errs.Errors, wantErrs)
+		td.Cmp(t, target, want)
+	})
+
 	t.Run("report missing fields", func(t *testing.T) {
 		target := struct{}{}
 
 		kvm := map[string]string{
-			"Foo":    "42",
-			"Bar":    "ハロー",
-			"": "えっ？",
+			"Foo": "42",
+			"Bar": "ハロー",
+			"":    "えっ？",
 		}
 
 		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)

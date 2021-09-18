@@ -31,6 +31,11 @@ var uintParsers = map[reflect.Kind]int{
 	reflect.Uint64: 64,
 }
 
+var floatParsers = map[reflect.Kind]int{
+	reflect.Float32: 32,
+	reflect.Float64: 64,
+}
+
 type MissingFieldError struct {
 	FieldName string
 }
@@ -82,7 +87,7 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 				continue
 			}
 
-            // This is the minimum I succeeded to decrease the boilerplate...
+			// This is the minimum I succeeded to decrease the boilerplate...
 			if field.Kind() == reflect.Int {
 				field.Set(reflect.ValueOf(int(parsed)))
 			} else if field.Kind() == reflect.Int8 {
@@ -93,24 +98,36 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 				field.Set(reflect.ValueOf(int32(parsed)))
 			} else if field.Kind() == reflect.Int64 {
 				field.Set(reflect.ValueOf(int64(parsed)))
-            }
-        } else if bitSize, found := uintParsers[field.Kind()]; found {
+			}
+		} else if bitSize, found := uintParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseUint(v, 10, bitSize)
 			if err != nil {
 				errs = multierror.Append(errs, &NotValueOfType{field.Kind(), v})
 				continue
 			}
 
-            if field.Kind() == reflect.Uint {
-                field.Set(reflect.ValueOf(uint(parsed)))
-            } else if field.Kind() == reflect.Uint8 {
-                field.Set(reflect.ValueOf(uint8(parsed)))
-            } else if field.Kind() == reflect.Uint16 {
-                field.Set(reflect.ValueOf(uint16(parsed)))
-            } else if field.Kind() == reflect.Uint32 {
-                field.Set(reflect.ValueOf(uint32(parsed)))
-            } else if field.Kind() == reflect.Uint64 {
-                field.Set(reflect.ValueOf(uint64(parsed)))
+			if field.Kind() == reflect.Uint {
+				field.Set(reflect.ValueOf(uint(parsed)))
+			} else if field.Kind() == reflect.Uint8 {
+				field.Set(reflect.ValueOf(uint8(parsed)))
+			} else if field.Kind() == reflect.Uint16 {
+				field.Set(reflect.ValueOf(uint16(parsed)))
+			} else if field.Kind() == reflect.Uint32 {
+				field.Set(reflect.ValueOf(uint32(parsed)))
+			} else if field.Kind() == reflect.Uint64 {
+				field.Set(reflect.ValueOf(uint64(parsed)))
+			}
+        } else if bitSize, found := floatParsers[field.Kind()]; found {
+			parsed, err := strconv.ParseFloat(v, bitSize)
+			if err != nil {
+				errs = multierror.Append(errs, &NotValueOfType{field.Kind(), v})
+				continue
+			}
+
+            if field.Kind() == reflect.Float32 {
+				field.Set(reflect.ValueOf(float32(parsed)))
+            } else if field.Kind() == reflect.Float64 {
+				field.Set(reflect.ValueOf(float64(parsed)))
             }
 		} else {
 			// ...
