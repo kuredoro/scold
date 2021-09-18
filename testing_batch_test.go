@@ -702,7 +702,7 @@ func TestTestingBatch(t *testing.T) {
 
 				clock.Advance(advances[i])
 				if i == 2 {
-                    time.Sleep(200 * time.Millisecond)
+					time.Sleep(200 * time.Millisecond)
 					break
 				}
 			}

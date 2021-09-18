@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
-    "strings"
 
+	"github.com/atomicgo/cursor"
 	"github.com/kuredoro/cptest"
 	"github.com/logrusorgru/aurora"
-    "github.com/atomicgo/cursor"
 )
 
 const diffColor = aurora.RedFg
@@ -16,9 +16,9 @@ const diffColor = aurora.RedFg
 var verdictStr map[cptest.Verdict]aurora.Value
 
 type TestResultNotification struct {
-    batch *cptest.TestingBatch
-    test cptest.Test
-    id int
+	batch *cptest.TestingBatch
+	test  cptest.Test
+	id    int
 }
 
 // printQueue facilitates synchronized output of the test results, since End
@@ -26,20 +26,20 @@ type TestResultNotification struct {
 var printQueue = make(chan *TestResultNotification, 100)
 
 func verboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
-    printQueue <- &TestResultNotification{b, test, id}
+	printQueue <- &TestResultNotification{b, test, id}
 }
 
 func verboseResultPrinterWorker() {
-    for result := range printQueue {
-        printVerboseResult(result)
-    }
+	for result := range printQueue {
+		printVerboseResult(result)
+	}
 }
 
 func printVerboseResult(res *TestResultNotification) {
-    b := res.batch
-    id := res.id
+	b := res.batch
+	id := res.id
 
-    str := &strings.Builder{}
+	str := &strings.Builder{}
 
 	verdict := b.Verdicts[id]
 
@@ -65,17 +65,17 @@ func printVerboseResult(res *TestResultNotification) {
 		}
 	}
 
-    if !args.NoProgress {
-        progressBar.Current++
+	if !args.NoProgress {
+		progressBar.Current++
 
-        fmt.Fprint(str, progressBar.String())
+		fmt.Fprint(str, progressBar.String())
 
-        cursor.ClearLine()
-    }
+		cursor.ClearLine()
+	}
 
-    fmt.Fprintf(stdout, str.String())
+	fmt.Fprintf(stdout, str.String())
 
-    if !args.NoProgress {
-        cursor.StartOfLine()
-    }
+	if !args.NoProgress {
+		cursor.StartOfLine()
+	}
 }
