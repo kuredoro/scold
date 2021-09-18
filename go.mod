@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/alexflint/go-arg v1.3.0
 	github.com/atomicgo/cursor v0.0.1
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jonboulle/clockwork v0.2.2
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-colorable v0.1.8

@@ -1,9 +1,12 @@
 package cptest_test
 
 import (
-    "github.com/kuredoro/cptest"
-    "testing"
-    "github.com/maxatome/go-testdeep/td"
+	"errors"
+	"testing"
+
+	"github.com/hashicorp/go-multierror"
+	"github.com/kuredoro/cptest"
+	"github.com/maxatome/go-testdeep/td"
 )
 
 func TestKVMapUnmarshal(t *testing.T) {
@@ -79,16 +82,66 @@ func TestKVMapUnmarshal(t *testing.T) {
         td.CmpNoError(t, err)
     })
 
+    t.Run("report missing fields", func(t *testing.T) {
+        target := struct{Exists int}{42}
+
+        kvm := map[string]string{
+            "Foo": "42",
+            "Bar": "ハロー",
+            "AGAIN?": "435",
+            "Exists": "Whaa?",
+        }
+
+        errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+
+        td.CmpError(t, errs)
+
+        wantMissingFields := map[string]struct{}{
+            "Foo": {},
+            "Bar": {},
+            "AGAIN?": {},
+        }
+
+        gotMissingFields := map[string]struct{}{}
+        for _, err := range errs.Errors {
+            var fieldError *cptest.MissingFieldError
+            if !errors.As(err, &fieldError) {
+                t.Errorf("error list contains an error of type different than MissingFieldError (%#v)", err)
+                continue
+            }
+
+            missingField := fieldError.FieldName
+
+            _, inInput := kvm[missingField]
+            if !inInput {
+                t.Errorf("error list contains an error for a missing field %q that wasn't specified in the input map", missingField)
+                continue
+            }
+
+            _, seenBefore := gotMissingFields[missingField]
+            if seenBefore {
+                t.Errorf("error list contains a duplicate of an error for a missing field %q", missingField)
+                continue
+            }
+
+            gotMissingFields[missingField] = struct{}{}
+        }
+
+        if len(gotMissingFields) != len(wantMissingFields) {
+            t.Errorf("Some missing fields weren't detected: got %v, want %v", gotMissingFields, wantMissingFields)
+        }
+    })
+
     // t.Run("int fields no error", func(t *testing.T) {
     //     type structType struct{
-    //         untouched int
-    //         i int
+    //         Untouched int
+    //         I int
     //     }
 
     //     target := structType{42, 1}
 
     //     kvm := map[string]string{
-    //         "i": "42",
+    //         "I": "42",
     //     }
 
     //     want := structType{42, 42}
