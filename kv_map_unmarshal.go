@@ -57,6 +57,20 @@ func (e *NotValueOfType) Equal(other *NotValueOfType) bool {
 	return e.Type == other.Type && e.Value == other.Value
 }
 
+type NotStringUnmarshalableType struct {
+	Field    string
+	Type     reflect.Kind
+	TypeName string
+}
+
+func (e *NotStringUnmarshalableType) Error() string {
+	return fmt.Sprintf("field %q is of type %v (%v) and cannot be unmarshaled from string, because it is not of fundamental type or because the type doesn't implement FromString(string) method", e.Field, e.TypeName, e.Type)
+}
+
+func (e *NotStringUnmarshalableType) Equal(other *NotStringUnmarshalableType) bool {
+	return e.Field == other.Field && e.Type == other.Type && e.TypeName == other.TypeName
+}
+
 type KVMap = map[string]string
 
 func KVMapUnmarshal(kvm KVMap, data interface{}) error {
@@ -117,28 +131,28 @@ func KVMapUnmarshal(kvm KVMap, data interface{}) error {
 			} else if field.Kind() == reflect.Uint64 {
 				field.Set(reflect.ValueOf(uint64(parsed)))
 			}
-        } else if bitSize, found := floatParsers[field.Kind()]; found {
+		} else if bitSize, found := floatParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseFloat(v, bitSize)
 			if err != nil {
 				errs = multierror.Append(errs, &NotValueOfType{field.Kind(), v})
 				continue
 			}
 
-            if field.Kind() == reflect.Float32 {
+			if field.Kind() == reflect.Float32 {
 				field.Set(reflect.ValueOf(float32(parsed)))
-            } else if field.Kind() == reflect.Float64 {
+			} else if field.Kind() == reflect.Float64 {
 				field.Set(reflect.ValueOf(float64(parsed)))
-            }
-        } else if field.Kind() == reflect.Bool {
-            parsed, err := strconv.ParseBool(v)
-            if err != nil {
+			}
+		} else if field.Kind() == reflect.Bool {
+			parsed, err := strconv.ParseBool(v)
+			if err != nil {
 				errs = multierror.Append(errs, &NotValueOfType{field.Kind(), v})
 				continue
-            }
+			}
 
-            field.Set(reflect.ValueOf(parsed))
+			field.Set(reflect.ValueOf(parsed))
 		} else {
-			// ...
+			panic(&NotStringUnmarshalableType{Field: k, Type: field.Kind(), TypeName: field.Type().Name()})
 		}
 	}
 
