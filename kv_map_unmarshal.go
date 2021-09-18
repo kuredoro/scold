@@ -20,7 +20,7 @@ type MissingFieldError struct {
 }
 
 func (e *MissingFieldError) Error() string {
-    return fmt.Sprintf("struct field %q doesn't exist", e.FieldName)
+    return fmt.Sprintf("field %q doesn't exist", e.FieldName)
 }
 
 type NotValueOfType struct {
