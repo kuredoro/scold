@@ -49,25 +49,25 @@ func TestKVMapUnmarshal(t *testing.T) {
 	t.Run("unmarshal only works on structs or pointers to them", func(t *testing.T) {
 		kvm := map[string]string{}
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, 42) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, 42) }, cptest.NotAStructLike)
 
 		i := 42
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &i) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &i) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, "foo") }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, "foo") }, cptest.NotAStructLike)
 
 		str := "foo"
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &str) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &str) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, []int{1, 2, 3}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, []int{1, 2, 3}) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, [...]int{1, 2, 3}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, [...]int{1, 2, 3}) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, kvm) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, kvm) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, func() {}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, func() {}) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, make(chan int)) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, make(chan int)) }, cptest.NotAStructLike)
 
 		// ---
 
@@ -378,7 +378,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 			"Info": "my age is over 9000",
 		}
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &target1) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: ""})
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &target1) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: ""})
 
 		type InfoType struct{ Age int }
 
@@ -386,7 +386,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 			Info InfoType
 		}{}
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &target2) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &target2) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
 
 		type Numbers []int
 
@@ -394,7 +394,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 			Info Numbers
 		}{}
 
-		td.CmpPanic(t, func() { cptest.KVMapUnmarshal(kvm, &target3) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
+		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &target3) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
 	})
 
 	t.Run("pointer to deserializable type that was allocated", func(t *testing.T) {
