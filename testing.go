@@ -34,7 +34,7 @@ func AssertTests(t *testing.T, got []Test, want []Test) {
 func AssertNoErrors(t *testing.T, errs []error) {
 	t.Helper()
 
-	if errs != nil && len(errs) != 0 {
+	if len(errs) != 0 {
 		var msg strings.Builder
 		msg.WriteString(fmt.Sprintf("expected no errors, but got %d:\n", len(errs)))
 

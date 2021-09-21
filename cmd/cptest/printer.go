@@ -73,7 +73,7 @@ func printVerboseResult(res *TestResultNotification) {
 		cursor.ClearLine()
 	}
 
-	fmt.Fprintf(stdout, str.String())
+	fmt.Fprint(stdout, str)
 
 	if !args.NoProgress {
 		cursor.StartOfLine()
