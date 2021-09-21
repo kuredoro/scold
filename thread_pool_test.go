@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kuredoro/cptest"
+	"github.com/maxatome/go-testdeep/td"
 )
 
 func TestThreadPool(t *testing.T) {
@@ -22,7 +23,7 @@ func TestThreadPool(t *testing.T) {
 
 	for i := 0; i < 4; i++ {
 		wg.Add(1)
-		pool.Execute(cptest.RunnableFunc(func() {
+		err := pool.Execute(cptest.RunnableFunc(func() {
 			barrier.Done()
 			barrier.Wait()
 
@@ -32,6 +33,8 @@ func TestThreadPool(t *testing.T) {
 
 			wg.Done()
 		}))
+
+		td.CmpNoError(t, err)
 	}
 
 	wg.Wait()
