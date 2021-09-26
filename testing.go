@@ -10,6 +10,7 @@ import (
 
 	"github.com/logrusorgru/aurora"
 	"github.com/sanity-io/litter"
+    "github.com/maxatome/go-testdeep/td"
 )
 
 // AssertTest compare the inputs and outputs with respective expected ones
@@ -51,7 +52,7 @@ func AssertErrors(t *testing.T, got, want []error) {
 	t.Helper()
 
 	if len(got) != len(want) {
-		t.Errorf("got %d errors, want %d", len(got), len(want))
+		t.Errorf("got %d errors (%v), want %d (%v)", len(got), got, len(want), want)
 	}
 
 	for i, err := range got {
@@ -91,16 +92,6 @@ func AssertCallCount(t *testing.T, funcName string, got, want int) {
 	}
 }
 
-// AssertConfig checks whether received and expected config key-value sets
-// are equal.
-func AssertConfig(t *testing.T, got, want map[string]string) {
-	t.Helper()
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("\ngot config %v\nwant %v", litter.Sdump(got), litter.Sdump(want))
-	}
-}
-
 // AssertErrorLines checks that each error in the received array of errors
 // is wrapping a LinedError error. At the same time, it checks that the line
 // numbers are equal to the expected ones.
@@ -125,18 +116,15 @@ func AssertErrorLines(t *testing.T, errs []error, lines []int) {
 	}
 }
 
-// AssertNoConfig checks that the received key-value set is empty. If it's not,
+// AssertDefaultConfig checks that the received key-value set is empty. If it's not,
 // the test is failed and the its contents are printed.
-func AssertNoConfig(t *testing.T, got map[string]string) {
+func AssertDefaultConfig(t *testing.T, got InputsConfig) {
 	t.Helper()
 
-	if got == nil {
-		t.Error("expected empty config, but config isn't even initialized")
-	}
+    want := InputsConfig{}
+    StringAttributesUnmarshal(map[string]string{}, &want)
 
-	if len(got) != 0 {
-		t.Errorf("expected emtpy config, but got %v", litter.Sdump(got))
-	}
+    td.Cmp(t, got, want)
 }
 
 // AssertTimes check whether the received and expected timestampts for the
