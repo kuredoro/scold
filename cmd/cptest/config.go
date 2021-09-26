@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/kuredoro/cptest"
@@ -13,14 +11,8 @@ const defaultTL = 6 * time.Second
 func getTL(inputs cptest.Inputs) (TL time.Duration) {
 	TL = defaultTL
 
-	if str, exists := inputs.Config["tl"]; exists {
-		sec, err := strconv.ParseFloat(str, 64)
-		if err != nil {
-			fmt.Printf("warning: time limit %q is of incorrect format: %v\n", str, err)
-			return
-		}
-
-		TL = time.Duration(sec * float64(time.Second))
+	if inputs.Config.Tl != (cptest.Duration{0 * time.Second}) {
+		TL = inputs.Config.Tl.Duration
 		return
 	}
 
