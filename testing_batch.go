@@ -3,7 +3,6 @@ package cptest
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -56,13 +55,17 @@ type TestResult struct {
 	Out ProcessResult
 }
 
+type TestingBatchConfig struct {
+    Prec uint8
+}
+
 // TestingBatch is responsible for running tests and evaluating the verdicts
 // for tests. For each test case, the verdict and execution time are stored.
-// It utilizer an instance of Processer to run tests, and an instance of
+// It utilizes an instance of Processer to run tests, and an instance of
 // Stopwatcher to track time limit. Optionally, user can set ResultPrinter
 // to a custom function to output useful statistics about test case's result.
 type TestingBatch struct {
-	inputs Inputs
+    inputs Inputs
 
 	complete chan TestResult
 
@@ -91,11 +94,6 @@ type TestingBatch struct {
 // NewTestingBatch will initialize channels and maps inside TestingBatch and
 // will assign respective dependency injections.
 func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher, pool WorkerPool) *TestingBatch {
-	precision, err := strconv.Atoi(inputs.Config["prec"])
-	if err != nil {
-		precision = int(DefaultPrecision)
-	}
-
 	return &TestingBatch{
 		inputs: inputs,
 
@@ -106,7 +104,7 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher, pool Wor
 		RichAnswers: make(map[int][]RichText),
 
 		Lx: &Lexer{
-			Precision: uint(precision),
+			Precision: uint(inputs.Config.Prec),
 		},
 
 		Verdicts:   make(map[int]Verdict),
