@@ -162,11 +162,9 @@ func SplitByInlinedPrefixN(text, delim string, n int) (parts []string) {
 }
 
 // ScanTest parses a single test case: input and output, separated with the
-// Input/Output separator. It also trims space around input and output
-// line-wise. If separator is absent, it returns an error.
+// Input/Output separator. If separator is absent, it returns an error.
 func ScanTest(testStr string) (Test, []error) {
-
-	if testStr == "" {
+	if strings.TrimSpace(testStr) == "" {
 		return Test{}, nil
 	}
 
