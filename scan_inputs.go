@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"strings"
+	"time"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // A set of errors that may be produced during scanning of the inputs file.
@@ -40,11 +43,32 @@ type Test struct {
 	Output string
 }
 
+// Duration is a wrapper around time.Duration that allows
+// StringAttributesUnmarshal to parse it from a string using a common
+// interface.
+type Duration struct{ time.Duration }
+
+// FromString will delegate parsing to built-in time.ParseDuration and, hence,
+// accept the same format as time.ParseDuration.
+func (d *Duration) FromString(str string) error {
+	dur, err := time.ParseDuration(str)
+	*d = Duration{dur}
+	return err
+}
+
+// InputsConfig defines a schema for available configuration options that
+// can be listed inside a config.
+type InputsConfig struct {
+	Prec uint8
+	Tl   Duration
+}
+
 // Inputs contains all information located in the inputs file: tests and
-// the set of key-value pairs that were provided.
+// a valid configuration that were provided. Inputs is supposed to be copied
+// around.
 type Inputs struct {
 	Tests  []Test
-	Config map[string]string
+	Config InputsConfig
 }
 
 // ScanKeyValuePair parses the key-value pair of form 'key=value'.
@@ -74,9 +98,11 @@ func ScanKeyValuePair(line string) (string, string, error) {
 	return key, val, nil
 }
 
-// ScanConfig tries to parse a stream of key-value pairs. It expects each pair
-// to be located on a dedicated line. Duplicate keys are allowed, the later
-// version is preferred.
+// ScanConfig tries to parse a stream of key-value pairs. Key-value pair is
+// defined as `<string> "=" <string>`. Both strings are space trimmed. The key
+// must be non-empty. Otherwise, a LinedError is produced. The final map
+// will contain only correctly specified key-value pairs or an empty map.
+// Duplicate keys are allowed, the later occurrence is preferred.
 func ScanConfig(text string) (m map[string]string, errs []error) {
 	s := bufio.NewScanner(strings.NewReader(text))
 
@@ -166,8 +192,6 @@ func ScanTest(testStr string) (Test, []error) {
 // could not be parsed, parsing continues to the next test case, but the errors
 // are accumulated and returned together.
 func ScanInputs(text string) (inputs Inputs, errs []error) {
-	inputs.Config = make(map[string]string)
-
 	parts := SplitByInlinedPrefixN(text, TestDelim, 0)
 
 	testNum := 0
@@ -180,10 +204,13 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 
 			if configErrs != nil {
 				errs = append(errs, configErrs...)
+				// We don't continue because ScanConfig gathers only correct
+				// key-value pairs.
 			}
 
-			for k, v := range config {
-				inputs.Config[k] = v
+			unmarshalErrs := StringAttributesUnmarshal(config, &inputs.Config)
+			if unmarshalErrs != nil {
+				errs = append(errs, unmarshalErrs.(*multierror.Error).Errors...)
 			}
 
 			continue

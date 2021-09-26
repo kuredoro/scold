@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+    "time"
 
+	"github.com/maxatome/go-testdeep/td"
 	"github.com/kuredoro/cptest"
 )
 
@@ -163,7 +165,7 @@ func TestScanInputs(t *testing.T) {
 
 			cptest.AssertTests(t, inputs.Tests, nil)
 			cptest.AssertNoErrors(t, errs)
-			cptest.AssertNoConfig(t, inputs.Config)
+			cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("single",
@@ -183,7 +185,7 @@ func TestScanInputs(t *testing.T) {
 
 			cptest.AssertTests(t, inputs.Tests, testsWant)
 			cptest.AssertNoErrors(t, errs)
-			cptest.AssertNoConfig(t, inputs.Config)
+			cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("multiple",
@@ -226,7 +228,7 @@ func TestScanInputs(t *testing.T) {
 
 			cptest.AssertTests(t, inputs.Tests, testsWant)
 			cptest.AssertNoErrors(t, errs)
-			cptest.AssertNoConfig(t, inputs.Config)
+			cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("multiple with CRLF",
@@ -269,7 +271,7 @@ func TestScanInputs(t *testing.T) {
 
 			cptest.AssertTests(t, inputs.Tests, testsWant)
 			cptest.AssertNoErrors(t, errs)
-			cptest.AssertNoConfig(t, inputs.Config)
+			cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("skip empty tests",
@@ -307,7 +309,7 @@ zyx
 
 			cptest.AssertTests(t, inputs.Tests, testsWant)
 			cptest.AssertNoErrors(t, errs)
-			cptest.AssertNoConfig(t, inputs.Config)
+			cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("only line's prefix should match TestDelimeter",
@@ -340,7 +342,7 @@ zyx
 
 			cptest.AssertTests(t, inputs.Tests, testsWant)
 			cptest.AssertNoErrors(t, errs)
-			cptest.AssertNoConfig(t, inputs.Config)
+			cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("configs may be listed before first test and once",
@@ -352,14 +354,14 @@ zyx
 				},
 			}
 
-			configWant := map[string]string{
-				"tl":  "2.0",
-				"foo": "bar",
-			}
+            configWant := cptest.InputsConfig{
+                Tl: cptest.Duration{2 * time.Second},
+                Prec: 16,
+            }
 
 			text := `
-tl = 2.0
-foo= bar
+Tl = 2s
+Prec= 16
 ===
 2 2
 ---
@@ -372,7 +374,7 @@ foo= bar
 
 			cptest.AssertTests(t, inputs.Tests, testsWant)
 			cptest.AssertNoErrors(t, errs)
-			cptest.AssertConfig(t, inputs.Config, configWant)
+            td.Cmp(t, inputs.Config, configWant)
 		})
 
 	t.Run("configs are treated as such only before test 1",
@@ -404,19 +406,19 @@ foo= bar
 
 			cptest.AssertTests(t, inputs.Tests, testsWant)
 			cptest.AssertErrors(t, errs, errsWant)
-			cptest.AssertNoConfig(t, inputs.Config)
+			cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("errors in config",
 		func(t *testing.T) {
 			text := `= foo
 == aaa
-a=b
+Tl=1ms
 ===
 extra=love
 ===`
-			configWant := map[string]string{
-				"a": "b",
+			configWant := cptest.InputsConfig{
+                Tl: cptest.Duration{time.Millisecond},
 			}
 
 			errLines := []int{1, 2}
@@ -431,7 +433,7 @@ extra=love
 			cptest.AssertTests(t, inputs.Tests, nil)
 			cptest.AssertErrorLines(t, errs, errLines)
 			cptest.AssertErrors(t, errs, errsWant)
-			cptest.AssertConfig(t, inputs.Config, configWant)
+            td.Cmp(t, inputs.Config, configWant, "parsed config")
 		})
 
 	t.Run("wierd (empty inputs)",
@@ -449,7 +451,7 @@ extra=love
 
 			cptest.AssertTests(t, inputs.Tests, nil)
 			cptest.AssertNoErrors(t, errs)
-			cptest.AssertNoConfig(t, inputs.Config)
+			cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 }
 
@@ -471,7 +473,7 @@ foo=bar
 				"two words": "is   true",
 			}
 
-			cptest.AssertConfig(t, got, want)
+            td.Cmp(t, got, want, "raw config")
 			cptest.AssertNoErrors(t, errs)
 		})
 
@@ -495,7 +497,7 @@ this is ok =
 				"this is ok":       "",
 			}
 
-			cptest.AssertConfig(t, got, want)
+            td.Cmp(t, got, want, "raw config")
 			cptest.AssertNoErrors(t, errs)
 		})
 
@@ -503,8 +505,8 @@ this is ok =
 		func(t *testing.T) {
 			text := `
 foo=bar
-foo=
 =bar
+foo=
 =
  = 
         `
@@ -515,14 +517,14 @@ foo=
 				"foo": "",
 			}
 
-			errLines := []int{4, 5, 6}
+			errLines := []int{3, 5, 6}
 			errsWant := []error{
 				cptest.KeyMissing,
 				cptest.KeyMissing,
 				cptest.KeyMissing,
 			}
 
-			cptest.AssertConfig(t, got, want)
+            td.Cmp(t, got, want, "raw config")
 			cptest.AssertErrorLines(t, errs, errLines)
 			cptest.AssertErrors(t, errs, errsWant)
 		})
