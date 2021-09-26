@@ -81,9 +81,7 @@ func (e *NotStringUnmarshalableType) Equal(other *NotStringUnmarshalableType) bo
 	return e.Field == other.Field && e.Type == other.Type && e.TypeName == other.TypeName
 }
 
-type KVMap = map[string]string
-
-func KVMapUnmarshal(kvm KVMap, data interface{}) error {
+func StringAttributesUnmarshal(kvm map[string]string, data interface{}) error {
 	val := reflect.ValueOf(data)
 
 	if val.Kind() == reflect.Ptr {

@@ -15,13 +15,13 @@ func init() {
 	td.DefaultContextConfig.MaxErrors = -1
 }
 
-func TestKVMapUnmarshal(t *testing.T) {
+func TestStringAttributesUnmarshal(t *testing.T) {
 	t.Run("empty map and struct", func(t *testing.T) {
 		var target struct{}
 
-		kvm := map[string]string{}
+		sas := map[string]string{} // String AttributeS
 
-		err := cptest.KVMapUnmarshal(kvm, &target)
+		err := cptest.StringAttributesUnmarshal(sas, &target)
 
 		td.CmpNoError(t, err)
 	})
@@ -36,59 +36,59 @@ func TestKVMapUnmarshal(t *testing.T) {
 			42, 11.0, "struct", make(map[string]int),
 		}
 
-		kvm := map[string]string{}
+		sas := map[string]string{}
 
 		want := target
 
-		err := cptest.KVMapUnmarshal(kvm, &target)
+		err := cptest.StringAttributesUnmarshal(sas, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, want)
 	})
 
 	t.Run("unmarshal only works on structs or pointers to them", func(t *testing.T) {
-		kvm := map[string]string{}
+		sas := map[string]string{}
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, 42) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, 42) }, cptest.NotAStructLike)
 
 		i := 42
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &i) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &i) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, "foo") }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, "foo") }, cptest.NotAStructLike)
 
 		str := "foo"
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &str) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &str) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, []int{1, 2, 3}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, []int{1, 2, 3}) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, [...]int{1, 2, 3}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, [...]int{1, 2, 3}) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, kvm) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, sas) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, func() {}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, func() {}) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, make(chan int)) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, make(chan int)) }, cptest.NotAStructLike)
 
 		// ---
 
-		err := cptest.KVMapUnmarshal(kvm, struct{}{})
+		err := cptest.StringAttributesUnmarshal(sas, struct{}{})
 		td.CmpNoError(t, err)
 
 		test := struct{}{}
-		err = cptest.KVMapUnmarshal(kvm, &test)
+		err = cptest.StringAttributesUnmarshal(sas, &test)
 		td.CmpNoError(t, err)
 	})
 
 	t.Run("report missing fields", func(t *testing.T) {
 		target := struct{}{}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Foo":    "42",
 			"Bar":    "ハロー",
 			"AGAIN?": "435",
 		}
 
-		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
 
 		td.CmpError(t, errs)
 
@@ -118,7 +118,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		target := structType{42, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"I":   "42",
 			"I8":  "127",
 			"I16": "-32000",
@@ -133,7 +133,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		want := structType{42, 42, 12, 127, -32000, -2000000000, 18000000000, 255, 65000, 4000000000, 32000000000}
 
-		err := cptest.KVMapUnmarshal(kvm, &target)
+		err := cptest.StringAttributesUnmarshal(sas, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, want)
@@ -156,7 +156,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		target := structType{42, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"I":   "-0",
 			"I8":  "-129",
 			"I16": "40000",
@@ -171,7 +171,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		want := structType{42, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
 
 		wantErrs := []error{
 			&cptest.NotValueOfType{reflect.Int8.String(), "-129", nil},
@@ -198,14 +198,14 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		target := structType{1.0, 0, 2.0}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"F32": "42.00",
 			"F64": "1e9",
 		}
 
 		want := structType{42.0, 0, 1e9}
 
-		err := cptest.KVMapUnmarshal(kvm, &target)
+		err := cptest.StringAttributesUnmarshal(sas, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, want)
@@ -220,14 +220,14 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		target := structType{1.0, 0, 2.0}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"F32": "3.402824E+38",
 			"F64": "-2.7976931348623157E+308",
 		}
 
 		want := structType{1.0, 0, 2.0}
 
-		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
 
 		wantErrs := []error{
 			&cptest.NotValueOfType{reflect.Float32.String(), "3.402824E+38", nil},
@@ -266,11 +266,11 @@ func TestKVMapUnmarshal(t *testing.T) {
 		}
 
 		for _, step := range sequence {
-			kvm := map[string]string{
+			sas := map[string]string{
 				"B": step.value,
 			}
 
-			err := cptest.KVMapUnmarshal(kvm, &target)
+			err := cptest.StringAttributesUnmarshal(sas, &target)
 			td.CmpNoError(t, err)
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -293,11 +293,11 @@ func TestKVMapUnmarshal(t *testing.T) {
 		}
 
 		for _, step := range seq1 {
-			kvm := map[string]string{
+			sas := map[string]string{
 				"B": step.value,
 			}
 
-			errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+			errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool.String(), step.value, nil}})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -314,11 +314,11 @@ func TestKVMapUnmarshal(t *testing.T) {
 		}
 
 		for _, step := range seq2 {
-			kvm := map[string]string{
+			sas := map[string]string{
 				"B": step.value,
 			}
 
-			errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+			errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool.String(), step.value, nil}})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -327,13 +327,13 @@ func TestKVMapUnmarshal(t *testing.T) {
 	t.Run("report missing fields", func(t *testing.T) {
 		target := struct{}{}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Foo": "42",
 			"Bar": "ハロー",
 			"":    "えっ？",
 		}
 
-		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
 
 		td.CmpError(t, errs)
 
@@ -356,13 +356,13 @@ func TestKVMapUnmarshal(t *testing.T) {
 
 		target := testType{}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Foo": "42",
 			"Bar": "ハロー",
 			"Zap": "",
 		}
 
-		err := cptest.KVMapUnmarshal(kvm, &target)
+		err := cptest.StringAttributesUnmarshal(sas, &target)
 
 		td.CmpNoError(t, err)
 
@@ -374,11 +374,11 @@ func TestKVMapUnmarshal(t *testing.T) {
 			Info struct{ Age int }
 		}{}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Info": "my age is over 9000",
 		}
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &target1) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: ""})
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &target1) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: ""})
 
 		type InfoType struct{ Age int }
 
@@ -386,7 +386,7 @@ func TestKVMapUnmarshal(t *testing.T) {
 			Info InfoType
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &target2) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &target2) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
 
 		type Numbers []int
 
@@ -394,113 +394,113 @@ func TestKVMapUnmarshal(t *testing.T) {
 			Info Numbers
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.KVMapUnmarshal(kvm, &target3) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
+		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &target3) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
 	})
 
 	t.Run("pointer to deserializable type that was allocated", func(t *testing.T) {
 		//(&d).FromString("5s")
 
 		target := struct {
-			Dur *Duration
-		}{&Duration{time.Second}}
+			Dur *duration
+		}{&duration{time.Second}}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Dur": "5s",
 		}
 
-		err := cptest.KVMapUnmarshal(kvm, &target)
+		err := cptest.StringAttributesUnmarshal(sas, &target)
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, target, struct{ Dur *Duration }{&Duration{5 * time.Second}})
+		td.Cmp(t, target, struct{ Dur *duration }{&duration{5 * time.Second}})
 	})
 
 	t.Run("pointer to deserializable type that was NOT allocated should allocate it", func(t *testing.T) {
 		target := struct {
-			Dur *Duration
+			Dur *duration
 		}{}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Dur": "5s",
 		}
 
-		err := cptest.KVMapUnmarshal(kvm, &target)
+		err := cptest.StringAttributesUnmarshal(sas, &target)
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, target, struct{ Dur *Duration }{&Duration{5 * time.Second}})
+		td.Cmp(t, target, struct{ Dur *duration }{&duration{5 * time.Second}})
 	})
 
 	t.Run("plain deserializable type should be filled anyway", func(t *testing.T) {
 		target := struct {
-			Dur Duration
+			Dur duration
 		}{}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Dur": "5s",
 		}
 
-		err := cptest.KVMapUnmarshal(kvm, &target)
+		err := cptest.StringAttributesUnmarshal(sas, &target)
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, target, struct{ Dur Duration }{Duration{5 * time.Second}})
+		td.Cmp(t, target, struct{ Dur duration }{duration{5 * time.Second}})
 	})
 
 	t.Run("error if user-defined type failed to parse input (non-pointer version)", func(t *testing.T) {
 		target := struct {
-			Dur Duration
+			Dur duration
 		}{}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Dur": "5sus",
 		}
 
-		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
 
         td.Cmp(t, errs.Errors, []error{
-            &cptest.NotValueOfType{"Duration", "5sus", nil},
+            &cptest.NotValueOfType{"duration", "5sus", nil},
         })
-		td.Cmp(t, target, struct{ Dur Duration }{})
+		td.Cmp(t, target, struct{ Dur duration }{})
 	})
 
 	t.Run("error if user-defined type failed to parse input (empty pointer version)", func(t *testing.T) {
 		target := struct {
-			Dur *Duration
+			Dur *duration
 		}{}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Dur": "5sus",
 		}
 
-		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
 
         td.Cmp(t, errs.Errors, []error{
-            &cptest.NotValueOfType{"Duration", "5sus", nil},
+            &cptest.NotValueOfType{"duration", "5sus", nil},
         })
-		td.Cmp(t, target, struct{ Dur *Duration }{})
+		td.Cmp(t, target, struct{ Dur *duration }{})
 	})
 
 	t.Run("error if user-defined type failed to parse input (valid pointer version)", func(t *testing.T) {
-        dur := &Duration{time.Second}
+        dur := &duration{time.Second}
 		target := struct {
-			Dur *Duration
+			Dur *duration
 		}{dur}
 
-		kvm := map[string]string{
+		sas := map[string]string{
 			"Dur": "5sus",
 		}
 
-		errs := cptest.KVMapUnmarshal(kvm, &target).(*multierror.Error)
+		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
 
         td.Cmp(t, errs.Errors, []error{
-            &cptest.NotValueOfType{"Duration", "5sus", nil},
+            &cptest.NotValueOfType{"duration", "5sus", nil},
         })
-		td.Cmp(t, target, struct{ Dur *Duration }{dur})
+		td.Cmp(t, target, struct{ Dur *duration }{dur})
 	})
 }
 
-type Duration struct{ time.Duration }
+type duration struct{ time.Duration }
 
-func (d *Duration) FromString(str string) error {
+func (d *duration) FromString(str string) error {
 	dur, err := time.ParseDuration(str)
-	*d = Duration{dur}
+	*d = duration{dur}
 	return err
 }
