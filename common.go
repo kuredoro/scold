@@ -26,6 +26,24 @@ func (e *LineError) Unwrap() error {
 	return e.Err
 }
 
+type LineRangeError struct {
+	Begin int
+	End   int
+	Err   error
+}
+
+func (e *LineRangeError) Error() string {
+    if e.Begin + 1 == e.End {
+        return fmt.Sprintf("line %d: %v", e.Begin, e.Err)
+    }
+
+	return fmt.Sprintf("lines %d-%d: %v", e.Begin, e.End - 1, e.Err)
+}
+
+func (e *LineRangeError) Unwrap() error {
+	return e.Err
+}
+
 type TestError struct {
 	TestNum int
 	Err     error
