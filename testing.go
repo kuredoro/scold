@@ -122,7 +122,7 @@ func AssertDefaultConfig(t *testing.T, got InputsConfig) {
 	t.Helper()
 
     want := InputsConfig{}
-    StringAttributesUnmarshal(map[string]string{}, &want)
+    StringMapUnmarshal(map[string]string{}, &want)
 
     td.Cmp(t, got, want)
 }
