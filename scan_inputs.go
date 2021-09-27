@@ -97,7 +97,6 @@ func ScanConfig(text string) (config map[string]string, key2line map[string]int,
 
 		if err != nil {
 			errs = append(errs, &LineError{
-				Header: "scan config",
 				Line:   lineNum,
 				Err:    err,
 			})
