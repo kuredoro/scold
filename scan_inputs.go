@@ -87,10 +87,11 @@ func ScanKeyValuePair(line string) (string, string, error) {
 // must be non-empty. Otherwise, a LinedError is produced. The final map
 // will contain only correctly specified key-value pairs or an empty map.
 // Duplicate keys are allowed, the later occurrence is preferred.
-func ScanConfig(text string) (m map[string]string, errs []error) {
+func ScanConfig(text string) (config map[string]string, key2line map[string]int, errs []error) {
 	s := bufio.NewScanner(strings.NewReader(text))
 
-	m = make(map[string]string)
+	config = make(map[string]string)
+	key2line = make(map[string]int)
 	for lineNum := 1; s.Scan(); lineNum++ {
 		key, val, err := ScanKeyValuePair(s.Text())
 
@@ -107,7 +108,8 @@ func ScanConfig(text string) (m map[string]string, errs []error) {
 			continue
 		}
 
-		m[key] = val
+		config[key] = val
+        key2line[key] = lineNum
 	}
 
 	return
@@ -182,7 +184,7 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 
 		// Try to parse config
 		if testErrs != nil && partNum == 0 {
-			config, configErrs := ScanConfig(part)
+			config, _, configErrs := ScanConfig(part)
 
 			if configErrs != nil {
 				errs = append(errs, configErrs...)
