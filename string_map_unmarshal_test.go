@@ -19,9 +19,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 	t.Run("empty map and struct", func(t *testing.T) {
 		var target struct{}
 
-		sas := map[string]string{} // String AttributeS
+		sm := map[string]string{} // String Map
 
-		err := cptest.StringAttributesUnmarshal(sas, &target)
+		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 	})
@@ -36,59 +36,59 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			42, 11.0, "struct", make(map[string]int),
 		}
 
-		sas := map[string]string{}
+		sm := map[string]string{}
 
 		want := target
 
-		err := cptest.StringAttributesUnmarshal(sas, &target)
+		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, want)
 	})
 
 	t.Run("unmarshal only works on structs or pointers to them", func(t *testing.T) {
-		sas := map[string]string{}
+		sm := map[string]string{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, 42) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, 42) }, cptest.NotAStructLike)
 
 		i := 42
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &i) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &i) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, "foo") }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, "foo") }, cptest.NotAStructLike)
 
 		str := "foo"
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &str) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &str) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, []int{1, 2, 3}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, []int{1, 2, 3}) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, [...]int{1, 2, 3}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, [...]int{1, 2, 3}) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, sas) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, sm) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, func() {}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, func() {}) }, cptest.NotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, make(chan int)) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, make(chan int)) }, cptest.NotAStructLike)
 
 		// ---
 
-		err := cptest.StringAttributesUnmarshal(sas, struct{}{})
+		err := cptest.StringMapUnmarshal(sm, struct{}{})
 		td.CmpNoError(t, err)
 
 		test := struct{}{}
-		err = cptest.StringAttributesUnmarshal(sas, &test)
+		err = cptest.StringMapUnmarshal(sm, &test)
 		td.CmpNoError(t, err)
 	})
 
 	t.Run("report missing fields", func(t *testing.T) {
 		target := struct{}{}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Foo":    "42",
 			"Bar":    "ハロー",
 			"AGAIN?": "435",
 		}
 
-		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
+		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.CmpError(t, errs)
 
@@ -118,7 +118,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		target := structType{42, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"I":   "42",
 			"I8":  "127",
 			"I16": "-32000",
@@ -133,7 +133,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		want := structType{42, 42, 12, 127, -32000, -2000000000, 18000000000, 255, 65000, 4000000000, 32000000000}
 
-		err := cptest.StringAttributesUnmarshal(sas, &target)
+		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, want)
@@ -156,7 +156,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		target := structType{42, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"I":   "-0",
 			"I8":  "-129",
 			"I16": "40000",
@@ -171,7 +171,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		want := structType{42, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
+		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		wantErrs := []error{
 			&cptest.NotValueOfType{reflect.Int8.String(), "-129", nil},
@@ -198,14 +198,14 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		target := structType{1.0, 0, 2.0}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"F32": "42.00",
 			"F64": "1e9",
 		}
 
 		want := structType{42.0, 0, 1e9}
 
-		err := cptest.StringAttributesUnmarshal(sas, &target)
+		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, want)
@@ -220,14 +220,14 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		target := structType{1.0, 0, 2.0}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"F32": "3.402824E+38",
 			"F64": "-2.7976931348623157E+308",
 		}
 
 		want := structType{1.0, 0, 2.0}
 
-		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
+		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		wantErrs := []error{
 			&cptest.NotValueOfType{reflect.Float32.String(), "3.402824E+38", nil},
@@ -266,11 +266,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		}
 
 		for _, step := range sequence {
-			sas := map[string]string{
+			sm := map[string]string{
 				"B": step.value,
 			}
 
-			err := cptest.StringAttributesUnmarshal(sas, &target)
+			err := cptest.StringMapUnmarshal(sm, &target)
 			td.CmpNoError(t, err)
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -293,11 +293,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		}
 
 		for _, step := range seq1 {
-			sas := map[string]string{
+			sm := map[string]string{
 				"B": step.value,
 			}
 
-			errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
+			errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool.String(), step.value, nil}})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -314,11 +314,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		}
 
 		for _, step := range seq2 {
-			sas := map[string]string{
+			sm := map[string]string{
 				"B": step.value,
 			}
 
-			errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
+			errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool.String(), step.value, nil}})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -327,13 +327,13 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 	t.Run("report missing fields", func(t *testing.T) {
 		target := struct{}{}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Foo": "42",
 			"Bar": "ハロー",
 			"":    "えっ？",
 		}
 
-		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
+		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.CmpError(t, errs)
 
@@ -356,13 +356,13 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		target := testType{}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Foo": "42",
 			"Bar": "ハロー",
 			"Zap": "",
 		}
 
-		err := cptest.StringAttributesUnmarshal(sas, &target)
+		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 
@@ -374,11 +374,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info struct{ Age int }
 		}{}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Info": "my age is over 9000",
 		}
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &target1) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: ""})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target1) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: ""})
 
 		type InfoType struct{ Age int }
 
@@ -386,7 +386,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info InfoType
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &target2) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target2) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
 
 		type Numbers []int
 
@@ -394,7 +394,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info Numbers
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringAttributesUnmarshal(sas, &target3) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target3) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
 	})
 
 	t.Run("pointer to deserializable type that was allocated", func(t *testing.T) {
@@ -404,11 +404,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Dur *duration
 		}{&duration{time.Second}}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Dur": "5s",
 		}
 
-		err := cptest.StringAttributesUnmarshal(sas, &target)
+		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, struct{ Dur *duration }{&duration{5 * time.Second}})
@@ -419,11 +419,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Dur *duration
 		}{}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Dur": "5s",
 		}
 
-		err := cptest.StringAttributesUnmarshal(sas, &target)
+		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, struct{ Dur *duration }{&duration{5 * time.Second}})
@@ -434,11 +434,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Dur duration
 		}{}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Dur": "5s",
 		}
 
-		err := cptest.StringAttributesUnmarshal(sas, &target)
+		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, struct{ Dur duration }{duration{5 * time.Second}})
@@ -449,11 +449,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Dur duration
 		}{}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Dur": "5sus",
 		}
 
-		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
+		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
         td.Cmp(t, errs.Errors, []error{
             &cptest.NotValueOfType{"duration", "5sus", nil},
@@ -466,11 +466,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Dur *duration
 		}{}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Dur": "5sus",
 		}
 
-		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
+		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
         td.Cmp(t, errs.Errors, []error{
             &cptest.NotValueOfType{"duration", "5sus", nil},
@@ -484,11 +484,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Dur *duration
 		}{dur}
 
-		sas := map[string]string{
+		sm := map[string]string{
 			"Dur": "5sus",
 		}
 
-		errs := cptest.StringAttributesUnmarshal(sas, &target).(*multierror.Error)
+		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
         td.Cmp(t, errs.Errors, []error{
             &cptest.NotValueOfType{"duration", "5sus", nil},

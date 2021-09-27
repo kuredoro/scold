@@ -206,7 +206,7 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 				// key-value pairs.
 			}
 
-			unmarshalErrs := StringAttributesUnmarshal(config, &inputs.Config)
+			unmarshalErrs := StringMapUnmarshal(config, &inputs.Config)
 			if unmarshalErrs != nil {
 				errs = append(errs, unmarshalErrs.(*multierror.Error).Errors...)
 			}
