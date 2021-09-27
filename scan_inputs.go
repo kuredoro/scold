@@ -15,22 +15,6 @@ const (
 	KeyMissing         = StringError("key cannot be empty")
 )
 
-// LinedError appends line information to the error message. It is mainly used
-// to test that errors are produced for correct lines.
-type LinedError struct {
-	Header string
-	Line   int
-	Err    error
-}
-
-func (e *LinedError) Error() string {
-	return fmt.Sprintf("%s: line %d: %v", e.Header, e.Line, e.Err)
-}
-
-func (e *LinedError) Unwrap() error {
-	return e.Err
-}
-
 // The set of delimeters used when partitioning inputs file.
 const (
 	IODelim   = "---"
@@ -111,7 +95,7 @@ func ScanConfig(text string) (m map[string]string, errs []error) {
 		key, val, err := ScanKeyValuePair(s.Text())
 
 		if err != nil {
-			errs = append(errs, &LinedError{
+			errs = append(errs, &LineError{
 				Header: "scan config",
 				Line:   lineNum,
 				Err:    err,
