@@ -12,7 +12,9 @@ const (
 	// NotStructLike is issued when a destination type doesn't behave like
 	// a struct. struct and *struct types have the same syntax for manipulating
 	// them, so they are considered struct-like.
-	NotAStructLike = StringError("not a struct-like")
+	ErrNotAStructLike = StringError("not a struct-like")
+
+	ErrUnknownField = StringError("unknown field")
 )
 
 var intParsers = map[reflect.Kind]int{
@@ -41,43 +43,43 @@ var complexParsers = map[reflect.Kind]int{
 	reflect.Complex128: 128,
 }
 
-type MissingFieldError struct {
+type FieldError struct {
 	FieldName string
+	Err       error
 }
 
-func (e *MissingFieldError) Error() string {
-	return fmt.Sprintf("field %q doesn't exist", e.FieldName)
+func (e *FieldError) Error() string {
+	return fmt.Sprintf("field %q: %v", e.FieldName, e.Err)
 }
 
-type NotValueOfType struct {
-	Type   string
-	Value  string
-	Reason error
+func (e *FieldError) Unwrap() error {
+	return e.Err
 }
 
-func (e *NotValueOfType) Error() string {
+type NotValueOfTypeError struct {
+	Type  string
+	Value string
+}
+
+func (e *NotValueOfTypeError) Error() string {
 	return fmt.Sprintf("value %q doesn't match %v type", e.Value, e.Type)
 }
 
-func (e *NotValueOfType) Equal(other *NotValueOfType) bool {
+func (e *NotValueOfTypeError) Equal(other *NotValueOfTypeError) bool {
 	return e.Type == other.Type && e.Value == other.Value
 }
 
-func (e *NotValueOfType) Unwrap() error {
-    return e.Reason
-}
-
-type NotStringUnmarshalableType struct {
+type NotStringUnmarshalableTypeError struct {
 	Field    string
 	Type     reflect.Kind
 	TypeName string
 }
 
-func (e *NotStringUnmarshalableType) Error() string {
+func (e *NotStringUnmarshalableTypeError) Error() string {
 	return fmt.Sprintf("field %q is of type %v (%v) and cannot be unmarshaled from string, because it is not of fundamental type or because the type doesn't implement FromString(string) method", e.Field, e.TypeName, e.Type)
 }
 
-func (e *NotStringUnmarshalableType) Equal(other *NotStringUnmarshalableType) bool {
+func (e *NotStringUnmarshalableTypeError) Equal(other *NotStringUnmarshalableTypeError) bool {
 	return e.Field == other.Field && e.Type == other.Type && e.TypeName == other.TypeName
 }
 
@@ -89,7 +91,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 	}
 
 	if val.Kind() != reflect.Struct {
-		panic(NotAStructLike)
+		panic(ErrNotAStructLike)
 	}
 
 	var errs *multierror.Error
@@ -98,42 +100,41 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 		field := val.FieldByName(k)
 
 		if !field.IsValid() {
-			errs = multierror.Append(errs, &MissingFieldError{k})
+			errs = multierror.Append(errs, &FieldError{k, ErrUnknownField})
 			continue
 		}
 
 		// A user-defined type should contain FromString method
-        // XXX: Should do via interfaces
-        fromStringMethod := field.MethodByName("FromString")
-        if !fromStringMethod.IsValid() {
-            fromStringMethod = field.Addr().MethodByName("FromString")
+		// XXX: Should do via interfaces
+		fromStringMethod := field.MethodByName("FromString")
+		if !fromStringMethod.IsValid() {
+			fromStringMethod = field.Addr().MethodByName("FromString")
 
-            // If we found conversion method on a pointer, then we should work
-            // on the pointer to the field further.
-            if fromStringMethod.IsValid() {
-                field = field.Addr()
-            }
-        }
+			// If we found conversion method on a pointer, then we should work
+			// on the pointer to the field further.
+			if fromStringMethod.IsValid() {
+				field = field.Addr()
+			}
+		}
 
-        if fromStringMethod.IsValid() {
-            // Make sure that the field is allocated, so that the FromString
-            // method had a place to write back to. But also remember if we
-            // changed the field, so to revert it back if error occurs.
-            wasNil := false
-            if field.IsNil() {
-                field.Set(reflect.New(field.Type().Elem()))
-                wasNil = true
-            }
+		if fromStringMethod.IsValid() {
+			// Make sure that the field is allocated, so that the FromString
+			// method had a place to write back to. But also remember if we
+			// changed the field, so to revert it back if error occurs.
+			wasNil := false
+			if field.IsNil() {
+				field.Set(reflect.New(field.Type().Elem()))
+				wasNil = true
+			}
 
 			output := fromStringMethod.Call([]reflect.Value{reflect.ValueOf(v)})
 
 			if !output[0].IsNil() {
-				err := output[0].Interface().(error)
-				errs = multierror.Append(errs, &NotValueOfType{field.Type().Elem().Name(), v, err})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Type().Elem().Name(), v}})
 
-                if wasNil {
-                    field.Set(reflect.Zero(field.Type()))
-                }
+				if wasNil {
+					field.Set(reflect.Zero(field.Type()))
+				}
 			}
 			continue
 		}
@@ -141,7 +142,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 		if bitSize, found := intParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseInt(v, 10, bitSize)
 			if err != nil {
-				errs = multierror.Append(errs, &NotValueOfType{field.Kind().String(), v, err})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v}})
 				continue
 			}
 
@@ -160,7 +161,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 		} else if bitSize, found := uintParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseUint(v, 10, bitSize)
 			if err != nil {
-				errs = multierror.Append(errs, &NotValueOfType{field.Kind().String(), v, err})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v}})
 				continue
 			}
 
@@ -178,7 +179,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 		} else if bitSize, found := floatParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseFloat(v, bitSize)
 			if err != nil {
-				errs = multierror.Append(errs, &NotValueOfType{field.Kind().String(), v, err})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v}})
 				continue
 			}
 
@@ -192,7 +193,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 		} else if field.Kind() == reflect.Bool {
 			parsed, err := strconv.ParseBool(v)
 			if err != nil {
-				errs = multierror.Append(errs, &NotValueOfType{field.Kind().String(), v, err})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v}})
 				continue
 			}
 
@@ -200,7 +201,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 		} else if field.Kind() == reflect.String {
 			field.Set(reflect.ValueOf(v))
 		} else {
-			panic(&NotStringUnmarshalableType{Field: k, Type: field.Kind(), TypeName: field.Type().Name()})
+			panic(&NotStringUnmarshalableTypeError{Field: k, Type: field.Kind(), TypeName: field.Type().Name()})
 		}
 	}
 
