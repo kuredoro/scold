@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-    "time"
+	"time"
 
-	"github.com/maxatome/go-testdeep/td"
 	"github.com/kuredoro/cptest"
+	"github.com/maxatome/go-testdeep/td"
 )
 
 func TestScanTest(t *testing.T) {
@@ -357,10 +357,10 @@ zyx
 				},
 			}
 
-            configWant := cptest.InputsConfig{
-                Tl: cptest.Duration{2 * time.Second},
-                Prec: 16,
-            }
+			configWant := cptest.InputsConfig{
+				Tl:   cptest.Duration{2 * time.Second},
+				Prec: 16,
+			}
 
 			text := `
 Tl = 2s
@@ -377,7 +377,7 @@ Prec= 16
 
 			cptest.AssertTests(t, inputs.Tests, testsWant)
 			cptest.AssertNoErrors(t, errs)
-            td.Cmp(t, inputs.Config, configWant)
+			td.Cmp(t, inputs.Config, configWant)
 		})
 
 	t.Run("configs are treated as such only before test 1",
@@ -421,13 +421,14 @@ Tl=1ms
 extra=love
 ===`
 			configWant := cptest.InputsConfig{
-                Tl: cptest.Duration{time.Millisecond},
+				Tl: cptest.Duration{time.Millisecond},
 			}
 
 			errLines := []int{1, 2}
 			errsWant := []error{
 				cptest.KeyMissing,
 				cptest.KeyMissing,
+				//cptest.MissingFieldError,
 				cptest.IOSeparatorMissing,
 			}
 
@@ -436,7 +437,7 @@ extra=love
 			cptest.AssertTests(t, inputs.Tests, nil)
 			cptest.AssertErrorLines(t, errs, errLines)
 			cptest.AssertErrors(t, errs, errsWant)
-            td.Cmp(t, inputs.Config, configWant, "parsed config")
+			td.Cmp(t, inputs.Config, configWant, "parsed config")
 		})
 
 	t.Run("wierd (empty inputs)",
@@ -468,31 +469,38 @@ foo=bar
   two words   =  is   true   
         `
 
-			got, errs := cptest.ScanConfig(text)
+			gotMap, gotLines, errs := cptest.ScanConfig(text)
 
-			want := map[string]string{
+			wantMap := map[string]string{
 				"hello":     "world",
 				"foo":       "bar",
 				"two words": "is   true",
 			}
 
-            td.Cmp(t, got, want, "raw config")
+			wantLines := map[string]int{
+				"hello":     2,
+				"foo":       3,
+				"two words": 4,
+			}
+
+			td.Cmp(t, gotMap, wantMap, "config contents")
+			td.Cmp(t, gotLines, wantLines, "key to line mapping")
 			cptest.AssertNoErrors(t, errs)
 		})
 
 	t.Run("lines without assignments are keys without values",
 		func(t *testing.T) {
-			text := `
-hi = owww
+			text := `hi = owww
 key assign value
 zap = paz
 ignore_newline
+
 this is ok =
         `
 
-			got, errs := cptest.ScanConfig(text)
+			gotMap, gotLines, errs := cptest.ScanConfig(text)
 
-			want := map[string]string{
+			wantMap := map[string]string{
 				"hi":               "owww",
 				"key assign value": "",
 				"zap":              "paz",
@@ -500,7 +508,16 @@ this is ok =
 				"this is ok":       "",
 			}
 
-            td.Cmp(t, got, want, "raw config")
+			wantLines := map[string]int{
+				"hi":               1,
+				"key assign value": 2,
+				"zap":              3,
+				"ignore_newline":   4,
+				"this is ok":       6,
+			}
+
+			td.Cmp(t, gotMap, wantMap, "config contents")
+			td.Cmp(t, gotLines, wantLines, "key to line mapping")
 			cptest.AssertNoErrors(t, errs)
 		})
 
@@ -514,11 +531,15 @@ foo=
  = 
         `
 
-			got, errs := cptest.ScanConfig(text)
+			gotMap, gotLines, errs := cptest.ScanConfig(text)
 
-			want := map[string]string{
+			wantMap := map[string]string{
 				"foo": "",
 			}
+
+            wantLines := map[string]int{
+                "foo": 4,
+            }
 
 			errLines := []int{3, 5, 6}
 			errsWant := []error{
@@ -527,7 +548,8 @@ foo=
 				cptest.KeyMissing,
 			}
 
-            td.Cmp(t, got, want, "raw config")
+			td.Cmp(t, gotMap, wantMap, "config contents")
+			td.Cmp(t, gotLines, wantLines, "key to line mapping")
 			cptest.AssertErrorLines(t, errs, errLines)
 			cptest.AssertErrors(t, errs, errsWant)
 		})
