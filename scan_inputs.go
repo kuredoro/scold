@@ -220,8 +220,9 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 		testNum++
 
 		if testErrs != nil {
+            testLineCount := strings.Count(part, "\n")
 			for i, err := range testErrs {
-				testErrs[i] = &LineError{lineNum, &TestError{testNum, err}}
+				testErrs[i] = &LineRangeError{lineNum, lineNum + testLineCount, &TestError{testNum, err}}
 			}
 
 			errs = append(errs, testErrs...)

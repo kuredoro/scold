@@ -421,6 +421,9 @@ Tl=10.0
 
 ===
 extra=love
+===
+oh = and
+by the way...
 ===`
 			configWant := cptest.InputsConfig{}
 
@@ -428,7 +431,8 @@ extra=love
 				&cptest.LineError{1, cptest.KeyMissing},
 				&cptest.LineError{2, &cptest.FieldError{"foo", cptest.ErrUnknownField}},
 				&cptest.LineError{3, &cptest.FieldError{"Tl", &cptest.NotValueOfTypeError{"Duration", "10.0"}}},
-				&cptest.LineError{7, &cptest.TestError{1, cptest.IOSeparatorMissing}},
+				&cptest.LineRangeError{7, 8, &cptest.TestError{1, cptest.IOSeparatorMissing}},
+				&cptest.LineRangeError{9, 11, &cptest.TestError{2, cptest.IOSeparatorMissing}},
 			}
 
 			inputs, errs := cptest.ScanInputs(text)
