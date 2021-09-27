@@ -415,28 +415,26 @@ foo= bar
 	t.Run("errors in config",
 		func(t *testing.T) {
 			text := `= foo
-== aaa
-Tl=1ms
+foo= aaa
+Tl=10.0
+===
+
 ===
 extra=love
 ===`
-			configWant := cptest.InputsConfig{
-				Tl: cptest.Duration{time.Millisecond},
-			}
+			configWant := cptest.InputsConfig{}
 
-			errLines := []int{1, 2}
 			errsWant := []error{
-				cptest.KeyMissing,
-				cptest.KeyMissing,
-				//cptest.MissingFieldError,
-				cptest.IOSeparatorMissing,
+				&cptest.LineError{1, cptest.KeyMissing},
+				&cptest.LineError{2, &cptest.FieldError{"foo", cptest.ErrUnknownField}},
+				&cptest.LineError{3, &cptest.FieldError{"Tl", &cptest.NotValueOfTypeError{"Duration", "10.0"}}},
+				&cptest.LineError{7, &cptest.TestError{1, cptest.IOSeparatorMissing}},
 			}
 
 			inputs, errs := cptest.ScanInputs(text)
 
 			cptest.AssertTests(t, inputs.Tests, nil)
-			cptest.AssertErrorLines(t, errs, errLines)
-			cptest.AssertErrors(t, errs, errsWant)
+			td.Cmp(t, errs, td.Bag(td.Flatten(errsWant)))
 			td.Cmp(t, inputs.Config, configWant, "parsed config")
 		})
 
@@ -537,9 +535,9 @@ foo=
 				"foo": "",
 			}
 
-            wantLines := map[string]int{
-                "foo": 4,
-            }
+			wantLines := map[string]int{
+				"foo": 4,
+			}
 
 			errLines := []int{3, 5, 6}
 			errsWant := []error{
