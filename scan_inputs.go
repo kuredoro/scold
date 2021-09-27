@@ -2,7 +2,6 @@ package cptest
 
 import (
 	"bufio"
-	"fmt"
 	"strings"
 	"time"
 
@@ -97,8 +96,8 @@ func ScanConfig(text string) (config map[string]string, key2line map[string]int,
 
 		if err != nil {
 			errs = append(errs, &LineError{
-				Line:   lineNum,
-				Err:    err,
+				Line: lineNum,
+				Err:  err,
 			})
 			continue
 		}
@@ -108,7 +107,7 @@ func ScanConfig(text string) (config map[string]string, key2line map[string]int,
 		}
 
 		config[key] = val
-        key2line[key] = lineNum
+		key2line[key] = lineNum
 	}
 
 	return
@@ -178,12 +177,22 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 	parts := SplitByInlinedPrefixN(text, TestDelim, 0)
 
 	testNum := 0
+	lineNum := 1
 	for partNum, part := range parts {
+		// Instead of incrementing lineNum at the code flow graph's each leaf,
+		// we'll do it once at the beginning.
+		if partNum != 0 {
+			// A part is a string between two lines that start with a specified
+			// prefix. We need to add excluded line with prefix to keep line number
+			// correct.
+			lineNum += strings.Count(parts[partNum-1], "\n") + 1
+		}
+
 		test, testErrs := ScanTest(part)
 
 		// Try to parse config
 		if testErrs != nil && partNum == 0 {
-			config, _, configErrs := ScanConfig(part)
+			config, key2line, configErrs := ScanConfig(part)
 
 			if configErrs != nil {
 				errs = append(errs, configErrs...)
@@ -193,7 +202,11 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 
 			unmarshalErrs := StringMapUnmarshal(config, &inputs.Config)
 			if unmarshalErrs != nil {
-				errs = append(errs, unmarshalErrs.(*multierror.Error).Errors...)
+				merr := unmarshalErrs.(*multierror.Error)
+				for i, err := range merr.Errors {
+					merr.Errors[i] = &LineError{key2line[err.(*FieldError).FieldName], err}
+				}
+				errs = append(errs, merr.Errors...)
 			}
 
 			continue
@@ -208,7 +221,7 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 
 		if testErrs != nil {
 			for i, err := range testErrs {
-				testErrs[i] = fmt.Errorf("test %d: %w", testNum, err)
+				testErrs[i] = &LineError{lineNum, &TestError{testNum, err}}
 			}
 
 			errs = append(errs, testErrs...)
