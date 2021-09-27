@@ -92,30 +92,6 @@ func AssertCallCount(t *testing.T, funcName string, got, want int) {
 	}
 }
 
-// AssertErrorLines checks that each error in the received array of errors
-// is wrapping a LinedError error. At the same time, it checks that the line
-// numbers are equal to the expected ones.
-func AssertErrorLines(t *testing.T, errs []error, lines []int) {
-	t.Helper()
-
-	if len(errs) < len(lines) {
-		t.Fatalf("got %d errors, want %d", len(errs), len(lines))
-	}
-
-	for i := range lines {
-		err := errs[i]
-		var e *LineError
-		if !errors.As(err, &e) {
-			t.Errorf("got error without line info, want one with line %d. Error: %v", lines[i], err)
-			continue
-		}
-
-		if e.Line != lines[i] {
-			t.Errorf("got error #%d at line %d, want at line %d", i+1, e.Line, lines[i])
-		}
-	}
-}
-
 // AssertDefaultConfig checks that the received key-value set is empty. If it's not,
 // the test is failed and the its contents are printed.
 func AssertDefaultConfig(t *testing.T, got InputsConfig) {

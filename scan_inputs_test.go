@@ -539,16 +539,14 @@ foo=
 				"foo": 4,
 			}
 
-			errLines := []int{3, 5, 6}
 			errsWant := []error{
-				cptest.KeyMissing,
-				cptest.KeyMissing,
-				cptest.KeyMissing,
+				&cptest.LineError{3, cptest.KeyMissing},
+				&cptest.LineError{5, cptest.KeyMissing},
+				&cptest.LineError{6, cptest.KeyMissing},
 			}
 
 			td.Cmp(t, gotMap, wantMap, "config contents")
 			td.Cmp(t, gotLines, wantLines, "key to line mapping")
-			cptest.AssertErrorLines(t, errs, errLines)
-			cptest.AssertErrors(t, errs, errsWant)
+            td.Cmp(t, errs, td.Bag(td.Flatten(errsWant)))
 		})
 }
