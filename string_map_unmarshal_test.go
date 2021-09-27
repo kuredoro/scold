@@ -49,25 +49,25 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 	t.Run("unmarshal only works on structs or pointers to them", func(t *testing.T) {
 		sm := map[string]string{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, 42) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, 42) }, cptest.ErrNotAStructLike)
 
 		i := 42
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &i) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &i) }, cptest.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, "foo") }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, "foo") }, cptest.ErrNotAStructLike)
 
 		str := "foo"
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &str) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &str) }, cptest.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, []int{1, 2, 3}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, []int{1, 2, 3}) }, cptest.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, [...]int{1, 2, 3}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, [...]int{1, 2, 3}) }, cptest.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, sm) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, sm) }, cptest.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, func() {}) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, func() {}) }, cptest.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, make(chan int)) }, cptest.NotAStructLike)
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, make(chan int)) }, cptest.ErrNotAStructLike)
 
 		// ---
 
@@ -93,9 +93,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		td.CmpError(t, errs)
 
 		wantErrs := []error{
-			&cptest.MissingFieldError{"Foo"},
-			&cptest.MissingFieldError{"Bar"},
-			&cptest.MissingFieldError{"AGAIN?"},
+			&cptest.FieldError{"Foo", cptest.ErrUnknownField},
+			&cptest.FieldError{"Bar", cptest.ErrUnknownField},
+			&cptest.FieldError{"AGAIN?", cptest.ErrUnknownField},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -174,15 +174,15 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		wantErrs := []error{
-			&cptest.NotValueOfType{reflect.Int8.String(), "-129", nil},
-			&cptest.NotValueOfType{reflect.Int16.String(), "40000", nil},
-			&cptest.NotValueOfType{reflect.Int32.String(), "-3000000000", nil},
-			&cptest.NotValueOfType{reflect.Int64.String(), "10000000000000000000", nil},
-			&cptest.NotValueOfType{reflect.Uint.String(), "０", nil},
-			&cptest.NotValueOfType{reflect.Uint8.String(), "300", nil},
-			&cptest.NotValueOfType{reflect.Uint16.String(), "67000", nil},
-			&cptest.NotValueOfType{reflect.Uint32.String(), "5000000000", nil},
-			&cptest.NotValueOfType{reflect.Uint64.String(), "20000000000000000000", nil},
+			&cptest.FieldError{"I8", &cptest.NotValueOfTypeError{reflect.Int8.String(), "-129"}},
+			&cptest.FieldError{"I16", &cptest.NotValueOfTypeError{reflect.Int16.String(), "40000"}},
+			&cptest.FieldError{"I32", &cptest.NotValueOfTypeError{reflect.Int32.String(), "-3000000000"}},
+			&cptest.FieldError{"I64", &cptest.NotValueOfTypeError{reflect.Int64.String(), "10000000000000000000"}},
+			&cptest.FieldError{"Ui", &cptest.NotValueOfTypeError{reflect.Uint.String(), "０"}},
+			&cptest.FieldError{"U8", &cptest.NotValueOfTypeError{reflect.Uint8.String(), "300"}},
+			&cptest.FieldError{"U16", &cptest.NotValueOfTypeError{reflect.Uint16.String(), "67000"}},
+			&cptest.FieldError{"U32", &cptest.NotValueOfTypeError{reflect.Uint32.String(), "5000000000"}},
+			&cptest.FieldError{"U64", &cptest.NotValueOfTypeError{reflect.Uint64.String(), "20000000000000000000"}},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -230,8 +230,8 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		wantErrs := []error{
-			&cptest.NotValueOfType{reflect.Float32.String(), "3.402824E+38", nil},
-			&cptest.NotValueOfType{reflect.Float64.String(), "-2.7976931348623157E+308", nil},
+			&cptest.FieldError{"F32", &cptest.NotValueOfTypeError{reflect.Float32.String(), "3.402824E+38"}},
+			&cptest.FieldError{"F64", &cptest.NotValueOfTypeError{reflect.Float64.String(), "-2.7976931348623157E+308"}},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -298,7 +298,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			}
 
 			errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
-			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool.String(), step.value, nil}})
+			td.Cmp(t, errs.Errors, []error{
+                &cptest.FieldError{"B", &cptest.NotValueOfTypeError{reflect.Bool.String(), step.value}},
+            })
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
 
@@ -319,7 +321,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			}
 
 			errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
-			td.Cmp(t, errs.Errors, []error{&cptest.NotValueOfType{reflect.Bool.String(), step.value, nil}})
+			td.Cmp(t, errs.Errors, []error{
+                &cptest.FieldError{"B", &cptest.NotValueOfTypeError{reflect.Bool.String(), step.value}},
+            })
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
 	})
@@ -338,9 +342,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		td.CmpError(t, errs)
 
 		wantErrs := []error{
-			&cptest.MissingFieldError{"Foo"},
-			&cptest.MissingFieldError{"Bar"},
-			&cptest.MissingFieldError{""},
+			&cptest.FieldError{"Foo", cptest.ErrUnknownField},
+			&cptest.FieldError{"Bar", cptest.ErrUnknownField},
+			&cptest.FieldError{"", cptest.ErrUnknownField},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -378,7 +382,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			"Info": "my age is over 9000",
 		}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target1) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: ""})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target1) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: ""})
 
 		type InfoType struct{ Age int }
 
@@ -386,7 +390,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info InfoType
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target2) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target2) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
 
 		type Numbers []int
 
@@ -394,7 +398,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info Numbers
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target3) }, &cptest.NotStringUnmarshalableType{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target3) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
 	})
 
 	t.Run("pointer to deserializable type that was allocated", func(t *testing.T) {
@@ -456,7 +460,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
         td.Cmp(t, errs.Errors, []error{
-            &cptest.NotValueOfType{"duration", "5sus", nil},
+            &cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
         })
 		td.Cmp(t, target, struct{ Dur duration }{})
 	})
@@ -473,7 +477,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
         td.Cmp(t, errs.Errors, []error{
-            &cptest.NotValueOfType{"duration", "5sus", nil},
+            &cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
         })
 		td.Cmp(t, target, struct{ Dur *duration }{})
 	})
@@ -491,7 +495,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
         td.Cmp(t, errs.Errors, []error{
-            &cptest.NotValueOfType{"duration", "5sus", nil},
+            &cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
         })
 		td.Cmp(t, target, struct{ Dur *duration }{dur})
 	})
