@@ -81,23 +81,28 @@ func ScanKeyValuePair(line string) (string, string, error) {
 	return key, val, nil
 }
 
+type NumberedLine struct {
+    Num int
+    Line string
+}
+
 // ScanConfig tries to parse a stream of key-value pairs. Key-value pair is
 // defined as `<string> "=" <string>`. Both strings are space trimmed. The key
 // must be non-empty. Otherwise, a LinedError is produced. The final map
 // will contain only correctly specified key-value pairs or an empty map.
 // Duplicate keys are allowed, the later occurrence is preferred.
-func ScanConfig(text string) (config map[string]string, key2line map[string]int, errs []error) {
+func ScanConfig(text string) (config map[string]string, key2line map[string]NumberedLine, errs []error) {
 	s := bufio.NewScanner(strings.NewReader(text))
 
 	config = make(map[string]string)
-	key2line = make(map[string]int)
+	key2line = make(map[string]NumberedLine)
 	for lineNum := 1; s.Scan(); lineNum++ {
 		key, val, err := ScanKeyValuePair(s.Text())
 
 		if err != nil {
 			errs = append(errs, &LineRangeError{
 				Begin: lineNum,
-				End:   lineNum + 1,
+				Lines: []string{s.Text()},
 				Err:   err,
 			})
 			continue
@@ -108,7 +113,7 @@ func ScanConfig(text string) (config map[string]string, key2line map[string]int,
 		}
 
 		config[key] = val
-		key2line[key] = lineNum
+		key2line[key] = NumberedLine{lineNum, s.Text()}
 	}
 
 	return
@@ -205,8 +210,12 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 			if unmarshalErrs != nil {
 				merr := unmarshalErrs.(*multierror.Error)
 				for i, err := range merr.Errors {
-					line := key2line[err.(*FieldError).FieldName]
-					merr.Errors[i] = &LineRangeError{line, line + 1, err}
+					numberedLine := key2line[err.(*FieldError).FieldName]
+					merr.Errors[i] = &LineRangeError{
+						Begin: numberedLine.Num,
+						Lines: []string{numberedLine.Line},
+						Err:   err,
+					}
 				}
 				errs = append(errs, merr.Errors...)
 			}
@@ -222,9 +231,18 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 		testNum++
 
 		if testErrs != nil {
-			testLineCount := strings.Count(part, "\n")
+            // TODO: add cptest.SplitAndTrim
+			testLines := strings.Split(part, "\n")
+            if len(testLines) != 0 && testLines[len(testLines)-1] == "" {
+                testLines = testLines[:len(testLines)-1]
+            }
+
 			for i, err := range testErrs {
-				testErrs[i] = &LineRangeError{lineNum, lineNum + testLineCount, &TestError{testNum, err}}
+				testErrs[i] = &LineRangeError{
+                    Begin: lineNum,
+                    Lines: testLines,
+                    Err: &TestError{testNum, err},
+                }
 			}
 
 			errs = append(errs, testErrs...)
