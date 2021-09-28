@@ -11,21 +11,8 @@ func (e StringError) Error() string {
 	return string(e)
 }
 
-// LineError appends line information to the error message. It is mainly used
+// LineRangeError appends line information to the error message. TODO: remove -> It is mainly used
 // to test that errors are produced for correct lines.
-type LineError struct {
-	Line int
-	Err  error
-}
-
-func (e *LineError) Error() string {
-	return fmt.Sprintf("line %d: %v", e.Line, e.Err)
-}
-
-func (e *LineError) Unwrap() error {
-	return e.Err
-}
-
 type LineRangeError struct {
 	Begin int
 	End   int
@@ -33,11 +20,11 @@ type LineRangeError struct {
 }
 
 func (e *LineRangeError) Error() string {
-    if e.Begin + 1 == e.End {
-        return fmt.Sprintf("line %d: %v", e.Begin, e.Err)
-    }
+	if e.Begin+1 == e.End {
+		return fmt.Sprintf("line %d: %v", e.Begin, e.Err)
+	}
 
-	return fmt.Sprintf("lines %d-%d: %v", e.Begin, e.End - 1, e.Err)
+	return fmt.Sprintf("lines %d-%d: %v", e.Begin, e.End-1, e.Err)
 }
 
 func (e *LineRangeError) Unwrap() error {
