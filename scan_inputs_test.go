@@ -428,11 +428,11 @@ by the way...
 			configWant := cptest.InputsConfig{}
 
 			errsWant := []error{
-				&cptest.LineRangeError{1, 2, cptest.KeyMissing},
-				&cptest.LineRangeError{2, 3, &cptest.FieldError{"foo", cptest.ErrUnknownField}},
-				&cptest.LineRangeError{3, 4, &cptest.FieldError{"Tl", &cptest.NotValueOfTypeError{"Duration", "10.0"}}},
-				&cptest.LineRangeError{7, 8, &cptest.TestError{1, cptest.IOSeparatorMissing}},
-				&cptest.LineRangeError{9, 11, &cptest.TestError{2, cptest.IOSeparatorMissing}},
+				&cptest.LineRangeError{1, []string{"= foo"}, cptest.KeyMissing},
+				&cptest.LineRangeError{2, []string{"foo= aaa"}, &cptest.FieldError{"foo", cptest.ErrUnknownField}},
+				&cptest.LineRangeError{3, []string{"Tl=10.0"}, &cptest.FieldError{"Tl", &cptest.NotValueOfTypeError{"Duration", "10.0"}}},
+				&cptest.LineRangeError{7, []string{"extra=love"}, &cptest.TestError{1, cptest.IOSeparatorMissing}},
+				&cptest.LineRangeError{9, []string{"oh = and", "by the way..."}, &cptest.TestError{2, cptest.IOSeparatorMissing}},
 			}
 
 			inputs, errs := cptest.ScanInputs(text)
@@ -479,10 +479,10 @@ foo=bar
 				"two words": "is   true",
 			}
 
-			wantLines := map[string]int{
-				"hello":     2,
-				"foo":       3,
-				"two words": 4,
+			wantLines := map[string]cptest.NumberedLine{
+				"hello":     {2, "hello = world"},
+				"foo":       {3, "foo=bar"},
+				"two words": {4, "  two words   =  is   true   "},
 			}
 
 			td.Cmp(t, gotMap, wantMap, "config contents")
@@ -510,12 +510,12 @@ this is ok =
 				"this is ok":       "",
 			}
 
-			wantLines := map[string]int{
-				"hi":               1,
-				"key assign value": 2,
-				"zap":              3,
-				"ignore_newline":   4,
-				"this is ok":       6,
+			wantLines := map[string]cptest.NumberedLine{
+				"hi":               {1, "hi = owww"},
+				"key assign value": {2, "key assign value"},
+				"zap":              {3, "zap = paz"},
+				"ignore_newline":   {4, "ignore_newline"},
+				"this is ok":       {6, "this is ok ="},
 			}
 
 			td.Cmp(t, gotMap, wantMap, "config contents")
@@ -539,14 +539,14 @@ foo=
 				"foo": "",
 			}
 
-			wantLines := map[string]int{
-				"foo": 4,
+			wantLines := map[string]cptest.NumberedLine{
+				"foo": {4, "foo="},
 			}
 
 			errsWant := []error{
-				&cptest.LineRangeError{3, 4, cptest.KeyMissing},
-				&cptest.LineRangeError{5, 6, cptest.KeyMissing},
-				&cptest.LineRangeError{6, 7, cptest.KeyMissing},
+				&cptest.LineRangeError{3, []string{"=bar"}, cptest.KeyMissing},
+				&cptest.LineRangeError{5, []string{"="}, cptest.KeyMissing},
+				&cptest.LineRangeError{6, []string{" = "}, cptest.KeyMissing},
 			}
 
 			td.Cmp(t, gotMap, wantMap, "config contents")
