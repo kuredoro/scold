@@ -95,9 +95,10 @@ func ScanConfig(text string) (config map[string]string, key2line map[string]int,
 		key, val, err := ScanKeyValuePair(s.Text())
 
 		if err != nil {
-			errs = append(errs, &LineError{
-				Line: lineNum,
-				Err:  err,
+			errs = append(errs, &LineRangeError{
+				Begin: lineNum,
+				End:   lineNum + 1,
+				Err:   err,
 			})
 			continue
 		}
@@ -204,7 +205,8 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 			if unmarshalErrs != nil {
 				merr := unmarshalErrs.(*multierror.Error)
 				for i, err := range merr.Errors {
-					merr.Errors[i] = &LineError{key2line[err.(*FieldError).FieldName], err}
+					line := key2line[err.(*FieldError).FieldName]
+					merr.Errors[i] = &LineRangeError{line, line + 1, err}
 				}
 				errs = append(errs, merr.Errors...)
 			}
@@ -220,7 +222,7 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 		testNum++
 
 		if testErrs != nil {
-            testLineCount := strings.Count(part, "\n")
+			testLineCount := strings.Count(part, "\n")
 			for i, err := range testErrs {
 				testErrs[i] = &LineRangeError{lineNum, lineNum + testLineCount, &TestError{testNum, err}}
 			}
