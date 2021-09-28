@@ -428,9 +428,9 @@ by the way...
 			configWant := cptest.InputsConfig{}
 
 			errsWant := []error{
-				&cptest.LineError{1, cptest.KeyMissing},
-				&cptest.LineError{2, &cptest.FieldError{"foo", cptest.ErrUnknownField}},
-				&cptest.LineError{3, &cptest.FieldError{"Tl", &cptest.NotValueOfTypeError{"Duration", "10.0"}}},
+				&cptest.LineRangeError{1, 2, cptest.KeyMissing},
+				&cptest.LineRangeError{2, 3, &cptest.FieldError{"foo", cptest.ErrUnknownField}},
+				&cptest.LineRangeError{3, 4, &cptest.FieldError{"Tl", &cptest.NotValueOfTypeError{"Duration", "10.0"}}},
 				&cptest.LineRangeError{7, 8, &cptest.TestError{1, cptest.IOSeparatorMissing}},
 				&cptest.LineRangeError{9, 11, &cptest.TestError{2, cptest.IOSeparatorMissing}},
 			}
@@ -544,9 +544,9 @@ foo=
 			}
 
 			errsWant := []error{
-				&cptest.LineError{3, cptest.KeyMissing},
-				&cptest.LineError{5, cptest.KeyMissing},
-				&cptest.LineError{6, cptest.KeyMissing},
+				&cptest.LineRangeError{3, 4, cptest.KeyMissing},
+				&cptest.LineRangeError{5, 6, cptest.KeyMissing},
+				&cptest.LineRangeError{6, 7, cptest.KeyMissing},
 			}
 
 			td.Cmp(t, gotMap, wantMap, "config contents")
