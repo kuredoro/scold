@@ -66,19 +66,19 @@ func findFile(userPath string) (string, error) {
 func readInputs(inputsPath string) (cptest.Inputs, []error) {
 	inputsFile, err := os.Open(inputsPath)
 	if err != nil {
-		return cptest.Inputs{}, []error{fmt.Errorf("load tests: %v", err)}
+		return cptest.Inputs{}, []error{fmt.Errorf("load tests: %w", err)}
 	}
 	defer inputsFile.Close()
 
 	text, err := ioutil.ReadAll(inputsFile)
 	if err != nil {
-		return cptest.Inputs{}, []error{fmt.Errorf("load tests: %v", err)}
+		return cptest.Inputs{}, []error{fmt.Errorf("load tests: %w", err)}
 	}
 
 	inputs, errs := cptest.ScanInputs(string(text))
 	if errs != nil {
 		for i, err := range errs {
-			errs[i] = fmt.Errorf("load tests: %v", err)
+			errs[i] = fmt.Errorf("load tests: %w", err)
 		}
 		return cptest.Inputs{}, errs
 	}
