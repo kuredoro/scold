@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"sync"
 
 	"github.com/alexflint/go-arg"
@@ -100,10 +102,29 @@ func main() {
 		return
 	}
 
-	inputs, errs := readInputs(inputsPath)
-	if errs != nil {
-		for _, err := range errs {
-			fmt.Printf("error: %v\n", err)
+	inputs, scanErrs := readInputs(inputsPath)
+	if scanErrs != nil {
+        if len(scanErrs) == 1 && !errors.Is(scanErrs[0], &cptest.LineRangeError{}) {
+			fmt.Printf("error: %v\n", scanErrs[0])
+            return
+        }
+
+		lineErrs := make([]*cptest.LineRangeError, len(scanErrs))
+		for i, scanErr := range scanErrs {
+            ok := errors.As(scanErr, &lineErrs[i])
+            if !ok {
+                panic(fmt.Sprintf("internal bug: some parse errors don't have line information"))
+            }
+		}
+
+		sort.Slice(lineErrs, func(i, j int) bool {
+            return lineErrs[i].Begin < lineErrs[j].Begin
+		})
+
+        errorHeader := cptest.Au.Bold("error").BrightRed()
+
+		for _, err := range lineErrs {
+            fmt.Printf("%s:%d: %s: %v\n%s", args.Inputs, err.Begin, errorHeader, err.Err, err.CodeSnippet())
 		}
 
 		return
@@ -139,12 +160,7 @@ func main() {
 
 	batch.TestEndCallback = verboseResultPrinter
 
-	var testingHeader string
-	if args.NoColors {
-		testingHeader = "    Testing"
-	} else {
-		testingHeader = aurora.Bold(aurora.Cyan("    Testing")).String()
-	}
+    testingHeader := cptest.Au.Bold("    Testing").Cyan().String()
 
 	progressBar = &ProgressBar{
 		Total:  len(inputs.Tests),
