@@ -104,7 +104,8 @@ func main() {
 
 	inputs, scanErrs := readInputs(inputsPath)
 	if scanErrs != nil {
-        if len(scanErrs) == 1 && !errors.Is(scanErrs[0], &cptest.LineRangeError{}) {
+        var lineRangeErrorType *cptest.LineRangeError
+        if len(scanErrs) == 1 && !errors.As(scanErrs[0], &lineRangeErrorType) {
 			fmt.Printf("error: %v\n", scanErrs[0])
             return
         }
