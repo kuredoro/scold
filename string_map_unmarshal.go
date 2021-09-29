@@ -88,7 +88,7 @@ func (e *NotStringUnmarshalableTypeError) Equal(other *NotStringUnmarshalableTyp
 	return e.Field == other.Field && e.Type == other.Type && e.TypeName == other.TypeName
 }
 
-func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
+func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ...func(string) string) error {
 	val := reflect.ValueOf(data)
 
 	if val.Kind() == reflect.Ptr {
@@ -102,7 +102,19 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 	var errs *multierror.Error
 
 	for k, v := range kvm {
-		field := val.FieldByName(k)
+        var field reflect.Value
+        if len(transformers) == 0 {
+            field = val.FieldByName(k)
+        } else {
+            for _, transformer := range transformers {
+                nameCandidate := transformer(k)
+                field = val.FieldByName(nameCandidate)
+
+                if field.IsValid() {
+                    break
+                }
+            }
+        }
 
 		if !field.IsValid() {
 			errs = multierror.Append(errs, &FieldError{k, ErrUnknownField})
