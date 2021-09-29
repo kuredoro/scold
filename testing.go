@@ -97,10 +97,7 @@ func AssertCallCount(t *testing.T, funcName string, got, want int) {
 func AssertDefaultConfig(t *testing.T, got InputsConfig) {
 	t.Helper()
 
-    want := InputsConfig{}
-    StringMapUnmarshal(map[string]string{}, &want)
-
-    td.Cmp(t, got, want)
+    td.Cmp(t, got, DefaultInputsConfig)
 }
 
 // AssertTimes check whether the received and expected timestampts for the

@@ -21,6 +21,8 @@ const (
 	TestDelim = "==="
 )
 
+var DefaultInputsConfig InputsConfig
+
 // Test represents a single test case: an input and the expected output.
 type Test struct {
 	Input  string
@@ -181,6 +183,8 @@ func ScanTest(testStr string) (Test, []error) {
 // could not be parsed, parsing continues to the next test case, but the errors
 // are accumulated and returned together.
 func ScanInputs(text string) (inputs Inputs, errs []error) {
+    inputs.Config = DefaultInputsConfig
+
 	parts := SplitByInlinedPrefixN(text, TestDelim, 0)
 
 	testNum := 0
