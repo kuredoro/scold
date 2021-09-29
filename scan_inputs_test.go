@@ -380,6 +380,42 @@ prec= 16
 			td.Cmp(t, inputs.Config, configWant)
 		})
 
+	t.Run("not listed config keys shall be set to default",
+		func(t *testing.T) {
+			testsWant := []cptest.Test{
+				{
+					Input:  "2 2\n",
+					Output: "4\n",
+				},
+			}
+
+            cptest.DefaultInputsConfig = cptest.InputsConfig{
+                Tl: cptest.Duration{24 * time.Second},
+                Prec: 6,
+            }
+
+			configWant := cptest.InputsConfig{
+				Tl:   cptest.DefaultInputsConfig.Tl,
+				Prec: 16,
+			}
+
+			text := `
+prec =16
+===
+2 2
+---
+4
+`
+			text = strings.ReplaceAll(text, "---", cptest.IODelim)
+			text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+
+			inputs, errs := cptest.ScanInputs(text)
+
+			cptest.AssertTests(t, inputs.Tests, testsWant)
+			cptest.AssertNoErrors(t, errs)
+			td.Cmp(t, inputs.Config, configWant)
+		})
+
 	t.Run("configs are treated as such only before test 1",
 		func(t *testing.T) {
 			testsWant := []cptest.Test{
@@ -425,7 +461,8 @@ extra=love
 oh = and
 by the way...
 ===`
-			configWant := cptest.InputsConfig{}
+
+            cptest.DefaultInputsConfig = cptest.InputsConfig{}
 
 			errsWant := []error{
 				&cptest.LineRangeError{1, []string{"= foo"}, cptest.KeyMissing},
@@ -439,7 +476,7 @@ by the way...
 
 			cptest.AssertTests(t, inputs.Tests, nil)
 			td.Cmp(t, errs, td.Bag(td.Flatten(errsWant)))
-			td.Cmp(t, inputs.Config, configWant, "parsed config")
+            cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("wierd (empty inputs)",
@@ -551,6 +588,6 @@ foo=
 
 			td.Cmp(t, gotMap, wantMap, "config contents")
 			td.Cmp(t, gotLines, wantLines, "key to line mapping")
-            td.Cmp(t, errs, td.Bag(td.Flatten(errsWant)))
+			td.Cmp(t, errs, td.Bag(td.Flatten(errsWant)))
 		})
 }
