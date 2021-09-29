@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+	"unicode"
+    "strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/kuredoro/cptest"
@@ -502,6 +504,119 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
 		})
 		td.Cmp(t, target, struct{ Dur *duration }{dur})
+	})
+
+	t.Run("optional transform functions", func(t *testing.T) {
+        type TestStruct struct {
+			One        int
+			Aword      string
+			PascalCase *duration
+            ShouldNotMatch uint
+		}
+
+		target := TestStruct{}
+
+		sm := map[string]string{
+			"one":         "1",
+			"a_word":      "woah",
+			"pascal_case": "5s",
+            "ShouldNotMatch": "12",
+		}
+
+        want := TestStruct{
+            One: 1,
+            Aword: "woah",
+            PascalCase: &duration{5 * time.Second},
+            ShouldNotMatch: 0,
+        }
+
+        callCounts := make([]int, 3)
+
+        // Used to explicitly reject pascal case map keys
+        isPascalCase := func(s string) bool {
+            return strings.Count(s, "_") == 0 && unicode.IsUpper([]rune(s)[0])
+        }
+
+		capitalize := func(s string) string {
+            callCounts[0]++
+
+            if isPascalCase(s) {
+                return ""
+            }
+
+			if s == "" {
+				return s
+			}
+
+			runes := []rune(s)
+			runes[0] = unicode.ToUpper(runes[0])
+			return string(runes)
+		}
+
+		capitalizeWithNoUnderscore := func(s string) string {
+            callCounts[1]++
+
+            if isPascalCase(s) {
+                return ""
+            }
+
+			if s == "" {
+				return s
+			}
+
+			r := []rune(s)
+			out := 0
+			for in := 0; in < len(r); in++ {
+				if r[in] == '_' {
+					continue
+				}
+
+				r[out] = r[in]
+				out++
+			}
+
+			r[0] = unicode.ToUpper(r[0])
+
+            return string(r[:out])
+		}
+
+		toPascalCase := func(s string) string {
+            callCounts[2]++
+
+            if isPascalCase(s) {
+                return ""
+            }
+
+			if s == "" {
+				return s
+			}
+
+			r := []rune(s)
+			out := 0
+			for in, capitalize := 0, true; in < len(r); in++ {
+				if r[in] == '_' {
+					capitalize = true
+					continue
+				}
+
+				if capitalize {
+					r[out] = unicode.ToUpper(r[in])
+					capitalize = false
+				} else {
+					r[out] = r[in]
+				}
+
+				out++
+			}
+
+            return string(r[:out])
+		}
+
+		err := cptest.StringMapUnmarshal(sm, &target, capitalize, capitalizeWithNoUnderscore, toPascalCase).(*multierror.Error)
+
+        td.Cmp(t, err.Errors, td.Bag(td.Flatten([]error{&cptest.FieldError{"ShouldNotMatch", cptest.ErrUnknownField}})))
+		td.Cmp(t, target, want, "correctly deserialized")
+        td.Cmp(t, callCounts, []int{4, 3, 2}, "transformers called sequentially until success")
 	})
 }
 
