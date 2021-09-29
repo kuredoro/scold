@@ -19,6 +19,7 @@ require (
 	github.com/alexflint/go-scalar v1.0.0 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
+	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.7.0 // indirect
 	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
