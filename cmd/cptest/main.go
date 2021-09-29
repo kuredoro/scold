@@ -26,7 +26,7 @@ type appArgs struct {
 	Inputs     string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
 	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
 	NoProgress bool     `arg:"--no-progress" help:"disable progress bar"`
-	Jobs       int      `arg:"-j" placeholder:"COUNT" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
+	Jobs       uint      `arg:"-j" placeholder:"COUNT" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
 	Executable string   `arg:"positional,required"`
 	Args       []string `arg:"positional" placeholder:"ARG"`
 }
@@ -84,7 +84,7 @@ func init() {
 	}
 
 	if args.Jobs == 0 {
-		args.Jobs = runtime.NumCPU()
+		args.Jobs = uint(runtime.NumCPU())
 	}
 
 	verdictStr = map[cptest.Verdict]aurora.Value{
@@ -153,7 +153,7 @@ func main() {
 		TL:    inputs.Config.Tl.Duration,
 		Clock: clockwork.NewRealClock(),
 	}
-	pool := cptest.NewThreadPool(args.Jobs)
+	pool := cptest.NewThreadPool(int(args.Jobs))
 
 	batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 
