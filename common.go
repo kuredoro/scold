@@ -27,19 +27,19 @@ func (e *LineRangeError) Error() string {
 	}
 
 	var msg strings.Builder
-    if len(e.Lines) == 1 {
-        msg.WriteString(fmt.Sprintf("line %d: %v\n", e.Begin, e.Err))
-    } else {
-        msg.WriteString(fmt.Sprintf("lines %d-%d: %v\n", e.Begin, e.Begin + len(e.Lines), e.Err))
-    }
+	if len(e.Lines) == 1 {
+		msg.WriteString(fmt.Sprintf("line %d: %v\n", e.Begin, e.Err))
+	} else {
+		msg.WriteString(fmt.Sprintf("lines %d-%d: %v\n", e.Begin, e.Begin+len(e.Lines), e.Err))
+	}
 
-    msg.WriteString(e.CodeSnippet())
+	msg.WriteString(e.CodeSnippet())
 
 	return msg.String()
 }
 
 func (e *LineRangeError) CodeSnippet() string {
-    var msg strings.Builder
+	var msg strings.Builder
 
 	for i, line := range e.Lines {
 		if line != "" && line[len(line)-1] == '\n' {
@@ -49,7 +49,7 @@ func (e *LineRangeError) CodeSnippet() string {
 		msg.WriteString(fmt.Sprintf("% 6d| %s\n", e.Begin+i, line))
 	}
 
-    return msg.String()
+	return msg.String()
 }
 
 func (e *LineRangeError) Unwrap() error {
@@ -75,7 +75,7 @@ func (e *TestError) Unwrap() error {
 type Duration struct{ time.Duration }
 
 func NewDuration(dur time.Duration) Duration {
-    return Duration{Duration: dur}
+	return Duration{Duration: dur}
 }
 
 // FromString will delegate parsing to built-in time.ParseDuration and, hence,

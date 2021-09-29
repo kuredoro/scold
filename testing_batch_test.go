@@ -73,7 +73,6 @@ func ProcFuncAnswer(ctx context.Context, in io.Reader) (cptest.ProcessResult, er
 
 func TestNewTestingBatch(t *testing.T) {
 	t.Run("no state altering configs", func(t *testing.T) {
-        /* FIXME:
 		inputs := cptest.Inputs{
 			Tests:  nil,
 			Config: cptest.InputsConfig{},
@@ -81,18 +80,16 @@ func TestNewTestingBatch(t *testing.T) {
 
 		batch := cptest.NewTestingBatch(inputs, nil, nil, nil)
 
-		if batch.Lx.Precision != cptest.DefaultPrecision {
-			t.Errorf("got lexer precision %d, but want default value %d",
-				batch.Lx.Precision, cptest.DefaultPrecision)
+		if batch.Lx.Precision != 0 {
+			t.Errorf("got lexer precision %d, but want zero", batch.Lx.Precision)
 		}
-        */
 	})
 
 	t.Run("prec option", func(t *testing.T) {
 		inputs := cptest.Inputs{
 			Tests: nil,
 			Config: cptest.InputsConfig{
-                Prec: 22,
+				Prec: 22,
 			},
 		}
 
@@ -195,7 +192,7 @@ func TestTestingBatch(t *testing.T) {
 				},
 			},
 			Config: cptest.InputsConfig{
-                Prec: 1,
+				Prec: 1,
 			},
 		}
 

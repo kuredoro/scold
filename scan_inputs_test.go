@@ -389,10 +389,10 @@ prec= 16
 				},
 			}
 
-            cptest.DefaultInputsConfig = cptest.InputsConfig{
-                Tl: cptest.Duration{24 * time.Second},
-                Prec: 6,
-            }
+			cptest.DefaultInputsConfig = cptest.InputsConfig{
+				Tl:   cptest.Duration{24 * time.Second},
+				Prec: 6,
+			}
 
 			configWant := cptest.InputsConfig{
 				Tl:   cptest.DefaultInputsConfig.Tl,
@@ -462,7 +462,7 @@ oh = and
 by the way...
 ===`
 
-            cptest.DefaultInputsConfig = cptest.InputsConfig{}
+			cptest.DefaultInputsConfig = cptest.InputsConfig{}
 
 			errsWant := []error{
 				&cptest.LineRangeError{1, []string{"= foo"}, cptest.KeyMissing},
@@ -476,7 +476,7 @@ by the way...
 
 			cptest.AssertTests(t, inputs.Tests, nil)
 			td.Cmp(t, errs, td.Bag(td.Flatten(errsWant)))
-            cptest.AssertDefaultConfig(t, inputs.Config)
+			cptest.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("wierd (empty inputs)",

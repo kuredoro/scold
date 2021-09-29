@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-// DefaultPrecision is the value the TestingBatch lexer's precision is
-// initialized with in NewTestingBatch function.
-var DefaultPrecision uint = 6
-
 // Verdict represents a verdict asssigned by the judge.
 type Verdict int
 
@@ -55,17 +51,13 @@ type TestResult struct {
 	Out ProcessResult
 }
 
-type TestingBatchConfig struct {
-    Prec uint8
-}
-
 // TestingBatch is responsible for running tests and evaluating the verdicts
 // for tests. For each test case, the verdict and execution time are stored.
 // It utilizes an instance of Processer to run tests, and an instance of
 // Stopwatcher to track time limit. Optionally, user can set ResultPrinter
 // to a custom function to output useful statistics about test case's result.
 type TestingBatch struct {
-    inputs Inputs
+	inputs Inputs
 
 	complete chan TestResult
 
