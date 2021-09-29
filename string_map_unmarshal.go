@@ -210,7 +210,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 		} else if field.Kind() == reflect.String {
 			field.Set(reflect.ValueOf(v))
 		} else {
-			panic(&NotStringUnmarshalableTypeError{Field: k, Type: field.Kind(), TypeName: field.Type().Name()})
+			panic(&NotStringUnmarshalableTypeError{Field: k, Type: field.Kind(), TypeName: fmt.Sprintf("%T", field.Interface())})
 		}
 	}
 
