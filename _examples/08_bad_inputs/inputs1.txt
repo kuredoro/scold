@@ -1,6 +1,6 @@
 foo = bar
-Tl = 
-Prec = -12
+tl = 
+prec = -12
 = two
 ===
 
