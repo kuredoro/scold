@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -22,11 +24,32 @@ var progressBar *ProgressBar
 
 var stdout = colorable.NewColorableStdout()
 
+type JobCount int
+
+func (jc *JobCount) UnmarshalText(b []byte) error {
+	if bytes.Equal(b, []byte("CPU_COUNT")) {
+        *jc = JobCount(runtime.NumCPU())
+		return nil
+	}
+
+	val, err := strconv.ParseUint(string(b), 10, 0)
+    if err != nil {
+        return err
+    }
+
+	if val == 0 {
+		return errors.New("job count must be at least 1")
+	}
+
+	*jc = JobCount(val)
+	return err
+}
+
 type appArgs struct {
 	Inputs     string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
 	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
 	NoProgress bool     `arg:"--no-progress" help:"disable progress bar"`
-	Jobs       uint      `arg:"-j" placeholder:"COUNT" help:"Number of tests to run concurrently [default: CPU_COUNT]"`
+    Jobs       JobCount `arg:"-j" default:"CPU_COUNT" placeholder:"COUNT" help:"Number of tests to run concurrently"`
 	Executable string   `arg:"positional,required"`
 	Args       []string `arg:"positional" placeholder:"ARG"`
 }
@@ -42,7 +65,7 @@ User manual: https://github.com/kuredoro/cptest
 }
 
 func (appArgs) Version() string {
-	return "cptest 2.01a"
+	return "cptest 2.01dev"
 }
 
 func mustParse(dest *appArgs) {
@@ -83,10 +106,6 @@ func init() {
 		cptest.Au = aurora.NewAurora(false)
 	}
 
-	if args.Jobs == 0 {
-		args.Jobs = uint(runtime.NumCPU())
-	}
-
 	verdictStr = map[cptest.Verdict]aurora.Value{
 		cptest.OK: cptest.Au.Bold("OK").Green(),
 		cptest.IE: cptest.Au.Bold("IE").Bold(),
@@ -95,11 +114,11 @@ func init() {
 		cptest.TL: cptest.Au.Bold("TL").Yellow(),
 	}
 
-    type duration cptest.Duration
-    cptest.DefaultInputsConfig = cptest.InputsConfig{
-        Tl: cptest.NewDuration(6 * time.Second),
-        Prec: 6,
-    }
+	type duration cptest.Duration
+	cptest.DefaultInputsConfig = cptest.InputsConfig{
+		Tl:   cptest.NewDuration(6 * time.Second),
+		Prec: 6,
+	}
 }
 
 func main() {
@@ -111,28 +130,28 @@ func main() {
 
 	inputs, scanErrs := readInputs(inputsPath)
 	if scanErrs != nil {
-        var lineRangeErrorType *cptest.LineRangeError
-        if len(scanErrs) == 1 && !errors.As(scanErrs[0], &lineRangeErrorType) {
+		var lineRangeErrorType *cptest.LineRangeError
+		if len(scanErrs) == 1 && !errors.As(scanErrs[0], &lineRangeErrorType) {
 			fmt.Printf("error: %v\n", scanErrs[0])
-            return
-        }
+			return
+		}
 
 		lineErrs := make([]*cptest.LineRangeError, len(scanErrs))
 		for i, scanErr := range scanErrs {
-            ok := errors.As(scanErr, &lineErrs[i])
-            if !ok {
-                panic(fmt.Sprintf("internal bug: some parse errors don't have line information"))
-            }
+			ok := errors.As(scanErr, &lineErrs[i])
+			if !ok {
+				panic(fmt.Sprintf("internal bug: some parse errors don't have line information"))
+			}
 		}
 
 		sort.Slice(lineErrs, func(i, j int) bool {
-            return lineErrs[i].Begin < lineErrs[j].Begin
+			return lineErrs[i].Begin < lineErrs[j].Begin
 		})
 
-        errorHeader := cptest.Au.Bold("error").BrightRed()
+		errorHeader := cptest.Au.Bold("error").BrightRed()
 
 		for _, err := range lineErrs {
-            fmt.Printf("%s:%d: %s: %v\n%s", args.Inputs, err.Begin, errorHeader, err.Err, err.CodeSnippet())
+			fmt.Printf("%s:%d: %s: %v\n%s", args.Inputs, err.Begin, errorHeader, err.Err, err.CodeSnippet())
 		}
 
 		return
@@ -167,7 +186,7 @@ func main() {
 
 	batch.TestEndCallback = verboseResultPrinter
 
-    testingHeader := cptest.Au.Bold("    Testing").Cyan().String()
+	testingHeader := cptest.Au.Bold("    Testing").Cyan().String()
 
 	progressBar = &ProgressBar{
 		Total:  len(inputs.Tests),
