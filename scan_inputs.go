@@ -29,19 +29,6 @@ type Test struct {
 	Output string
 }
 
-// Duration is a wrapper around time.Duration that allows
-// StringAttributesUnmarshal to parse it from a string using a common
-// interface.
-type Duration struct{ time.Duration }
-
-// FromString will delegate parsing to built-in time.ParseDuration and, hence,
-// accept the same format as time.ParseDuration.
-func (d *Duration) FromString(str string) error {
-	dur, err := time.ParseDuration(str)
-	*d = Duration{dur}
-	return err
-}
-
 // InputsConfig defines a schema for available configuration options that
 // can be listed inside a config.
 type InputsConfig struct {

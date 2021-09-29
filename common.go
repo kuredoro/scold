@@ -3,6 +3,7 @@ package cptest
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 // StringError is an error type whose values can be constant and compared against deterministically with == operator. An error type that solves the problems of sentinel errors.
@@ -66,4 +67,21 @@ func (e *TestError) Error() string {
 
 func (e *TestError) Unwrap() error {
 	return e.Err
+}
+
+// Duration is a wrapper around time.Duration that allows
+// StringAttributesUnmarshal to parse it from a string using a common
+// interface.
+type Duration struct{ time.Duration }
+
+func NewDuration(dur time.Duration) Duration {
+    return Duration{Duration: dur}
+}
+
+// FromString will delegate parsing to built-in time.ParseDuration and, hence,
+// accept the same format as time.ParseDuration.
+func (d *Duration) FromString(str string) error {
+	dur, err := time.ParseDuration(str)
+	*d = Duration{dur}
+	return err
 }
