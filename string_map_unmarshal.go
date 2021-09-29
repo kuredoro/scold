@@ -43,6 +43,11 @@ var complexParsers = map[reflect.Kind]int{
 	reflect.Complex128: 128,
 }
 
+// FromStringer should not alter the its value, if error occurs.
+type FromStringer interface {
+	FromString(string) error
+}
+
 type FieldError struct {
 	FieldName string
 	Err       error
@@ -104,33 +109,37 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}) error {
 			continue
 		}
 
-		// A user-defined type should contain FromString method
-		// XXX: Should do via interfaces
-		fromStringMethod := field.MethodByName("FromString")
-		if !fromStringMethod.IsValid() {
-			fromStringMethod = field.Addr().MethodByName("FromString")
-
-			// If we found conversion method on a pointer, then we should work
-			// on the pointer to the field further.
-			if fromStringMethod.IsValid() {
-				field = field.Addr()
-			}
+		// A user-defined type should satisfy FromStringer
+		var unmarshalDest FromStringer
+		var isDeserializable bool
+		if field.Kind() == reflect.Ptr {
+			unmarshalDest, isDeserializable = field.Interface().(FromStringer)
+		} else {
+			unmarshalDest, isDeserializable = field.Addr().Interface().(FromStringer)
 		}
 
-		if fromStringMethod.IsValid() {
+		if isDeserializable {
 			// Make sure that the field is allocated, so that the FromString
 			// method had a place to write back to. But also remember if we
 			// changed the field, so to revert it back if error occurs.
 			wasNil := false
-			if field.IsNil() {
+			if field.Kind() == reflect.Ptr && field.IsNil() {
 				field.Set(reflect.New(field.Type().Elem()))
+				unmarshalDest = field.Interface().(FromStringer)
 				wasNil = true
 			}
 
-			output := fromStringMethod.Call([]reflect.Value{reflect.ValueOf(v)})
+			err := unmarshalDest.FromString(v)
 
-			if !output[0].IsNil() {
-				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Type().Elem().Name(), v}})
+			if err != nil {
+				var typeName string
+				if field.Kind() == reflect.Ptr {
+					typeName = field.Type().Elem().Name()
+				} else {
+					typeName = field.Type().Name()
+				}
+
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{typeName, v}})
 
 				if wasNil {
 					field.Set(reflect.Zero(field.Type()))
