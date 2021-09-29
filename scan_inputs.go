@@ -3,10 +3,9 @@ package cptest
 import (
 	"bufio"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/go-multierror"
-    "github.com/stoewer/go-strcase"
+	"github.com/stoewer/go-strcase"
 )
 
 // A set of errors that may be produced during scanning of the inputs file.
@@ -72,8 +71,8 @@ func ScanKeyValuePair(line string) (string, string, error) {
 }
 
 type NumberedLine struct {
-    Num int
-    Line string
+	Num  int
+	Line string
 }
 
 // ScanConfig tries to parse a stream of key-value pairs. Key-value pair is
@@ -170,7 +169,7 @@ func ScanTest(testStr string) (Test, []error) {
 // could not be parsed, parsing continues to the next test case, but the errors
 // are accumulated and returned together.
 func ScanInputs(text string) (inputs Inputs, errs []error) {
-    inputs.Config = DefaultInputsConfig
+	inputs.Config = DefaultInputsConfig
 
 	parts := SplitByInlinedPrefixN(text, TestDelim, 0)
 
@@ -223,18 +222,18 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 		testNum++
 
 		if testErrs != nil {
-            // TODO: add cptest.SplitAndTrim
+			// TODO: add cptest.SplitAndTrim
 			testLines := strings.Split(part, "\n")
-            if len(testLines) != 0 && testLines[len(testLines)-1] == "" {
-                testLines = testLines[:len(testLines)-1]
-            }
+			if len(testLines) != 0 && testLines[len(testLines)-1] == "" {
+				testLines = testLines[:len(testLines)-1]
+			}
 
 			for i, err := range testErrs {
 				testErrs[i] = &LineRangeError{
-                    Begin: lineNum,
-                    Lines: testLines,
-                    Err: &TestError{testNum, err},
-                }
+					Begin: lineNum,
+					Lines: testLines,
+					Err:   &TestError{testNum, err},
+				}
 			}
 
 			errs = append(errs, testErrs...)

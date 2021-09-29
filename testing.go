@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/logrusorgru/aurora"
+	"github.com/maxatome/go-testdeep/td"
 	"github.com/sanity-io/litter"
-    "github.com/maxatome/go-testdeep/td"
 )
 
 // AssertTest compare the inputs and outputs with respective expected ones
@@ -97,7 +97,7 @@ func AssertCallCount(t *testing.T, funcName string, got, want int) {
 func AssertDefaultConfig(t *testing.T, got InputsConfig) {
 	t.Helper()
 
-    td.Cmp(t, got, DefaultInputsConfig)
+	td.Cmp(t, got, DefaultInputsConfig)
 }
 
 // AssertTimes check whether the received and expected timestampts for the
