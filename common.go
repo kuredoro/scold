@@ -80,8 +80,8 @@ func NewDuration(dur time.Duration) Duration {
 
 // FromString will delegate parsing to built-in time.ParseDuration and, hence,
 // accept the same format as time.ParseDuration.
-func (d *Duration) FromString(str string) error {
-	dur, err := time.ParseDuration(str)
+func (d *Duration) UnmarshalText(b []byte) error {
+	dur, err := time.ParseDuration(string(b))
 	*d = Duration{dur}
 	return err
 }

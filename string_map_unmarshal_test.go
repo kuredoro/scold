@@ -622,8 +622,8 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 type duration struct{ time.Duration }
 
-func (d *duration) FromString(str string) error {
-	dur, err := time.ParseDuration(str)
+func (d *duration) UnmarshalText(b []byte) error {
+	dur, err := time.ParseDuration(string(b))
 	*d = duration{dur}
 	return err
 }

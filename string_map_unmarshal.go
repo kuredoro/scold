@@ -1,6 +1,7 @@
 package cptest
 
 import (
+	"encoding"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -43,11 +44,6 @@ var complexParsers = map[reflect.Kind]int{
 	reflect.Complex128: 128,
 }
 
-// FromStringer should not alter the its value, if error occurs.
-type FromStringer interface {
-	FromString(string) error
-}
-
 type FieldError struct {
 	FieldName string
 	Err       error
@@ -81,7 +77,7 @@ type NotStringUnmarshalableTypeError struct {
 }
 
 func (e *NotStringUnmarshalableTypeError) Error() string {
-	return fmt.Sprintf("field %q is of type %v (%v) and cannot be unmarshaled from string, because it is not of fundamental type or because the type doesn't implement FromString(string) method", e.Field, e.TypeName, e.Type)
+	return fmt.Sprintf("field %q is of type %v (%v) and cannot be unmarshaled from string, because it is not of fundamental type or because the type doesn't implement encoding.TextUnmarshaler interface", e.Field, e.TypeName, e.Type)
 }
 
 func (e *NotStringUnmarshalableTypeError) Equal(other *NotStringUnmarshalableTypeError) bool {
@@ -121,13 +117,13 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 			continue
 		}
 
-		// A user-defined type should satisfy FromStringer
-		var unmarshalDest FromStringer
+		// A user-defined type should satisfy encoding.TextUnmarshaler
+		var unmarshalDest encoding.TextUnmarshaler
 		var isDeserializable bool
 		if field.Kind() == reflect.Ptr {
-			unmarshalDest, isDeserializable = field.Interface().(FromStringer)
+			unmarshalDest, isDeserializable = field.Interface().(encoding.TextUnmarshaler)
 		} else {
-			unmarshalDest, isDeserializable = field.Addr().Interface().(FromStringer)
+			unmarshalDest, isDeserializable = field.Addr().Interface().(encoding.TextUnmarshaler)
 		}
 
 		if isDeserializable {
@@ -137,11 +133,11 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 			wasNil := false
 			if field.Kind() == reflect.Ptr && field.IsNil() {
 				field.Set(reflect.New(field.Type().Elem()))
-				unmarshalDest = field.Interface().(FromStringer)
+				unmarshalDest = field.Interface().(encoding.TextUnmarshaler)
 				wasNil = true
 			}
 
-			err := unmarshalDest.FromString(v)
+			err := unmarshalDest.UnmarshalText([]byte(v))
 
 			if err != nil {
 				var typeName string
