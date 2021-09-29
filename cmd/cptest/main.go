@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/alexflint/go-arg"
 	"github.com/atomicgo/cursor"
@@ -93,6 +94,12 @@ func init() {
 		cptest.RE: cptest.Au.Bold("RE").Magenta(),
 		cptest.TL: cptest.Au.Bold("TL").Yellow(),
 	}
+
+    type duration cptest.Duration
+    cptest.DefaultInputsConfig = cptest.InputsConfig{
+        Tl: cptest.NewDuration(6 * time.Second),
+        Prec: 6,
+    }
 }
 
 func main() {
@@ -142,19 +149,18 @@ func main() {
 		Args: args.Args,
 	}
 
-	TL := getTL(inputs)
 	swatch := &cptest.ConfigurableStopwatcher{
-		TL:    TL,
+		TL:    inputs.Config.Tl.Duration,
 		Clock: clockwork.NewRealClock(),
 	}
 	pool := cptest.NewThreadPool(args.Jobs)
 
 	batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
 
-	if TL == 0 {
+	if inputs.Config.Tl.Duration == 0 {
 		fmt.Println("time limit: infinity")
 	} else {
-		fmt.Printf("time limit: %v\n", TL)
+		fmt.Printf("time limit: %v\n", inputs.Config.Tl)
 	}
 	fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
 	fmt.Printf("job count: %d\n", args.Jobs)
