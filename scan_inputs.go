@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+    "github.com/stoewer/go-strcase"
 )
 
 // A set of errors that may be produced during scanning of the inputs file.
@@ -206,7 +207,7 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 				// key-value pairs.
 			}
 
-			unmarshalErrs := StringMapUnmarshal(config, &inputs.Config)
+			unmarshalErrs := StringMapUnmarshal(config, &inputs.Config, strcase.UpperCamelCase)
 			if unmarshalErrs != nil {
 				merr := unmarshalErrs.(*multierror.Error)
 				for i, err := range merr.Errors {
