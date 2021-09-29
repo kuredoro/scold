@@ -2,10 +2,10 @@ package cptest_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 	"unicode"
-    "strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/kuredoro/cptest"
@@ -507,42 +507,42 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 	})
 
 	t.Run("optional transform functions", func(t *testing.T) {
-        type TestStruct struct {
-			One        int
-			Aword      string
-			PascalCase *duration
-            ShouldNotMatch uint
+		type TestStruct struct {
+			One            int
+			Aword          string
+			PascalCase     *duration
+			ShouldNotMatch uint
 		}
 
 		target := TestStruct{}
 
 		sm := map[string]string{
-			"one":         "1",
-			"a_word":      "woah",
-			"pascal_case": "5s",
-            "ShouldNotMatch": "12",
+			"one":            "1",
+			"a_word":         "woah",
+			"pascal_case":    "5s",
+			"ShouldNotMatch": "12",
 		}
 
-        want := TestStruct{
-            One: 1,
-            Aword: "woah",
-            PascalCase: &duration{5 * time.Second},
-            ShouldNotMatch: 0,
-        }
+		want := TestStruct{
+			One:            1,
+			Aword:          "woah",
+			PascalCase:     &duration{5 * time.Second},
+			ShouldNotMatch: 0,
+		}
 
-        callCounts := make([]int, 3)
+		callCounts := make([]int, 3)
 
-        // Used to explicitly reject pascal case map keys
-        isPascalCase := func(s string) bool {
-            return strings.Count(s, "_") == 0 && unicode.IsUpper([]rune(s)[0])
-        }
+		// Used to explicitly reject pascal case map keys
+		isPascalCase := func(s string) bool {
+			return strings.Count(s, "_") == 0 && unicode.IsUpper([]rune(s)[0])
+		}
 
 		capitalize := func(s string) string {
-            callCounts[0]++
+			callCounts[0]++
 
-            if isPascalCase(s) {
-                return ""
-            }
+			if isPascalCase(s) {
+				return ""
+			}
 
 			if s == "" {
 				return s
@@ -554,11 +554,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		}
 
 		capitalizeWithNoUnderscore := func(s string) string {
-            callCounts[1]++
+			callCounts[1]++
 
-            if isPascalCase(s) {
-                return ""
-            }
+			if isPascalCase(s) {
+				return ""
+			}
 
 			if s == "" {
 				return s
@@ -577,15 +577,15 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 			r[0] = unicode.ToUpper(r[0])
 
-            return string(r[:out])
+			return string(r[:out])
 		}
 
 		toPascalCase := func(s string) string {
-            callCounts[2]++
+			callCounts[2]++
 
-            if isPascalCase(s) {
-                return ""
-            }
+			if isPascalCase(s) {
+				return ""
+			}
 
 			if s == "" {
 				return s
@@ -609,14 +609,14 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 				out++
 			}
 
-            return string(r[:out])
+			return string(r[:out])
 		}
 
 		err := cptest.StringMapUnmarshal(sm, &target, capitalize, capitalizeWithNoUnderscore, toPascalCase).(*multierror.Error)
 
-        td.Cmp(t, err.Errors, td.Bag(td.Flatten([]error{&cptest.FieldError{"ShouldNotMatch", cptest.ErrUnknownField}})))
+		td.Cmp(t, err.Errors, td.Bag(td.Flatten([]error{&cptest.FieldError{"ShouldNotMatch", cptest.ErrUnknownField}})))
 		td.Cmp(t, target, want, "correctly deserialized")
-        td.Cmp(t, callCounts, []int{4, 3, 2}, "transformers called sequentially until success")
+		td.Cmp(t, callCounts, []int{4, 3, 2}, "transformers called sequentially until success")
 	})
 }
 

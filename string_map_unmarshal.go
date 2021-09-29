@@ -102,19 +102,19 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 	var errs *multierror.Error
 
 	for k, v := range kvm {
-        var field reflect.Value
-        if len(transformers) == 0 {
-            field = val.FieldByName(k)
-        } else {
-            for _, transformer := range transformers {
-                nameCandidate := transformer(k)
-                field = val.FieldByName(nameCandidate)
+		var field reflect.Value
+		if len(transformers) == 0 {
+			field = val.FieldByName(k)
+		} else {
+			for _, transformer := range transformers {
+				nameCandidate := transformer(k)
+				field = val.FieldByName(nameCandidate)
 
-                if field.IsValid() {
-                    break
-                }
-            }
-        }
+				if field.IsValid() {
+					break
+				}
+			}
+		}
 
 		if !field.IsValid() {
 			errs = multierror.Append(errs, &FieldError{k, ErrUnknownField})
