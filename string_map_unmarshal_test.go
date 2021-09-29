@@ -299,8 +299,8 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 			errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{
-                &cptest.FieldError{"B", &cptest.NotValueOfTypeError{reflect.Bool.String(), step.value}},
-            })
+				&cptest.FieldError{"B", &cptest.NotValueOfTypeError{reflect.Bool.String(), step.value}},
+			})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
 
@@ -322,8 +322,8 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 			errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{
-                &cptest.FieldError{"B", &cptest.NotValueOfTypeError{reflect.Bool.String(), step.value}},
-            })
+				&cptest.FieldError{"B", &cptest.NotValueOfTypeError{reflect.Bool.String(), step.value}},
+			})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
 	})
@@ -382,7 +382,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			"Info": "my age is over 9000",
 		}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target1) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: ""})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target1) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "struct { Age int }"})
 
 		type InfoType struct{ Age int }
 
@@ -390,20 +390,24 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info InfoType
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target2) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "InfoType"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target2) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "cptest_test.InfoType"})
+
+		target3 := struct {
+			Info *InfoType
+		}{}
+
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target3) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Ptr, TypeName: "*cptest_test.InfoType"})
 
 		type Numbers []int
 
-		target3 := struct {
+		target4 := struct {
 			Info Numbers
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target3) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Slice, TypeName: "Numbers"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target4) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Slice, TypeName: "cptest_test.Numbers"})
 	})
 
 	t.Run("pointer to deserializable type that was allocated", func(t *testing.T) {
-		//(&d).FromString("5s")
-
 		target := struct {
 			Dur *duration
 		}{&duration{time.Second}}
@@ -459,9 +463,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
-        td.Cmp(t, errs.Errors, []error{
-            &cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
-        })
+		td.Cmp(t, errs.Errors, []error{
+			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
+		})
 		td.Cmp(t, target, struct{ Dur duration }{})
 	})
 
@@ -476,14 +480,14 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
-        td.Cmp(t, errs.Errors, []error{
-            &cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
-        })
+		td.Cmp(t, errs.Errors, []error{
+			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
+		})
 		td.Cmp(t, target, struct{ Dur *duration }{})
 	})
 
 	t.Run("error if user-defined type failed to parse input (valid pointer version)", func(t *testing.T) {
-        dur := &duration{time.Second}
+		dur := &duration{time.Second}
 		target := struct {
 			Dur *duration
 		}{dur}
@@ -494,9 +498,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
-        td.Cmp(t, errs.Errors, []error{
-            &cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
-        })
+		td.Cmp(t, errs.Errors, []error{
+			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
+		})
 		td.Cmp(t, target, struct{ Dur *duration }{dur})
 	})
 }
