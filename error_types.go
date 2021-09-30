@@ -3,8 +3,9 @@ package cptest
 import (
 	"fmt"
 	"strings"
-	"time"
+    "reflect"
 )
+
 
 // StringError is an error type whose values can be constant and compared against deterministically with == operator. An error type that solves the problems of sentinel errors.
 type StringError string
@@ -69,19 +70,42 @@ func (e *TestError) Unwrap() error {
 	return e.Err
 }
 
-// Duration is a wrapper around time.Duration that allows
-// StringAttributesUnmarshal to parse it from a string using a common
-// interface.
-type Duration struct{ time.Duration }
-
-func NewDuration(dur time.Duration) Duration {
-	return Duration{Duration: dur}
+type FieldError struct {
+	FieldName string
+	Err       error
 }
 
-// FromString will delegate parsing to built-in time.ParseDuration and, hence,
-// accept the same format as time.ParseDuration.
-func (d *Duration) UnmarshalText(b []byte) error {
-	dur, err := time.ParseDuration(string(b))
-	*d = Duration{dur}
-	return err
+func (e *FieldError) Error() string {
+	return fmt.Sprintf("field %q: %v", e.FieldName, e.Err)
+}
+
+func (e *FieldError) Unwrap() error {
+	return e.Err
+}
+
+type NotValueOfTypeError struct {
+	Type  string
+	Value string
+}
+
+func (e *NotValueOfTypeError) Error() string {
+	return fmt.Sprintf("value %q doesn't match %v type", e.Value, e.Type)
+}
+
+func (e *NotValueOfTypeError) Equal(other *NotValueOfTypeError) bool {
+	return e.Type == other.Type && e.Value == other.Value
+}
+
+type NotStringUnmarshalableTypeError struct {
+	Field    string
+	Type     reflect.Kind
+	TypeName string
+}
+
+func (e *NotStringUnmarshalableTypeError) Error() string {
+	return fmt.Sprintf("field %q is of type %v (%v) and cannot be unmarshaled from string, because it is not of fundamental type or because the type doesn't implement encoding.TextUnmarshaler interface", e.Field, e.TypeName, e.Type)
+}
+
+func (e *NotStringUnmarshalableTypeError) Equal(other *NotStringUnmarshalableTypeError) bool {
+	return e.Field == other.Field && e.Type == other.Type && e.TypeName == other.TypeName
 }

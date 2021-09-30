@@ -620,6 +620,61 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 	})
 }
 
+func TestPositiveDuration(t *testing.T) {
+    t.Run("empty string", func(t *testing.T) {
+        dur := &cptest.PositiveDuration{}
+        err := dur.UnmarshalText([]byte(""))
+
+        td.CmpError(t, err)
+    })
+
+    t.Run("zero nanoseconds", func(t *testing.T) {
+        dur := &cptest.PositiveDuration{}
+        err := dur.UnmarshalText([]byte("0ns"))
+
+        td.CmpNoError(t, err)
+        td.Cmp(t, dur.Duration, 0 * time.Nanosecond)
+    })
+
+    t.Run("one second", func(t *testing.T) {
+        dur := &cptest.PositiveDuration{}
+        err := dur.UnmarshalText([]byte("1s"))
+
+        td.CmpNoError(t, err)
+        td.Cmp(t, dur.Duration, time.Second)
+    })
+
+    t.Run("ten seconds", func(t *testing.T) {
+        dur := &cptest.PositiveDuration{}
+        err := dur.UnmarshalText([]byte("10s"))
+
+        td.CmpNoError(t, err)
+        td.Cmp(t, dur.Duration, 10 * time.Second)
+    })
+
+    t.Run("1 and half milliseconds", func(t *testing.T) {
+        dur := &cptest.PositiveDuration{}
+        err := dur.UnmarshalText([]byte("1.5ms"))
+
+        td.CmpNoError(t, err)
+        td.Cmp(t, dur.Duration, 1500 * time.Microsecond)
+    })
+
+    t.Run("negative second is forbidden", func(t *testing.T) {
+        dur := &cptest.PositiveDuration{}
+        err := dur.UnmarshalText([]byte("-1s"))
+
+        td.Cmp(t, err, cptest.ErrNegativePositiveDuration)
+    })
+
+    t.Run("negative fractional duration is forbidden", func(t *testing.T) {
+        dur := &cptest.PositiveDuration{}
+        err := dur.UnmarshalText([]byte("-42.0us"))
+
+        td.Cmp(t, err, cptest.ErrNegativePositiveDuration)
+    })
+}
+
 type duration struct{ time.Duration }
 
 func (d *duration) UnmarshalText(b []byte) error {

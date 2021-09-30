@@ -114,9 +114,9 @@ func init() {
 		cptest.TL: cptest.Au.Bold("TL").Yellow(),
 	}
 
-	type duration cptest.Duration
+	type duration cptest.PositiveDuration
 	cptest.DefaultInputsConfig = cptest.InputsConfig{
-		Tl:   cptest.NewDuration(6 * time.Second),
+		Tl:   cptest.NewPositiveDuration(6 * time.Second),
 		Prec: 6,
 	}
 }

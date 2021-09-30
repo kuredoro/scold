@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 )
@@ -16,6 +17,8 @@ const (
 	ErrNotAStructLike = StringError("not a struct-like")
 
 	ErrUnknownField = StringError("unknown field")
+
+    ErrNegativePositiveDuration = StringError("PositiveDuration accepts only positive durations")
 )
 
 var intParsers = map[reflect.Kind]int{
@@ -44,44 +47,26 @@ var complexParsers = map[reflect.Kind]int{
 	reflect.Complex128: 128,
 }
 
-type FieldError struct {
-	FieldName string
-	Err       error
+// PositiveDuration is a wrapper around time.PositiveDuration that allows
+// StringMapsUnmarshal to parse it from a string and forbids negative
+// durations.
+type PositiveDuration struct{ time.Duration }
+
+func NewPositiveDuration(dur time.Duration) PositiveDuration {
+	return PositiveDuration{dur}
 }
 
-func (e *FieldError) Error() string {
-	return fmt.Sprintf("field %q: %v", e.FieldName, e.Err)
-}
+// UnmarshalText will delegate parsing to built-in time.ParseDuration and,
+// hence, accept the same format as time.ParseDuration. It will also
+// reject negative durations.
+func (d *PositiveDuration) UnmarshalText(b []byte) error {
+	dur, err := time.ParseDuration(string(b))
+    if dur.Nanoseconds() < 0 {
+        return ErrNegativePositiveDuration
+    }
 
-func (e *FieldError) Unwrap() error {
-	return e.Err
-}
-
-type NotValueOfTypeError struct {
-	Type  string
-	Value string
-}
-
-func (e *NotValueOfTypeError) Error() string {
-	return fmt.Sprintf("value %q doesn't match %v type", e.Value, e.Type)
-}
-
-func (e *NotValueOfTypeError) Equal(other *NotValueOfTypeError) bool {
-	return e.Type == other.Type && e.Value == other.Value
-}
-
-type NotStringUnmarshalableTypeError struct {
-	Field    string
-	Type     reflect.Kind
-	TypeName string
-}
-
-func (e *NotStringUnmarshalableTypeError) Error() string {
-	return fmt.Sprintf("field %q is of type %v (%v) and cannot be unmarshaled from string, because it is not of fundamental type or because the type doesn't implement encoding.TextUnmarshaler interface", e.Field, e.TypeName, e.Type)
-}
-
-func (e *NotStringUnmarshalableTypeError) Equal(other *NotStringUnmarshalableTypeError) bool {
-	return e.Field == other.Field && e.Type == other.Type && e.TypeName == other.TypeName
+	*d = PositiveDuration{dur}
+	return err
 }
 
 func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ...func(string) string) error {
