@@ -411,8 +411,8 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 	t.Run("pointer to deserializable type that was allocated", func(t *testing.T) {
 		target := struct {
-			Dur *duration
-		}{&duration{time.Second}}
+			Dur *cptest.PositiveDuration
+		}{&cptest.PositiveDuration{time.Second}}
 
 		sm := map[string]string{
 			"Dur": "5s",
@@ -421,12 +421,12 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, target, struct{ Dur *duration }{&duration{5 * time.Second}})
+		td.Cmp(t, target, struct{ Dur *cptest.PositiveDuration }{&cptest.PositiveDuration{5 * time.Second}})
 	})
 
 	t.Run("pointer to deserializable type that was NOT allocated should allocate it", func(t *testing.T) {
 		target := struct {
-			Dur *duration
+			Dur *cptest.PositiveDuration
 		}{}
 
 		sm := map[string]string{
@@ -436,12 +436,12 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, target, struct{ Dur *duration }{&duration{5 * time.Second}})
+		td.Cmp(t, target, struct{ Dur *cptest.PositiveDuration }{&cptest.PositiveDuration{5 * time.Second}})
 	})
 
 	t.Run("plain deserializable type should be filled anyway", func(t *testing.T) {
 		target := struct {
-			Dur duration
+			Dur cptest.PositiveDuration
 		}{}
 
 		sm := map[string]string{
@@ -451,12 +451,12 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		err := cptest.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, target, struct{ Dur duration }{duration{5 * time.Second}})
+		td.Cmp(t, target, struct{ Dur cptest.PositiveDuration }{cptest.PositiveDuration{5 * time.Second}})
 	})
 
 	t.Run("error if user-defined type failed to parse input (non-pointer version)", func(t *testing.T) {
 		target := struct {
-			Dur duration
+			Dur cptest.PositiveDuration
 		}{}
 
 		sm := map[string]string{
@@ -466,14 +466,14 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
+			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"PositiveDuration", "5sus"}},
 		})
-		td.Cmp(t, target, struct{ Dur duration }{})
+		td.Cmp(t, target, struct{ Dur cptest.PositiveDuration }{})
 	})
 
 	t.Run("error if user-defined type failed to parse input (empty pointer version)", func(t *testing.T) {
 		target := struct {
-			Dur *duration
+			Dur *cptest.PositiveDuration
 		}{}
 
 		sm := map[string]string{
@@ -483,15 +483,15 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
+			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"PositiveDuration", "5sus"}},
 		})
-		td.Cmp(t, target, struct{ Dur *duration }{})
+		td.Cmp(t, target, struct{ Dur *cptest.PositiveDuration }{})
 	})
 
 	t.Run("error if user-defined type failed to parse input (valid pointer version)", func(t *testing.T) {
-		dur := &duration{time.Second}
+		dur := &cptest.PositiveDuration{time.Second}
 		target := struct {
-			Dur *duration
+			Dur *cptest.PositiveDuration
 		}{dur}
 
 		sm := map[string]string{
@@ -501,16 +501,16 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"duration", "5sus"}},
+			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"PositiveDuration", "5sus"}},
 		})
-		td.Cmp(t, target, struct{ Dur *duration }{dur})
+		td.Cmp(t, target, struct{ Dur *cptest.PositiveDuration }{dur})
 	})
 
 	t.Run("optional transform functions", func(t *testing.T) {
 		type TestStruct struct {
 			One            int
 			Aword          string
-			PascalCase     *duration
+			PascalCase     *cptest.PositiveDuration
 			ShouldNotMatch uint
 		}
 
@@ -526,7 +526,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		want := TestStruct{
 			One:            1,
 			Aword:          "woah",
-			PascalCase:     &duration{5 * time.Second},
+			PascalCase:     &cptest.PositiveDuration{5 * time.Second},
 			ShouldNotMatch: 0,
 		}
 
@@ -673,12 +673,4 @@ func TestPositiveDuration(t *testing.T) {
 
         td.Cmp(t, err, cptest.ErrNegativePositiveDuration)
     })
-}
-
-type duration struct{ time.Duration }
-
-func (d *duration) UnmarshalText(b []byte) error {
-	dur, err := time.ParseDuration(string(b))
-	*d = duration{dur}
-	return err
 }
