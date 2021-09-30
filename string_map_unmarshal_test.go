@@ -384,7 +384,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			"Info": "my age is over 9000",
 		}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target1) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "struct { Age int }"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target1) }, &cptest.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "struct { Age int }"})
 
 		type InfoType struct{ Age int }
 
@@ -392,13 +392,13 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info InfoType
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target2) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "cptest_test.InfoType"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target2) }, &cptest.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "cptest_test.InfoType"})
 
 		target3 := struct {
 			Info *InfoType
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target3) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Ptr, TypeName: "*cptest_test.InfoType"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target3) }, &cptest.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Ptr, TypeName: "*cptest_test.InfoType"})
 
 		type Numbers []int
 
@@ -406,7 +406,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info Numbers
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target4) }, &cptest.NotStringUnmarshalableTypeError{Field: "Info", Type: reflect.Slice, TypeName: "cptest_test.Numbers"})
+		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target4) }, &cptest.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Slice, TypeName: "cptest_test.Numbers"})
 	})
 
 	t.Run("pointer to deserializable type that was allocated", func(t *testing.T) {
@@ -621,56 +621,56 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 }
 
 func TestPositiveDuration(t *testing.T) {
-    t.Run("empty string", func(t *testing.T) {
-        dur := &cptest.PositiveDuration{}
-        err := dur.UnmarshalText([]byte(""))
+	t.Run("empty string", func(t *testing.T) {
+		dur := &cptest.PositiveDuration{}
+		err := dur.UnmarshalText([]byte(""))
 
-        td.CmpError(t, err)
-    })
+		td.CmpError(t, err)
+	})
 
-    t.Run("zero nanoseconds", func(t *testing.T) {
-        dur := &cptest.PositiveDuration{}
-        err := dur.UnmarshalText([]byte("0ns"))
+	t.Run("zero nanoseconds", func(t *testing.T) {
+		dur := &cptest.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("0ns"))
 
-        td.CmpNoError(t, err)
-        td.Cmp(t, dur.Duration, 0 * time.Nanosecond)
-    })
+		td.CmpNoError(t, err)
+		td.Cmp(t, dur.Duration, 0*time.Nanosecond)
+	})
 
-    t.Run("one second", func(t *testing.T) {
-        dur := &cptest.PositiveDuration{}
-        err := dur.UnmarshalText([]byte("1s"))
+	t.Run("one second", func(t *testing.T) {
+		dur := &cptest.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("1s"))
 
-        td.CmpNoError(t, err)
-        td.Cmp(t, dur.Duration, time.Second)
-    })
+		td.CmpNoError(t, err)
+		td.Cmp(t, dur.Duration, time.Second)
+	})
 
-    t.Run("ten seconds", func(t *testing.T) {
-        dur := &cptest.PositiveDuration{}
-        err := dur.UnmarshalText([]byte("10s"))
+	t.Run("ten seconds", func(t *testing.T) {
+		dur := &cptest.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("10s"))
 
-        td.CmpNoError(t, err)
-        td.Cmp(t, dur.Duration, 10 * time.Second)
-    })
+		td.CmpNoError(t, err)
+		td.Cmp(t, dur.Duration, 10*time.Second)
+	})
 
-    t.Run("1 and half milliseconds", func(t *testing.T) {
-        dur := &cptest.PositiveDuration{}
-        err := dur.UnmarshalText([]byte("1.5ms"))
+	t.Run("1 and half milliseconds", func(t *testing.T) {
+		dur := &cptest.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("1.5ms"))
 
-        td.CmpNoError(t, err)
-        td.Cmp(t, dur.Duration, 1500 * time.Microsecond)
-    })
+		td.CmpNoError(t, err)
+		td.Cmp(t, dur.Duration, 1500*time.Microsecond)
+	})
 
-    t.Run("negative second is forbidden", func(t *testing.T) {
-        dur := &cptest.PositiveDuration{}
-        err := dur.UnmarshalText([]byte("-1s"))
+	t.Run("negative second is forbidden", func(t *testing.T) {
+		dur := &cptest.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("-1s"))
 
-        td.Cmp(t, err, cptest.ErrNegativePositiveDuration)
-    })
+		td.Cmp(t, err, cptest.ErrNegativePositiveDuration)
+	})
 
-    t.Run("negative fractional duration is forbidden", func(t *testing.T) {
-        dur := &cptest.PositiveDuration{}
-        err := dur.UnmarshalText([]byte("-42.0us"))
+	t.Run("negative fractional duration is forbidden", func(t *testing.T) {
+		dur := &cptest.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("-42.0us"))
 
-        td.Cmp(t, err, cptest.ErrNegativePositiveDuration)
-    })
+		td.Cmp(t, err, cptest.ErrNegativePositiveDuration)
+	})
 }
