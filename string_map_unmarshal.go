@@ -18,7 +18,7 @@ const (
 
 	ErrUnknownField = StringError("unknown field")
 
-    ErrNegativePositiveDuration = StringError("PositiveDuration accepts only positive durations")
+	ErrNegativePositiveDuration = StringError("PositiveDuration accepts only positive durations")
 )
 
 var intParsers = map[reflect.Kind]int{
@@ -47,9 +47,9 @@ var complexParsers = map[reflect.Kind]int{
 	reflect.Complex128: 128,
 }
 
-// PositiveDuration is a wrapper around time.PositiveDuration that allows
-// StringMapsUnmarshal to parse it from a string and forbids negative
-// durations.
+// PositiveDuration is a wrapper around time.Duration that allows
+// StringMapsUnmarshal to parse it from a string and that forbids negative
+// durations. Implements encoding.TextUnmarshaler.
 type PositiveDuration struct{ time.Duration }
 
 func NewPositiveDuration(dur time.Duration) PositiveDuration {
@@ -61,9 +61,9 @@ func NewPositiveDuration(dur time.Duration) PositiveDuration {
 // reject negative durations.
 func (d *PositiveDuration) UnmarshalText(b []byte) error {
 	dur, err := time.ParseDuration(string(b))
-    if dur.Nanoseconds() < 0 {
-        return ErrNegativePositiveDuration
-    }
+	if dur.Nanoseconds() < 0 {
+		return ErrNegativePositiveDuration
+	}
 
 	*d = PositiveDuration{dur}
 	return err
@@ -203,7 +203,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 		} else if field.Kind() == reflect.String {
 			field.Set(reflect.ValueOf(v))
 		} else {
-			panic(&NotStringUnmarshalableTypeError{Field: k, Type: field.Kind(), TypeName: fmt.Sprintf("%T", field.Interface())})
+			panic(&NotTextUnmarshalableTypeError{Field: k, Type: field.Kind(), TypeName: fmt.Sprintf("%T", field.Interface())})
 		}
 	}
 
