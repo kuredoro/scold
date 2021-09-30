@@ -77,18 +77,18 @@ Possible arguments:
 The format is simple:
 ```
 ===     (1)
-line 1  \
-line 2  |
----     +- Test 1
-line 1  |
-line 2  /
+line 1  ┐
+line 2  │
+---     ├─ Test 1
+line 1  │
+line 2  ┘
 ===     (1)
 ===
-line 1  \
-line 2  |
----     +- Test 2
-line 1  |
-line 2  /
+line 1  ┐
+line 2  │
+---     ├─ Test 2
+line 1  │
+line 2  ┘
 ===     (1)
 ```
 
@@ -96,7 +96,7 @@ In other words, your inputs are separated from outputs with `---`, and test case
 
 The first test can specify a set of **test suite options** and follows a different format
 ```
-tl = 10.0
+tl = 10s
 prec = 8
 ===
 line 1
@@ -107,7 +107,6 @@ line 2
 ```
 
 See [Test suite configuration](#test-suite-configuration).
-
 
 ### How are outputs compared?
 
@@ -227,9 +226,9 @@ The internal error is a failed test because cptest could not perform what it was
 
 ### Test suite configuration
 
-A set of key-value pairs can be specified in place of the first test to alter the behavior of cptest. For example:
+A set of key-value pairs can be specified at the very top of `inputs.txt`. For example:
 ```
-tl = 10.0
+tl = 10s
 prec = 8
 ===
 input 1
@@ -241,29 +240,30 @@ input 2
 output 2
 ```
 
-A key-value pair is a line with an equality sign. The key and the value are located to the left and to the right of the sign. They both are space-trimmed. So, `  two words =   are  parsed` is parsed as: `key="two words"` and `value="are  parsed"`.
+A key-value pair is a line with an equality sign. The key and the value are located to the left and to the right of the sign, respectively. They both are space-trimmed. So, `"  two words =   are  parsed"` is parsed as: `key="two words"` and `value="are  parsed"`.
 
 #### Specifying time limit
 
 Syntax:
 ```
-tl = <integer> [ '.' <integer> ]
+tl = <digits> [ '.' <digits> ] <unit>
+unit ::=  "ns" | "us" | "µs" | "ms" | "s" | "m" | "h"
 ```
 
 Examples:
 ```
-tl = 1
-tl = 6.66
-tl = 0.01
+tl = 1ms
+tl = 6.66s
+tl = 0.01m
 ```
 
-The `tl` option specifies the time limit for the test suite, overriding the default value. The time limit is measured in seconds, and non-integer seconds can be entered.
+The `tl` option specifies the time limit for the test suite, overriding the default value. The value for the time limit should contain a unit suffix and may contain a fractional part. "us" and "µs" both correspond to microseconds.
 
 #### Specifying floating point precision
 
 Syntax:
 ```
-prec = <integer>
+prec = <digits>
 ```
 
 Examples:
