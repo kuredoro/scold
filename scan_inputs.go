@@ -32,7 +32,7 @@ type Test struct {
 // can be listed inside a config.
 type InputsConfig struct {
 	Prec uint8
-	Tl   Duration
+	Tl   PositiveDuration
 }
 
 // Inputs contains all information located in the inputs file: tests and

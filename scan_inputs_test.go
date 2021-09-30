@@ -358,7 +358,7 @@ zyx
 			}
 
 			configWant := cptest.InputsConfig{
-				Tl:   cptest.Duration{2 * time.Second},
+				Tl:   cptest.PositiveDuration{2 * time.Second},
 				Prec: 16,
 			}
 
@@ -390,7 +390,7 @@ prec= 16
 			}
 
 			cptest.DefaultInputsConfig = cptest.InputsConfig{
-				Tl:   cptest.Duration{24 * time.Second},
+				Tl:   cptest.PositiveDuration{24 * time.Second},
 				Prec: 6,
 			}
 
@@ -467,7 +467,7 @@ by the way...
 			errsWant := []error{
 				&cptest.LineRangeError{1, []string{"= foo"}, cptest.KeyMissing},
 				&cptest.LineRangeError{2, []string{"foo= aaa"}, &cptest.FieldError{"foo", cptest.ErrUnknownField}},
-				&cptest.LineRangeError{3, []string{"tl=10.0"}, &cptest.FieldError{"tl", &cptest.NotValueOfTypeError{"Duration", "10.0"}}},
+				&cptest.LineRangeError{3, []string{"tl=10.0"}, &cptest.FieldError{"tl", &cptest.NotValueOfTypeError{"PositiveDuration", "10.0"}}},
 				&cptest.LineRangeError{7, []string{"extra=love"}, &cptest.TestError{1, cptest.IOSeparatorMissing}},
 				&cptest.LineRangeError{9, []string{"oh = and", "by the way..."}, &cptest.TestError{2, cptest.IOSeparatorMissing}},
 			}
