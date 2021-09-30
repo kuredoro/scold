@@ -22,7 +22,7 @@ type ConfigurableStopwatcher struct {
 	Clock clockwork.Clock
 }
 
-// Now will returns time point since internal's clock epoch.
+// Now will return time point since internal's clock epoch.
 func (s *ConfigurableStopwatcher) Now() time.Time {
 	return s.Clock.Now()
 }
