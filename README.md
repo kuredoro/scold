@@ -255,9 +255,10 @@ Examples:
 tl = 1ms
 tl = 6.66s
 tl = 0.01m
+tl = 0s
 ```
 
-The `tl` option specifies the time limit for the test suite, overriding the default value. The value for the time limit should contain a unit suffix and may contain a fractional part. "us" and "µs" both correspond to microseconds.
+The `tl` option specifies the time limit for the test suite, overriding the default value. The value for the time limit should contain a unit suffix and may contain a fractional part. "us" and "µs" both correspond to microseconds. If `tl` is specified to be `0`, then the time limit is considered to be infinite.
 
 #### Specifying floating point precision
 
