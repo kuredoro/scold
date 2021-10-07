@@ -123,7 +123,7 @@ func AssertTimes(t *testing.T, got, want map[int]time.Duration) {
 	}
 }
 
-// AssertLexSequence compares if the two LexSequences are equal.
+// AssertLexemes compares if the two LexSequences are equal.
 func AssertLexemes(t *testing.T, got, want []string) {
 	t.Helper()
 
@@ -141,7 +141,7 @@ func AssertDiffSuccess(t *testing.T, ok bool) {
 	}
 }
 
-// AssertDiffSuccess chacks if lexeme comparison returned ok = true.
+// AssertDiffFailure chacks if lexeme comparison returned ok = false.
 func AssertDiffFailure(t *testing.T, ok bool) {
 	t.Helper()
 
@@ -150,6 +150,8 @@ func AssertDiffFailure(t *testing.T, ok bool) {
 	}
 }
 
+// AssertRichText checks that the contents and the bitmasks of both RichTexts
+// are equal.
 func AssertRichText(t *testing.T, got, want RichText) {
 	t.Helper()
 
@@ -159,6 +161,8 @@ func AssertRichText(t *testing.T, got, want RichText) {
 	}
 }
 
+// AssertRichTextMask checks that both bitmasks to be used in RichText
+// are equal.
 func AssertRichTextMask(t *testing.T, got, want []bool) {
 	t.Helper()
 
@@ -175,6 +179,8 @@ func AssertRichTextMask(t *testing.T, got, want []bool) {
 	AssertRichText(t, gotRt, wantRt)
 }
 
+// AssertEnrichedLexSequence checks that both lexeme sequences render to
+// the same string.
 func AssertEnrichedLexSequence(t *testing.T, got, want []RichText) {
 	t.Helper()
 
@@ -189,6 +195,7 @@ func AssertEnrichedLexSequence(t *testing.T, got, want []RichText) {
 	}
 }
 
+// AssertText checks two strings for equality, but escapes all newlines.
 func AssertText(t *testing.T, got, want string) {
 	t.Helper()
 
@@ -199,6 +206,8 @@ func AssertText(t *testing.T, got, want string) {
 	}
 }
 
+// AssertThreadCount thread-safely checks that the pool has the specified
+// number of threads created during its lifetime.
 func AssertThreadCount(t *testing.T, pool *SpyThreadPool, want int) {
 	t.Helper()
 
