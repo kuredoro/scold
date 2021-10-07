@@ -204,10 +204,10 @@ func (l *Lexer) Compare(target, source []string) (rts []RichText, ok bool) {
 	return
 }
 
-// DeduceLexemeType will assess the type of the lexeme by sequentially applying
+// deduceLexemeType will assess the type of the lexeme by sequentially applying
 // more and more specialized type checkers starting from the least restrictive
 // one.
-func DeduceLexemeType(xm string) lexemeType {
+func deduceLexemeType(xm string) lexemeType {
 	for i := int(STRXM) + 1; i != int(FINALXM); i++ {
 		// As any lexeme *is* a string, the function IsStringLexeme is omitted.
 		if !TypeCheckers[i-1](xm) {
@@ -221,8 +221,8 @@ func DeduceLexemeType(xm string) lexemeType {
 // GenerateMask is a wrapper function that finds the common type of the two
 // lexems and generates a color mask for the target based on source.
 func (l *Lexer) GenerateMask(target, source string) []bool {
-	targetType := DeduceLexemeType(target)
-	sourceType := DeduceLexemeType(source)
+	targetType := deduceLexemeType(target)
+	sourceType := deduceLexemeType(source)
 
 	commonType := targetType
 	if sourceType < commonType {

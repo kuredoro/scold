@@ -13,15 +13,21 @@ type Verdict int
 
 // The set of all possible judge verdicts that can be assigned. The
 // abbreviatons are due to competitive programming online judges.
-// (Except for IE, that stands for Internal Error)
 const (
 	OK Verdict = iota
+    // Internal Error
 	IE
+    // Wrong Answer
 	WA
+    // Runtime Error
 	RE
+    // Time Limit
 	TL
 )
 
+// TLError is an error that can occur during Processer execution that
+// indicates that it was prematurely killed by TestingBatch, because
+// it exceeded the time limit.
 const TLError StringError = "Time limit exceeded"
 
 // TestStartCallbackFunc represents a function to be called before a test

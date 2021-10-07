@@ -20,6 +20,9 @@ const (
 	TestDelim = "==="
 )
 
+// DefaultInputsConfig is used to define default values for the InputsConfig
+// inside Inputs. It is a starting ground. It may be altered further by
+// customization points inside the inputs.txt file.
 var DefaultInputsConfig InputsConfig
 
 // Test represents a single test case: an input and the expected output.
@@ -70,6 +73,9 @@ func ScanKeyValuePair(line string) (string, string, error) {
 	return key, val, nil
 }
 
+// NumberedLine is used to assign line number information to a string.
+// It is used to map string map keys produced during config parsing to
+// the relevant lines for error reporting.
 type NumberedLine struct {
 	Num  int
 	Line string
@@ -77,9 +83,14 @@ type NumberedLine struct {
 
 // ScanConfig tries to parse a stream of key-value pairs. Key-value pair is
 // defined as `<string> "=" <string>`. Both strings are space trimmed. The key
-// must be non-empty. Otherwise, a LinedError is produced. The final map
-// will contain only correctly specified key-value pairs or an empty map.
-// Duplicate keys are allowed, the later occurrence is preferred.
+// must be non-empty. Otherwise, a LineRangeError is issued. Duplicate keys
+// are allowed, the later occurrence is preferred.
+//
+// The function returns two maps: the first is a key-value map as defined in the
+// supplied text, and the second maps keys to the relevant lines inside the
+// config. The first one will contain only correctly defined keys. The second
+// one is mainly used to correlate errors from StringMapUnmarshal to the
+// inputs.txt lines and produce error messages.
 func ScanConfig(text string) (config map[string]string, key2line map[string]NumberedLine, errs []error) {
 	s := bufio.NewScanner(strings.NewReader(text))
 
