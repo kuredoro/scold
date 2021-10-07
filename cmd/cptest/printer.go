@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 )
 
 const diffColor = aurora.RedFg
+const missingNewlineColor = aurora.MagentaFg
 
 // Initialized in init()
 var verdictStr map[cptest.Verdict]aurora.Value
@@ -35,6 +37,14 @@ func verboseResultPrinterWorker() {
 	}
 }
 
+func printAlwaysWithNewline(r io.Writer, text string) {
+    fmt.Fprint(r, text)
+    if text != "" && text[len(text)-1] != '\n' {
+        fmt.Fprint(r, cptest.DumpLexemes([]cptest.RichText{{Str: "\n", Mask: []bool{true}}}, missingNewlineColor))
+        fmt.Fprintln(r)
+    }
+}
+
 func printVerboseResult(res *TestResultNotification) {
 	b := res.batch
 	id := res.id
@@ -53,13 +63,25 @@ func printVerboseResult(res *TestResultNotification) {
 
 		if verdict == cptest.RE {
 			fmt.Fprintf(str, "Exit code: %d\n\n", b.Outs[id].ExitCode)
-			fmt.Fprintf(str, "Output:\n%s\n", b.Outs[id].Stdout)
-			fmt.Fprintf(str, "Stderr:\n%s\n", b.Outs[id].Stderr)
+			fmt.Fprint(str, "Output:\n")
+            printAlwaysWithNewline(str, b.Outs[id].Stdout)
+			fmt.Fprint(str, "Stderr:\n")
+            printAlwaysWithNewline(str, b.Outs[id].Stderr)
 		} else if verdict == cptest.WA {
 			fmt.Fprintf(str, "Output:\n%s\n", cptest.DumpLexemes(b.RichOuts[id], diffColor))
 			if b.Outs[id].Stderr != "" {
 				fmt.Fprintf(str, "Stderr:\n%s\n", b.Outs[id].Stderr)
 			}
+        } else if verdict == cptest.TL {
+            if b.Outs[id].Stdout != "" {
+                fmt.Fprint(str, "Output:\n")
+                printAlwaysWithNewline(str, b.Outs[id].Stdout)
+            }
+
+            if b.Outs[id].Stderr != "" {
+                fmt.Fprint(str, "Stderr:\n")
+                printAlwaysWithNewline(str, b.Outs[id].Stderr)
+            }
 		} else if verdict == cptest.IE {
 			fmt.Fprintf(str, "Error:\n%v\n\n", b.Errs[id])
 		}
