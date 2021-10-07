@@ -8,9 +8,9 @@ import (
 	"unicode/utf8"
 )
 
-// VALID_INT_MAX_LEN is maximum number of digits a lexeme may have to be
+// ValidIntMaxLen is maximum number of digits a lexeme may have to be
 // considered an int
-var VALID_INT_MAX_LEN = 10
+var ValidIntMaxLen = 10
 
 type lexemeType int
 
@@ -38,7 +38,7 @@ const (
 func IsIntLexeme(xm string) bool {
 	_, err := strconv.Atoi(xm)
 
-	return err == nil && len(xm) <= VALID_INT_MAX_LEN
+	return err == nil && len(xm) <= ValidIntMaxLen
 }
 
 // IsFloatLexeme returns true if the string represents a floating-point value.
