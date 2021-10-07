@@ -11,13 +11,17 @@ import (
 )
 
 const (
-	// NotStructLike is issued when a destination type doesn't behave like
+	// ErrNotAStructLike is issued when a destination type doesn't behave like
 	// a struct. struct and *struct types have the same syntax for manipulating
 	// them, so they are considered struct-like.
 	ErrNotAStructLike = StringError("not a struct-like")
 
+	// ErrUnknownField is issued when the deserialization destination cannot be
+	// found in a struct-like via reflection.
 	ErrUnknownField = StringError("unknown field")
 
+	// ErrNegativePositiveDuration is issued when PositiveDuration is attempted
+	// to be initialized with negative value.
 	ErrNegativePositiveDuration = StringError("PositiveDuration accepts only positive durations")
 )
 
@@ -52,7 +56,13 @@ var complexParsers = map[reflect.Kind]int{
 // durations. Implements encoding.TextUnmarshaler.
 type PositiveDuration struct{ time.Duration }
 
+// NewPositiveDuration returns a PositiveDuration with the specified value.
+// Panics if value is negative.
 func NewPositiveDuration(dur time.Duration) PositiveDuration {
+	if dur < 0 {
+		panic(ErrNegativePositiveDuration)
+	}
+
 	return PositiveDuration{dur}
 }
 
@@ -69,6 +79,41 @@ func (d *PositiveDuration) UnmarshalText(b []byte) error {
 	return err
 }
 
+// StringMapUnmarshal accepts a string map and for each key-value pair tries
+// to find an identically named field in the provided object, parse the
+// string value according to the field's type and assign the parsed value
+// to it.
+//
+// The field's type should be: int (any flavor), uint (any flavor), string,
+// bool, any struct or a pointer to a struct. The structs should implement
+// encoding.TextUnmarshaler standard interface to be parsed by this function,
+// otherwise NotUnmarshalableTypeError is issued.
+//
+// If the destination object is not struct or a pointer to a struct,
+// ErrNotAStructLike is issued.
+//
+// If a map's key cannot be mapped to a field within the destination object,
+// FieldError wrapping ErrUnknownField is issued.
+//
+// If a map's value cannot be parsed to the destination type, a FieldError
+// wrapping a NotValueOfTypeError is issued.
+//
+// StringMapUnmarshal makes sure that if any error occurs during unmarshaling
+// of a field, the field's previous value is retained.
+//
+// This function will accumulate all produced errors and return an instance of
+// *multierror.Error type.
+//
+// Since a key must match the field's name perfectly, and this function operates
+// only on exported fields, this would mean that only capitalized keys would
+// be accepted. This may not be desired. An array of transformers can be
+// supplied to change the field matching behavior. Each map's key will be
+// fed to one transformer at a time in the order they were passed to this
+// function, until a match is found. The transformer's job, then, is to
+// convert an arbitrary string to a possible exported field's name in the
+// destination object. If a transformer succeeds, the successive transformers
+// are not applied. If the field still could not be found, a FieldError
+// wrapping ErrUnknownField is issued.
 func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ...func(string) string) error {
 	val := reflect.ValueOf(data)
 
