@@ -217,8 +217,8 @@ func TestIsIntLexeme(t *testing.T) {
 		{"10+-", false},
 		{"0", true},
 		{"0xa", false},
-		{strings.Repeat("1", cptest.VALID_INT_MAX_LEN), true},
-		{strings.Repeat("1", cptest.VALID_INT_MAX_LEN+1), false},
+		{strings.Repeat("1", cptest.ValidIntMaxLen), true},
+		{strings.Repeat("1", cptest.ValidIntMaxLen+1), false},
 	}
 
 	for _, test := range cases {
