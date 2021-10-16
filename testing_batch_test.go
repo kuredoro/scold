@@ -132,6 +132,7 @@ func TestTestingBatch(t *testing.T) {
 			2: cptest.OK,
 		}
 
+		cptest.AssertResultIDInvariant(t, batch)
 		cptest.AssertVerdicts(t, batch.Results, want)
 		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		cptest.AssertThreadCount(t, pool, 2)
@@ -166,6 +167,7 @@ func TestTestingBatch(t *testing.T) {
 			2: cptest.OK,
 		}
 
+		cptest.AssertResultIDInvariant(t, batch)
 		cptest.AssertVerdicts(t, batch.Results, want)
 		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		cptest.AssertThreadCount(t, pool, 2)
@@ -211,6 +213,7 @@ func TestTestingBatch(t *testing.T) {
 			2: cptest.WA,
 		}
 
+		cptest.AssertResultIDInvariant(t, batch)
 		cptest.AssertVerdicts(t, batch.Results, want)
 		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		cptest.AssertThreadCount(t, pool, 2)
@@ -246,6 +249,7 @@ func TestTestingBatch(t *testing.T) {
 				2: cptest.WA,
 			}
 
+			cptest.AssertResultIDInvariant(t, batch)
 			cptest.AssertVerdicts(t, batch.Results, want)
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 			cptest.AssertThreadCount(t, pool, 2)
@@ -318,6 +322,7 @@ func TestTestingBatch(t *testing.T) {
 				5: cptest.IE,
 			}
 
+			cptest.AssertResultIDInvariant(t, batch)
 			cptest.AssertVerdicts(t, batch.Results, want)
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 5)
 			cptest.AssertThreadCount(t, pool, 3)
@@ -381,6 +386,7 @@ func TestTestingBatch(t *testing.T) {
 				1: 3 * time.Second,
 			}
 
+			cptest.AssertResultIDInvariant(t, batch)
 			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 1)
 
@@ -453,6 +459,7 @@ func TestTestingBatch(t *testing.T) {
 				1: 3 * time.Second,
 			}
 
+			cptest.AssertResultIDInvariant(t, batch)
 			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 1)
 
@@ -529,6 +536,7 @@ func TestTestingBatch(t *testing.T) {
 				2: 3 * time.Second,
 			}
 
+			cptest.AssertResultIDInvariant(t, batch)
 			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 1)
 
@@ -606,6 +614,7 @@ func TestTestingBatch(t *testing.T) {
 				2: 3 * time.Second,
 			}
 
+			cptest.AssertResultIDInvariant(t, batch)
 			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 2)
 
@@ -722,6 +731,7 @@ func TestTestingBatch(t *testing.T) {
 				4: 3 * time.Second,
 			}
 
+			cptest.AssertResultIDInvariant(t, batch)
 			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 2)
 
