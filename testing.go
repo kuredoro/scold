@@ -224,3 +224,13 @@ func AssertThreadCount(t *testing.T, pool *SpyThreadPool, want int) {
 		t.Errorf("got %d threads used, want %d", got, want)
 	}
 }
+
+// AssertResultIDInvariant checks that each key in TestingBatch.Results
+// equals to the its value`s ID field.
+func AssertResultIDInvariant(t *testing.T, b *TestingBatch) {
+    for k, v := range b.Results {
+        if k != v.ID {
+            t.Errorf("invariant violation: %d != Results[%d].ID (which is %d)", k, k, v.ID)
+        }
+    }
+}
