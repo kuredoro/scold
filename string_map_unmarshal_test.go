@@ -644,12 +644,28 @@ func TestPositiveDuration(t *testing.T) {
 		td.Cmp(t, dur.Duration, time.Second)
 	})
 
+	t.Run("one second without suffix", func(t *testing.T) {
+		dur := &cptest.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("1"))
+
+		td.CmpNoError(t, err)
+		td.Cmp(t, dur.Duration, time.Second)
+	})
+
 	t.Run("ten seconds", func(t *testing.T) {
 		dur := &cptest.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("10s"))
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, dur.Duration, 10*time.Second)
+	})
+
+	t.Run("ten and half seconds without suffix", func(t *testing.T) {
+		dur := &cptest.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("10.5"))
+
+		td.CmpNoError(t, err)
+		td.Cmp(t, dur.Duration, 10500 * time.Millisecond)
 	})
 
 	t.Run("1 and half milliseconds", func(t *testing.T) {
