@@ -68,16 +68,16 @@ func AssertErrors(t *testing.T, got, want []error) {
 
 // AssertVerdicts checks that received and expected verdict maps contain the
 // same keys, and then checks that the values for these keys equal.
-func AssertVerdicts(t *testing.T, got, want map[int]Verdict) {
+func AssertVerdicts(t *testing.T, got map[int]*TestResult, want map[int]Verdict) {
 	t.Helper()
 
 	if len(got) != len(want) {
 		t.Fatalf("got %d verdicts, want %d", len(got), len(want))
 	}
 
-	for testID, got := range got {
-		if got != want[testID] {
-			t.Errorf("for test %d got verdict %v, want %v", testID, got, want[testID])
+	for testID, result := range got {
+		if result.Verdict != want[testID] {
+			t.Errorf("for test %d got verdict %v, want %v", testID, result.Verdict, want[testID])
 		}
 	}
 }
@@ -102,15 +102,20 @@ func AssertDefaultConfig(t *testing.T, got InputsConfig) {
 
 // AssertTimes check whether the received and expected timestampts for the
 // test cases both exist and are equal.
-func AssertTimes(t *testing.T, got, want map[int]time.Duration) {
-	if len(got) != len(want) {
+func AssertTimes(t *testing.T, got map[int]*TestResult, want map[int]time.Duration) {
+    gotTimes := map[int]time.Duration{}
+    for k, v := range got {
+        gotTimes[k] = v.Time
+    }
+
+	if len(gotTimes) != len(want) {
 		t.Errorf("got %d timestamps, want %d\ngot %v\nwant %v\n",
-			len(got), len(want), litter.Sdump(got), litter.Sdump(want))
+			len(gotTimes), len(want), litter.Sdump(gotTimes), litter.Sdump(want))
 		return
 	}
 
 	for id, wantTime := range want {
-		gotTime, exists := got[id]
+		gotTime, exists := gotTimes[id]
 
 		if !exists {
 			t.Errorf("expected time #%d to exist, but doesn't", id)

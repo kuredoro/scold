@@ -16,18 +16,18 @@ import (
 	"github.com/sanity-io/litter"
 )
 
-func ProcFuncMultiply(ctx context.Context, in io.Reader) (cptest.ProcessResult, error) {
+func ProcFuncMultiply(ctx context.Context, in io.Reader) (cptest.ExecutionResult, error) {
 	var a, b int
 	fmt.Fscan(in, &a, &b)
 
-	return cptest.ProcessResult{
+	return cptest.ExecutionResult{
 		ExitCode: 0,
 		Stdout:   fmt.Sprintln(a * b),
 		Stderr:   "",
 	}, nil
 }
 
-func ProcFuncIntegerSequence(ctx context.Context, in io.Reader) (cptest.ProcessResult, error) {
+func ProcFuncIntegerSequence(ctx context.Context, in io.Reader) (cptest.ExecutionResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
@@ -38,14 +38,14 @@ func ProcFuncIntegerSequence(ctx context.Context, in io.Reader) (cptest.ProcessR
 
 	fmt.Fprintln(buf)
 
-	return cptest.ProcessResult{
+	return cptest.ExecutionResult{
 		ExitCode: 0,
 		Stdout:   buf.String(),
 		Stderr:   "",
 	}, nil
 }
 
-func ProcFuncBogusFloatingPoint(ctx context.Context, in io.Reader) (cptest.ProcessResult, error) {
+func ProcFuncBogusFloatingPoint(ctx context.Context, in io.Reader) (cptest.ExecutionResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
@@ -56,15 +56,15 @@ func ProcFuncBogusFloatingPoint(ctx context.Context, in io.Reader) (cptest.Proce
 		out = "2.345678\n"
 	}
 
-	return cptest.ProcessResult{
+	return cptest.ExecutionResult{
 		ExitCode: 0,
 		Stdout:   out,
 		Stderr:   "",
 	}, nil
 }
 
-func ProcFuncAnswer(ctx context.Context, in io.Reader) (cptest.ProcessResult, error) {
-	return cptest.ProcessResult{
+func ProcFuncAnswer(ctx context.Context, in io.Reader) (cptest.ExecutionResult, error) {
+	return cptest.ExecutionResult{
 		ExitCode: 0,
 		Stdout:   "42",
 		Stderr:   "",
@@ -132,7 +132,7 @@ func TestTestingBatch(t *testing.T) {
 			2: cptest.OK,
 		}
 
-		cptest.AssertVerdicts(t, batch.Verdicts, want)
+		cptest.AssertVerdicts(t, batch.Results, want)
 		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		cptest.AssertThreadCount(t, pool, 2)
 	})
@@ -166,16 +166,16 @@ func TestTestingBatch(t *testing.T) {
 			2: cptest.OK,
 		}
 
-		cptest.AssertVerdicts(t, batch.Verdicts, want)
+		cptest.AssertVerdicts(t, batch.Results, want)
 		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		cptest.AssertThreadCount(t, pool, 2)
 
-		if len(batch.RichAnswers[1]) != 3 || len(batch.RichAnswers[2]) != 4 {
-			t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
+		if len(batch.Results[1].RichAnswer) != 3 || len(batch.Results[2].RichAnswer) != 4 {
+			t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.Results))
 		}
 
-		if len(batch.RichOuts[1]) != 3 || len(batch.RichOuts[2]) != 4 {
-			t.Errorf("got wrong rich outputs, %s", litter.Sdump(batch.RichOuts))
+		if len(batch.Results[1].RichOut) != 3 || len(batch.Results[2].RichOut) != 4 {
+			t.Errorf("got wrong rich outputs, %s", litter.Sdump(batch.Results))
 		}
 	})
 
@@ -211,7 +211,7 @@ func TestTestingBatch(t *testing.T) {
 			2: cptest.WA,
 		}
 
-		cptest.AssertVerdicts(t, batch.Verdicts, want)
+		cptest.AssertVerdicts(t, batch.Results, want)
 		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		cptest.AssertThreadCount(t, pool, 2)
 	})
@@ -246,7 +246,7 @@ func TestTestingBatch(t *testing.T) {
 				2: cptest.WA,
 			}
 
-			cptest.AssertVerdicts(t, batch.Verdicts, want)
+			cptest.AssertVerdicts(t, batch.Results, want)
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 			cptest.AssertThreadCount(t, pool, 2)
 		})
@@ -280,12 +280,12 @@ func TestTestingBatch(t *testing.T) {
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
+					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
 						var num int
 						fmt.Fscan(r, &num)
 
 						if num == 3 {
-							return cptest.ProcessResult{
+							return cptest.ExecutionResult{
 								ExitCode: 1,
 								Stdout:   "",
 								Stderr:   "segfault. (core dumped)",
@@ -296,7 +296,7 @@ func TestTestingBatch(t *testing.T) {
 							panic("brrrr")
 						}
 
-						return cptest.ProcessResult{
+						return cptest.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "1\n",
 							Stderr:   "",
@@ -318,12 +318,12 @@ func TestTestingBatch(t *testing.T) {
 				5: cptest.IE,
 			}
 
-			cptest.AssertVerdicts(t, batch.Verdicts, want)
+			cptest.AssertVerdicts(t, batch.Results, want)
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 5)
 			cptest.AssertThreadCount(t, pool, 3)
 
-			if len(batch.RichAnswers[3]) == 0 || len(batch.RichAnswers[5]) == 0 {
-				t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.RichAnswers))
+			if len(batch.Results[3].RichAnswer) == 0 || len(batch.Results[5].RichAnswer) == 0 {
+				t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.Results))
 			}
 		})
 
@@ -341,11 +341,11 @@ func TestTestingBatch(t *testing.T) {
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
+					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
 						<-ctx.Done()
 						killCount++
 
-						return cptest.ProcessResult{
+						return cptest.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "",
 							Stderr:   "",
@@ -381,13 +381,13 @@ func TestTestingBatch(t *testing.T) {
 				1: 3 * time.Second,
 			}
 
-			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
+			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 1)
 
 			// Should be too fast for anyone to be killed.
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 0)
 			cptest.AssertCallCount(t, "process cancel", killCount, 0)
-			cptest.AssertTimes(t, batch.Times, timesWant)
+			cptest.AssertTimes(t, batch.Results, timesWant)
 		})
 
 	t.Run("single TL (proc runs)",
@@ -404,19 +404,19 @@ func TestTestingBatch(t *testing.T) {
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
+					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
 						select {
 						case <-clock.After(5 * time.Second):
 						case <-ctx.Done():
 							killCount++
-							return cptest.ProcessResult{
+							return cptest.ExecutionResult{
 								ExitCode: 0,
 								Stdout:   "",
 								Stderr:   "",
 							}, cptest.TLError
 						}
 
-						return cptest.ProcessResult{
+						return cptest.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "",
 							Stderr:   "",
@@ -453,12 +453,12 @@ func TestTestingBatch(t *testing.T) {
 				1: 3 * time.Second,
 			}
 
-			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
+			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 1)
 
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 1)
 			cptest.AssertCallCount(t, "process cancel", killCount, 1)
-			cptest.AssertTimes(t, batch.Times, timesWant)
+			cptest.AssertTimes(t, batch.Results, timesWant)
 		})
 
 	t.Run("two TL, thread count 1",
@@ -476,19 +476,19 @@ func TestTestingBatch(t *testing.T) {
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
+					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
 						select {
 						case <-clock.After(5 * time.Second):
 						case <-ctx.Done():
 							killCount++
-							return cptest.ProcessResult{
+							return cptest.ExecutionResult{
 								ExitCode: 0,
 								Stdout:   "",
 								Stderr:   "",
 							}, cptest.TLError
 						}
 
-						return cptest.ProcessResult{
+						return cptest.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "",
 							Stderr:   "",
@@ -529,12 +529,12 @@ func TestTestingBatch(t *testing.T) {
 				2: 3 * time.Second,
 			}
 
-			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
+			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 1)
 
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 			cptest.AssertCallCount(t, "process cancel", killCount, 2)
-			cptest.AssertTimes(t, batch.Times, timesWant)
+			cptest.AssertTimes(t, batch.Results, timesWant)
 		})
 
 	t.Run("two TL, thread count 2",
@@ -553,21 +553,21 @@ func TestTestingBatch(t *testing.T) {
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
+					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
 						select {
 						case <-clock.After(5 * time.Second):
 						case <-ctx.Done():
 							mu.Lock()
 							killCount++
 							mu.Unlock()
-							return cptest.ProcessResult{
+							return cptest.ExecutionResult{
 								ExitCode: 0,
 								Stdout:   "",
 								Stderr:   "",
 							}, cptest.TLError
 						}
 
-						return cptest.ProcessResult{
+						return cptest.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "",
 							Stderr:   "",
@@ -606,12 +606,12 @@ func TestTestingBatch(t *testing.T) {
 				2: 3 * time.Second,
 			}
 
-			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
+			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 2)
 
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 			cptest.AssertCallCount(t, "process cancel", killCount, 2)
-			cptest.AssertTimes(t, batch.Times, timesWant)
+			cptest.AssertTimes(t, batch.Results, timesWant)
 		})
 
 	t.Run("two TL two OK, thread count 2",
@@ -632,7 +632,7 @@ func TestTestingBatch(t *testing.T) {
 
 			proc := &cptest.SpyProcesser{
 				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
+					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
 						line, _ := ioutil.ReadAll(r)
 
 						var num int
@@ -648,14 +648,14 @@ func TestTestingBatch(t *testing.T) {
 							mu.Lock()
 							killCount++
 							mu.Unlock()
-							return cptest.ProcessResult{
+							return cptest.ExecutionResult{
 								ExitCode: 0,
 								Stdout:   "",
 								Stderr:   "",
 							}, nil
 						}
 
-						return cptest.ProcessResult{
+						return cptest.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   string(line),
 							Stderr:   "",
@@ -671,7 +671,7 @@ func TestTestingBatch(t *testing.T) {
 			pool := cptest.NewSpyThreadPool(2)
 
 			doneCh := make(chan struct{}, 1)
-			done := func(b *cptest.TestingBatch, t cptest.Test, id int) {
+			done := func(*cptest.TestResult) {
 				doneCh <- (struct{}{})
 			}
 
@@ -722,11 +722,11 @@ func TestTestingBatch(t *testing.T) {
 				4: 3 * time.Second,
 			}
 
-			cptest.AssertVerdicts(t, batch.Verdicts, testsWant)
+			cptest.AssertVerdicts(t, batch.Results, testsWant)
 			cptest.AssertThreadCount(t, pool, 2)
 
 			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 4)
 			cptest.AssertCallCount(t, "process cancel", killCount, 2)
-			cptest.AssertTimes(t, batch.Times, timesWant)
+			cptest.AssertTimes(t, batch.Results, timesWant)
 		})
 }
