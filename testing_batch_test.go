@@ -671,7 +671,7 @@ func TestTestingBatch(t *testing.T) {
 			pool := cptest.NewSpyThreadPool(2)
 
 			doneCh := make(chan struct{}, 1)
-			done := func(*cptest.TestResult) {
+			done := func(*cptest.Test, *cptest.TestResult) {
 				doneCh <- (struct{}{})
 			}
 

@@ -220,16 +220,16 @@ func main() {
 	}
 
 	passCount := 0
-	for _, v := range batch.Verdicts {
-		if v == cptest.OK {
+	for _, r := range batch.Results {
+		if r.Verdict == cptest.OK {
 			passCount++
 		}
 	}
 
-	if passCount == len(batch.Verdicts) {
+	if passCount == len(batch.Results) {
 		fmt.Fprintln(stdout, cptest.Au.Bold("OK").Green())
 	} else {
 		fmt.Fprintln(stdout, cptest.Au.Bold("FAIL").Red())
-		fmt.Fprintf(stdout, "%d/%d passed\n", passCount, len(batch.Verdicts))
+		fmt.Fprintf(stdout, "%d/%d passed\n", passCount, len(batch.Results))
 	}
 }
