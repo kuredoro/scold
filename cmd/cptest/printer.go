@@ -17,18 +17,17 @@ const missingNewlineColor = aurora.MagentaFg
 // Initialized in init()
 var verdictStr map[cptest.Verdict]aurora.Value
 
-type TestResultNotification struct {
-	batch *cptest.TestingBatch
-	test  cptest.Test
-	id    int
-}
-
 // printQueue facilitates synchronized output of the test results, since End
 // callback can be called simultaneously.
-var printQueue = make(chan *TestResultNotification, 100)
+var printQueue = make(chan testResultNotification, 100)
 
-func verboseResultPrinter(b *cptest.TestingBatch, test cptest.Test, id int) {
-	printQueue <- &TestResultNotification{b, test, id}
+type testResultNotification struct {
+	test  *cptest.Test
+    result *cptest.TestResult
+}
+
+func verboseResultPrinter(test *cptest.Test, result *cptest.TestResult) {
+	printQueue <- testResultNotification{test, result}
 }
 
 func verboseResultPrinterWorker() {
@@ -45,45 +44,45 @@ func printAlwaysWithNewline(r io.Writer, text string) {
     }
 }
 
-func printVerboseResult(res *TestResultNotification) {
-	b := res.batch
-	id := res.id
-
+func printVerboseResult(blob testResultNotification) {
 	str := &strings.Builder{}
 
-	verdict := b.Verdicts[id]
+    test := blob.test
+    result := blob.result
 
-	seconds := b.Times[id].Round(time.Millisecond).Seconds()
-	fmt.Fprintf(str, "--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], id, seconds)
+	verdict := result.Verdict
+
+	seconds := result.Time.Round(time.Millisecond).Seconds()
+	fmt.Fprintf(str, "--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], result.ID, seconds)
 
 	if verdict != cptest.OK {
-		fmt.Fprintf(str, "Input:\n%s\n", res.test.Input)
+		fmt.Fprintf(str, "Input:\n%s\n", test.Input)
 
-		fmt.Fprintf(str, "Answer:\n%s\n", cptest.DumpLexemes(b.RichAnswers[id], diffColor))
+		fmt.Fprintf(str, "Answer:\n%s\n", cptest.DumpLexemes(result.RichAnswer, diffColor))
 
 		if verdict == cptest.RE {
-			fmt.Fprintf(str, "Exit code: %d\n\n", b.Outs[id].ExitCode)
+			fmt.Fprintf(str, "Exit code: %d\n\n", result.Out.ExitCode)
 			fmt.Fprint(str, "Output:\n")
-            printAlwaysWithNewline(str, b.Outs[id].Stdout)
+            printAlwaysWithNewline(str, result.Out.Stdout)
 			fmt.Fprint(str, "Stderr:\n")
-            printAlwaysWithNewline(str, b.Outs[id].Stderr)
+            printAlwaysWithNewline(str, result.Out.Stderr)
 		} else if verdict == cptest.WA {
-			fmt.Fprintf(str, "Output:\n%s\n", cptest.DumpLexemes(b.RichOuts[id], diffColor))
-			if b.Outs[id].Stderr != "" {
-				fmt.Fprintf(str, "Stderr:\n%s\n", b.Outs[id].Stderr)
+			fmt.Fprintf(str, "Output:\n%s\n", cptest.DumpLexemes(result.RichOut, diffColor))
+			if result.Out.Stderr != "" {
+				fmt.Fprintf(str, "Stderr:\n%s\n", result.Out.Stderr)
 			}
         } else if verdict == cptest.TL {
-            if b.Outs[id].Stdout != "" {
+            if result.Out.Stdout != "" {
                 fmt.Fprint(str, "Output:\n")
-                printAlwaysWithNewline(str, b.Outs[id].Stdout)
+                printAlwaysWithNewline(str, result.Out.Stdout)
             }
 
-            if b.Outs[id].Stderr != "" {
+            if result.Out.Stderr != "" {
                 fmt.Fprint(str, "Stderr:\n")
-                printAlwaysWithNewline(str, b.Outs[id].Stderr)
+                printAlwaysWithNewline(str, result.Out.Stderr)
             }
 		} else if verdict == cptest.IE {
-			fmt.Fprintf(str, "Error:\n%v\n\n", b.Errs[id])
+			fmt.Fprintf(str, "Error:\n%v\n\n", result.Err)
 		}
 	}
 
