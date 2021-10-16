@@ -24,18 +24,20 @@ var progressBar *ProgressBar
 
 var stdout = colorable.NewColorableStdout()
 
+var errorLabel aurora.Value
+
 type JobCount int
 
 func (jc *JobCount) UnmarshalText(b []byte) error {
 	if bytes.Equal(b, []byte("CPU_COUNT")) {
-        *jc = JobCount(runtime.NumCPU())
+		*jc = JobCount(runtime.NumCPU())
 		return nil
 	}
 
 	val, err := strconv.ParseUint(string(b), 10, 0)
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
 	if val == 0 {
 		return errors.New("job count must be at least 1")
@@ -49,7 +51,7 @@ type appArgs struct {
 	Inputs     string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
 	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
 	NoProgress bool     `arg:"--no-progress" help:"disable progress bar"`
-    Jobs       JobCount `arg:"-j" default:"CPU_COUNT" placeholder:"COUNT" help:"Number of tests to run concurrently"`
+	Jobs       JobCount `arg:"-j" default:"CPU_COUNT" placeholder:"COUNT" help:"Number of tests to run concurrently"`
 	Executable string   `arg:"positional,required"`
 	Args       []string `arg:"positional" placeholder:"ARG"`
 }
@@ -109,10 +111,12 @@ func init() {
 	verdictStr = map[cptest.Verdict]aurora.Value{
 		cptest.OK: cptest.Au.Bold("OK").Green(),
 		cptest.IE: cptest.Au.Bold("IE").Bold(),
-		cptest.WA: cptest.Au.Bold("WA").Red(),
+		cptest.WA: cptest.Au.Bold("WA").BrightRed(),
 		cptest.RE: cptest.Au.Bold("RE").Magenta(),
 		cptest.TL: cptest.Au.Bold("TL").Yellow(),
 	}
+
+	errorLabel = cptest.Au.Bold("error").BrightRed()
 
 	type duration cptest.PositiveDuration
 	cptest.DefaultInputsConfig = cptest.InputsConfig{
@@ -124,7 +128,7 @@ func init() {
 func main() {
 	inputsPath, err := filepath.Abs(args.Inputs)
 	if err != nil {
-		fmt.Printf("error: retreive inputs absolute path: %v\n", err)
+		fmt.Printf("%v: retreive inputs absolute path: %v\n", errorLabel, err)
 		return
 	}
 
@@ -132,7 +136,7 @@ func main() {
 	if scanErrs != nil {
 		var lineRangeErrorType *cptest.LineRangeError
 		if len(scanErrs) == 1 && !errors.As(scanErrs[0], &lineRangeErrorType) {
-			fmt.Printf("error: %v\n", scanErrs[0])
+			fmt.Printf("%v: %v\n", errorLabel, scanErrs[0])
 			return
 		}
 
@@ -148,10 +152,8 @@ func main() {
 			return lineErrs[i].Begin < lineErrs[j].Begin
 		})
 
-		errorHeader := cptest.Au.Bold("error").BrightRed()
-
 		for _, err := range lineErrs {
-			fmt.Printf("%s:%d: %s: %v\n%s", args.Inputs, err.Begin, errorHeader, err.Err, err.CodeSnippet())
+			fmt.Printf("%s:%d: %s: %v\n%s", args.Inputs, err.Begin, errorLabel, err.Err, err.CodeSnippet())
 		}
 
 		return
@@ -159,20 +161,20 @@ func main() {
 
 	execPath, err := findFile(args.Executable)
 	if err != nil {
-		fmt.Printf("error: find executable: %v\n", err)
+		fmt.Printf("%v: find executable: %v\n", errorLabel, err)
 		return
 	}
 
-    execStat, err := os.Stat(execPath)
-    if err != nil {
-        fmt.Printf("error: read executable's properties: %v\n", err)
-        return
-    }
+	execStat, err := os.Stat(execPath)
+	if err != nil {
+		fmt.Printf("%v: read executable's properties: %v\n", errorLabel, err)
+		return
+	}
 
-    if execStat.IsDir() {
-        fmt.Printf("error: provided executable %s is a directory\n", args.Executable)
-        return
-    }
+	if execStat.IsDir() {
+		fmt.Printf("%v: provided executable %s is a directory\n", errorLabel, args.Executable)
+		return
+	}
 
 	proc := &Executable{
 		Path: execPath,
