@@ -67,7 +67,7 @@ User manual: https://github.com/kuredoro/cptest
 }
 
 func (appArgs) Version() string {
-	return "cptest 2.02a"
+	return "cptest 2.03a"
 }
 
 func mustParse(dest *appArgs) {
