@@ -75,6 +75,14 @@ func (d *PositiveDuration) UnmarshalText(b []byte) error {
 		return ErrNegativePositiveDuration
 	}
 
+    if err != nil {
+        num, err := strconv.ParseFloat(string(b), 64)
+        if err == nil {
+            *d = PositiveDuration{time.Duration(num * float64(time.Second))}
+            return nil
+        }
+    }
+
 	*d = PositiveDuration{dur}
 	return err
 }
