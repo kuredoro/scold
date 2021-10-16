@@ -44,10 +44,10 @@ func TestStartStub(id int) {}
 // It accepts the pointer to the TestingBatch that contains verdict, time,
 // program's error and output info. it also accepts the Test and the id of
 // the Test.
-type TestEndCallbackFunc func(*TestResult)
+type TestEndCallbackFunc func(*Test, *TestResult)
 
 // TestEndStub is a stub for TestEndCallback that does nothing.
-func TestEndStub(*TestResult) {}
+func TestEndStub(*Test, *TestResult) {}
 
 // TestExecutionResult carries an output of the process together with the
 // corresponding test ID and a TestingBatch related error if any (panics,
@@ -58,6 +58,8 @@ type TestExecutionResult struct {
 	Out ExecutionResult
 }
 
+// TestResult encapsulates all the information TestingBatch produced for a
+// particular test.
 type TestResult struct {
 	RichOut    []RichText
 	RichAnswer []RichText
@@ -264,6 +266,6 @@ func (b *TestingBatch) Run() {
 		}
 
 		b.Results[id] = result
-		b.TestEndCallback(result)
+		b.TestEndCallback(&b.inputs.Tests[id-1], result)
 	}
 }
