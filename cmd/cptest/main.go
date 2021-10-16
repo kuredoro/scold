@@ -163,6 +163,17 @@ func main() {
 		return
 	}
 
+    execStat, err := os.Stat(execPath)
+    if err != nil {
+        fmt.Printf("error: read executable's properties: %v\n", err)
+        return
+    }
+
+    if execStat.IsDir() {
+        fmt.Printf("error: provided executable %s is a directory\n", args.Executable)
+        return
+    }
+
 	proc := &Executable{
 		Path: execPath,
 		Args: args.Args,
