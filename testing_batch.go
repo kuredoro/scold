@@ -15,13 +15,13 @@ type Verdict int
 // abbreviatons are due to competitive programming online judges.
 const (
 	OK Verdict = iota
-    // Internal Error
+	// Internal Error
 	IE
-    // Wrong Answer
+	// Wrong Answer
 	WA
-    // Runtime Error
+	// Runtime Error
 	RE
-    // Time Limit
+	// Time Limit
 	TL
 )
 
@@ -44,17 +44,27 @@ func TestStartStub(id int) {}
 // It accepts the pointer to the TestingBatch that contains verdict, time,
 // program's error and output info. it also accepts the Test and the id of
 // the Test.
-type TestEndCallbackFunc func(*TestingBatch, Test, int)
+type TestEndCallbackFunc func(*TestResult)
 
 // TestEndStub is a stub for TestEndCallback that does nothing.
-func TestEndStub(b *TestingBatch, test Test, id int) {}
+func TestEndStub(*TestResult) {}
 
-// TestResult carries an output of the process given the ID-th test input
-// and an error if any.
-type TestResult struct {
+// TestExecutionResult carries an output of the process together with the
+// corresponding test ID and a TestingBatch related error if any (panics,
+// etc.).
+type TestExecutionResult struct {
 	ID  int
 	Err error
-	Out ProcessResult
+	Out ExecutionResult
+}
+
+type TestResult struct {
+	RichOut    []RichText
+	RichAnswer []RichText
+	Verdict    Verdict
+	Time       time.Duration
+
+	TestExecutionResult
 }
 
 // TestingBatch is responsible for running tests and evaluating the verdicts
@@ -65,16 +75,11 @@ type TestResult struct {
 type TestingBatch struct {
 	inputs Inputs
 
-	complete chan TestResult
+	complete chan TestExecutionResult
 
-	Errs        map[int]error
-	Outs        map[int]ProcessResult
-	RichOuts    map[int][]RichText
-	RichAnswers map[int][]RichText
-	Lx          *Lexer
+	Results map[int]*TestResult
+	Lx      *Lexer
 
-	Verdicts   map[int]Verdict
-	Times      map[int]time.Duration
 	startTimes map[int]time.Time
 
 	Proc          Processer
@@ -95,18 +100,13 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher, pool Wor
 	return &TestingBatch{
 		inputs: inputs,
 
-		complete:    make(chan TestResult),
-		Errs:        make(map[int]error),
-		Outs:        make(map[int]ProcessResult),
-		RichOuts:    make(map[int][]RichText),
-		RichAnswers: make(map[int][]RichText),
+		complete: make(chan TestExecutionResult),
+		Results:  make(map[int]*TestResult),
 
 		Lx: &Lexer{
 			Precision: uint(inputs.Config.Prec),
 		},
 
-		Verdicts:   make(map[int]Verdict),
-		Times:      make(map[int]time.Duration),
 		startTimes: make(map[int]time.Time),
 
 		Proc:        proc,
@@ -124,10 +124,10 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher, pool Wor
 func (b *TestingBatch) launchTest(id int, in string) {
 	defer func() {
 		if e := recover(); e != nil {
-			b.complete <- TestResult{
+			b.complete <- TestExecutionResult{
 				ID:  id,
 				Err: fmt.Errorf("internal: %v", e),
-				Out: ProcessResult{},
+				Out: ExecutionResult{},
 			}
 		}
 	}()
@@ -140,7 +140,7 @@ func (b *TestingBatch) launchTest(id int, in string) {
 	} else {
 		b.procCancelsMu.Unlock()
 		cancel()
-		b.complete <- TestResult{
+		b.complete <- TestExecutionResult{
 			ID:  id,
 			Err: TLError,
 		}
@@ -154,7 +154,7 @@ func (b *TestingBatch) launchTest(id int, in string) {
 		err = TLError
 	}
 
-	b.complete <- TestResult{
+	b.complete <- TestExecutionResult{
 		ID:  id,
 		Err: err,
 		Out: out,
@@ -163,7 +163,7 @@ func (b *TestingBatch) launchTest(id int, in string) {
 
 func (b *TestingBatch) nextOldestRunning(previous int) int {
 	for id := previous + 1; id < len(b.inputs.Tests)+1; id++ {
-		_, finished := b.Verdicts[id]
+		_, finished := b.Results[id]
 		if !finished {
 			return id
 		}
@@ -198,8 +198,8 @@ func (b *TestingBatch) Run() {
 	}
 
 	oldestRunningID := 1
-	for len(b.Verdicts) != len(b.inputs.Tests) {
-		var result TestResult
+	for len(b.Results) != len(b.inputs.Tests) {
+		result := &TestResult{}
 
 		select {
 		case <-b.Swatch.TimeLimit(b.startTimes[oldestRunningID]):
@@ -216,7 +216,7 @@ func (b *TestingBatch) Run() {
 
 			oldestRunningID = b.nextOldestRunning(oldestRunningID)
 			continue
-		case result = <-b.complete:
+		case result.TestExecutionResult = <-b.complete:
 		}
 
 		// A worker is now free, run another test if any
@@ -236,35 +236,34 @@ func (b *TestingBatch) Run() {
 		id := result.ID
 		test := b.inputs.Tests[id-1]
 
-		b.Errs[id] = result.Err
-		b.Outs[id] = result.Out
-		b.Times[id] = b.Swatch.Elapsed(b.startTimes[id])
+		result.Time = b.Swatch.Elapsed(b.startTimes[id])
 
 		answerLexemes := b.Lx.Scan(test.Output)
-		b.RichAnswers[id], _ = b.Lx.Compare(answerLexemes, nil)
+		result.RichAnswer, _ = b.Lx.Compare(answerLexemes, nil)
 
 		if result.Err == TLError {
-			b.Verdicts[id] = TL
+			result.Verdict = TL
 		} else if result.Err != nil {
-			b.Verdicts[id] = IE
-		} else if b.Outs[id].ExitCode != 0 {
-			b.Verdicts[id] = RE
+			result.Verdict = IE
+		} else if result.Out.ExitCode != 0 {
+			result.Verdict = RE
 		} else {
-			got := b.Lx.Scan(b.Outs[id].Stdout)
+			got := b.Lx.Scan(result.Out.Stdout)
 
 			var okOut, okAns bool
-			b.RichOuts[id], okOut = b.Lx.Compare(got, answerLexemes)
-			b.RichAnswers[id], okAns = b.Lx.Compare(answerLexemes, got)
+			result.RichOut, okOut = b.Lx.Compare(got, answerLexemes)
+			result.RichAnswer, okAns = b.Lx.Compare(answerLexemes, got)
 
 			same := okOut && okAns
 
 			if !same {
-				b.Verdicts[id] = WA
+				result.Verdict = WA
 			} else {
-				b.Verdicts[id] = OK
+				result.Verdict = OK
 			}
 		}
 
-		b.TestEndCallback(b, test, id)
+		b.Results[id] = result
+		b.TestEndCallback(result)
 	}
 }

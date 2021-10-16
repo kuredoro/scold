@@ -14,23 +14,23 @@ type Executable struct {
 	Args []string
 }
 
-func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ProcessResult, error) {
+func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
 	cmd := exec.Command(e.Path, e.Args...)
 	cmd.Stdin = r
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		return cptest.ProcessResult{}, fmt.Errorf("executable: %v", err)
+		return cptest.ExecutionResult{}, fmt.Errorf("executable: %v", err)
 	}
 
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		return cptest.ProcessResult{}, fmt.Errorf("executable: %v", err)
+		return cptest.ExecutionResult{}, fmt.Errorf("executable: %v", err)
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		return cptest.ProcessResult{}, fmt.Errorf("executable: %v", err)
+		return cptest.ExecutionResult{}, fmt.Errorf("executable: %v", err)
 	}
 
 	stdout := make([]byte, 0, 1024)
@@ -48,16 +48,16 @@ func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ProcessResult
 			// will receive EOF and return nil.
             err = cmd.Process.Kill()
             if err != nil {
-                return cptest.ProcessResult{}, fmt.Errorf("executable: kill: %v", err)
+                return cptest.ExecutionResult{}, fmt.Errorf("executable: kill: %v", err)
             }
 		case err := <-stdoutComplete:
 			if err != nil {
-				return cptest.ProcessResult{}, fmt.Errorf("executable: stdout: %v", err)
+				return cptest.ExecutionResult{}, fmt.Errorf("executable: stdout: %v", err)
 			}
 			doneCount++
 		case err := <-stderrComplete:
 			if err != nil {
-				return cptest.ProcessResult{}, fmt.Errorf("executable: stderr: %v", err)
+				return cptest.ExecutionResult{}, fmt.Errorf("executable: stderr: %v", err)
 			}
 			doneCount++
 		}
@@ -66,7 +66,7 @@ func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ProcessResult
 	close(stdoutComplete)
 	close(stderrComplete)
 
-	out := cptest.ProcessResult{
+	out := cptest.ExecutionResult{
 		ExitCode: 0,
 		Stdout:   string(stdout),
 		Stderr:   string(stderr),
@@ -80,7 +80,7 @@ func (e *Executable) Run(ctx context.Context, r io.Reader) (cptest.ProcessResult
 	}
 
 	if err != nil {
-		return cptest.ProcessResult{}, fmt.Errorf("executable: %v", err)
+		return cptest.ExecutionResult{}, fmt.Errorf("executable: %v", err)
 	}
 
 	return out, nil

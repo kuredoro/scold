@@ -6,9 +6,9 @@ import (
 	"sync"
 )
 
-// ProcessResult contains the text printed to stdout and stderr by the process
+// ExecutionResult contains the text printed to stdout and stderr by the process
 // and the exit code returned upon termination.
-type ProcessResult struct {
+type ExecutionResult struct {
 	ExitCode int
 	Stdout   string
 	Stderr   string
@@ -17,7 +17,7 @@ type ProcessResult struct {
 // Processer interface abstracts away the concept of the executable under
 // testing.
 type Processer interface {
-	Run(context.Context, io.Reader) (ProcessResult, error)
+	Run(context.Context, io.Reader) (ExecutionResult, error)
 }
 
 // SpyProcesser is a test double that proxies another processer.
@@ -31,7 +31,7 @@ type SpyProcesser struct {
 
 // Run will execute the Run function of the inner processer, but will
 // also increase the call count by one.
-func (p *SpyProcesser) Run(ctx context.Context, r io.Reader) (ProcessResult, error) {
+func (p *SpyProcesser) Run(ctx context.Context, r io.Reader) (ExecutionResult, error) {
 	p.mu.Lock()
 	p.callCount++
 	p.mu.Unlock()
@@ -48,9 +48,9 @@ func (p *SpyProcesser) CallCount() int {
 
 // ProcesserFunc represents an implementation of Processer that instead
 // of a real OS-level process executes Go code.
-type ProcesserFunc func(ctx context.Context, r io.Reader) (ProcessResult, error)
+type ProcesserFunc func(ctx context.Context, r io.Reader) (ExecutionResult, error)
 
 // Run will call the underlying Go function to compute the result.
-func (p ProcesserFunc) Run(ctx context.Context, r io.Reader) (ProcessResult, error) {
+func (p ProcesserFunc) Run(ctx context.Context, r io.Reader) (ExecutionResult, error) {
 	return p(ctx, r)
 }
