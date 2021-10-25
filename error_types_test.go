@@ -1,21 +1,21 @@
-package cptest_test
+package scold_test
 
 import (
 	"testing"
 
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 	"github.com/maxatome/go-testdeep/td"
 )
 
 func TestStringError(t *testing.T) {
 	str1 := "an example of an error"
-	err1 := cptest.StringError(str1)
+	err1 := scold.StringError(str1)
 
 	str2 := "an example of an error"
-	err2 := cptest.StringError(str2)
+	err2 := scold.StringError(str2)
 
 	str3 := "a different error"
-	err3 := cptest.StringError(str3)
+	err3 := scold.StringError(str3)
 
 	td.Cmp(t, err1.Error(), str1)
 	td.Cmp(t, err2.Error(), str2)

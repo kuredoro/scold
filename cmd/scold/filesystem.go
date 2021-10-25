@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 )
 
 func getPath() []string {
@@ -63,24 +63,24 @@ func findFile(userPath string) (string, error) {
 	return "", fmt.Errorf("%s does not exist", pathForError)
 }
 
-func readInputs(inputsPath string) (cptest.Inputs, []error) {
+func readInputs(inputsPath string) (scold.Inputs, []error) {
 	inputsFile, err := os.Open(inputsPath)
 	if err != nil {
-		return cptest.Inputs{}, []error{fmt.Errorf("load tests: %w", err)}
+		return scold.Inputs{}, []error{fmt.Errorf("load tests: %w", err)}
 	}
 	defer inputsFile.Close()
 
 	text, err := ioutil.ReadAll(inputsFile)
 	if err != nil {
-		return cptest.Inputs{}, []error{fmt.Errorf("load tests: %w", err)}
+		return scold.Inputs{}, []error{fmt.Errorf("load tests: %w", err)}
 	}
 
-	inputs, errs := cptest.ScanInputs(string(text))
+	inputs, errs := scold.ScanInputs(string(text))
 	if errs != nil {
 		for i, err := range errs {
 			errs[i] = fmt.Errorf("load tests: %w", err)
 		}
-		return cptest.Inputs{}, errs
+		return scold.Inputs{}, errs
 	}
 
 	return inputs, nil

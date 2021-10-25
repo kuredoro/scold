@@ -1,4 +1,4 @@
-package cptest
+package scold
 
 import (
 	"github.com/logrusorgru/aurora"

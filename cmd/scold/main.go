@@ -15,7 +15,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/atomicgo/cursor"
 	"github.com/jonboulle/clockwork"
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 	"github.com/logrusorgru/aurora"
 	"github.com/mattn/go-colorable"
 )
@@ -62,12 +62,12 @@ func (appArgs) Description() string {
 	return `Feed programs fixed inputs, compare their outputs against expected ones.
 
 Author: @kuredoro (github, twitter)
-User manual: https://github.com/kuredoro/cptest
+User manual: https://github.com/kuredoro/scold
 `
 }
 
 func (appArgs) Version() string {
-	return "cptest 2.03a"
+	return "scold 2.03a"
 }
 
 func mustParse(dest *appArgs) {
@@ -105,22 +105,22 @@ func init() {
 	mustParse(&args)
 
 	if args.NoColors {
-		cptest.Au = aurora.NewAurora(false)
+		scold.Au = aurora.NewAurora(false)
 	}
 
-	verdictStr = map[cptest.Verdict]aurora.Value{
-		cptest.OK: cptest.Au.Bold("OK").Green(),
-		cptest.IE: cptest.Au.Bold("IE").Bold(),
-		cptest.WA: cptest.Au.Bold("WA").BrightRed(),
-		cptest.RE: cptest.Au.Bold("RE").Magenta(),
-		cptest.TL: cptest.Au.Bold("TL").Yellow(),
+	verdictStr = map[scold.Verdict]aurora.Value{
+		scold.OK: scold.Au.Bold("OK").Green(),
+		scold.IE: scold.Au.Bold("IE").Bold(),
+		scold.WA: scold.Au.Bold("WA").BrightRed(),
+		scold.RE: scold.Au.Bold("RE").Magenta(),
+		scold.TL: scold.Au.Bold("TL").Yellow(),
 	}
 
-	errorLabel = cptest.Au.Bold("error").BrightRed()
+	errorLabel = scold.Au.Bold("error").BrightRed()
 
-	type duration cptest.PositiveDuration
-	cptest.DefaultInputsConfig = cptest.InputsConfig{
-		Tl:   cptest.NewPositiveDuration(6 * time.Second),
+	type duration scold.PositiveDuration
+	scold.DefaultInputsConfig = scold.InputsConfig{
+		Tl:   scold.NewPositiveDuration(6 * time.Second),
 		Prec: 6,
 	}
 }
@@ -134,13 +134,13 @@ func main() {
 
 	inputs, scanErrs := readInputs(inputsPath)
 	if scanErrs != nil {
-		var lineRangeErrorType *cptest.LineRangeError
+		var lineRangeErrorType *scold.LineRangeError
 		if len(scanErrs) == 1 && !errors.As(scanErrs[0], &lineRangeErrorType) {
 			fmt.Printf("%v: %v\n", errorLabel, scanErrs[0])
 			return
 		}
 
-		lineErrs := make([]*cptest.LineRangeError, len(scanErrs))
+		lineErrs := make([]*scold.LineRangeError, len(scanErrs))
 		for i, scanErr := range scanErrs {
 			ok := errors.As(scanErr, &lineErrs[i])
 			if !ok {
@@ -181,13 +181,13 @@ func main() {
 		Args: args.Args,
 	}
 
-	swatch := &cptest.ConfigurableStopwatcher{
+	swatch := &scold.ConfigurableStopwatcher{
 		TL:    inputs.Config.Tl.Duration,
 		Clock: clockwork.NewRealClock(),
 	}
-	pool := cptest.NewThreadPool(int(args.Jobs))
+	pool := scold.NewThreadPool(int(args.Jobs))
 
-	batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+	batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 
 	if inputs.Config.Tl.Duration == 0 {
 		fmt.Println("time limit: infinity")
@@ -199,7 +199,7 @@ func main() {
 
 	batch.TestEndCallback = verboseResultPrinter
 
-	testingHeader := cptest.Au.Bold("    Testing").Cyan().String()
+	testingHeader := scold.Au.Bold("    Testing").Cyan().String()
 
 	progressBar = &ProgressBar{
 		Total:  len(inputs.Tests),
@@ -234,15 +234,15 @@ func main() {
 
 	passCount := 0
 	for _, r := range batch.Results {
-		if r.Verdict == cptest.OK {
+		if r.Verdict == scold.OK {
 			passCount++
 		}
 	}
 
 	if passCount == len(batch.Results) {
-		fmt.Fprintln(stdout, cptest.Au.Bold("OK").Green())
+		fmt.Fprintln(stdout, scold.Au.Bold("OK").Green())
 	} else {
-		fmt.Fprintln(stdout, cptest.Au.Bold("FAIL").Red())
+		fmt.Fprintln(stdout, scold.Au.Bold("FAIL").Red())
 		fmt.Fprintf(stdout, "%d/%d passed\n", passCount, len(batch.Results))
 	}
 }

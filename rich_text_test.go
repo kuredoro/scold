@@ -1,17 +1,17 @@
-package cptest_test
+package scold_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 	"github.com/logrusorgru/aurora"
 )
 
 func TestRichTextColorize(t *testing.T) {
 
 	t.Run("identity mask", func(t *testing.T) {
-		rt := cptest.RichText{
+		rt := scold.RichText{
 			"test", make([]bool, 4),
 		}
 
@@ -24,7 +24,7 @@ func TestRichTextColorize(t *testing.T) {
 	})
 
 	t.Run("the mask may crop the string", func(t *testing.T) {
-		rt := cptest.RichText{
+		rt := scold.RichText{
 			"test", make([]bool, 2),
 		}
 
@@ -37,7 +37,7 @@ func TestRichTextColorize(t *testing.T) {
 	})
 
 	t.Run("nil mask produces emtpy string", func(t *testing.T) {
-		rt := cptest.RichText{
+		rt := scold.RichText{
 			"test", nil,
 		}
 
@@ -50,7 +50,7 @@ func TestRichTextColorize(t *testing.T) {
 	})
 
 	t.Run("second half is highlighted", func(t *testing.T) {
-		rt := cptest.RichText{
+		rt := scold.RichText{
 			"abcdef", []bool{false, false, false, true, true, true},
 		}
 
@@ -63,7 +63,7 @@ func TestRichTextColorize(t *testing.T) {
 	})
 
 	t.Run("checkerboard", func(t *testing.T) {
-		rt := cptest.RichText{
+		rt := scold.RichText{
 			"gray", []bool{true, false, true, false},
 		}
 
@@ -78,7 +78,7 @@ func TestRichTextColorize(t *testing.T) {
 
 func TestRichTextColorful(t *testing.T) {
 	t.Run("no colors", func(t *testing.T) {
-		rt := cptest.RichText{
+		rt := scold.RichText{
 			"abc", make([]bool, 3),
 		}
 
@@ -88,7 +88,7 @@ func TestRichTextColorful(t *testing.T) {
 	})
 
 	t.Run("with colors", func(t *testing.T) {
-		rt := cptest.RichText{
+		rt := scold.RichText{
 			"yay", []bool{false, true, true},
 		}
 

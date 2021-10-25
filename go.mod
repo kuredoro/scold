@@ -1,4 +1,4 @@
-module github.com/kuredoro/cptest
+module github.com/kuredoro/scold
 
 go 1.17
 

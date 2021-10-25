@@ -1,17 +1,17 @@
 # Maintainer: Sakamoto Shizue <supremeep at yandex dot ru>
-pkgname=cptest
+pkgname=scold
 pkgver=2.0.1
 pkgrel=3
 pkgdesc="A tool for competitve programming. Feed programs fixed inputs, compare their outputs against expected ones."
 arch=('x86_64')
-url="https://github.com/kuredoro/cptest"
+url="https://github.com/kuredoro/scold"
 license=('BSD')
 depends=()
 makedepends=(
   'git'
   'go'
 )
-source=("${pkgname}-${pkgver}.tar.gz::https://github.com/kuredoro/cptest/archive/v${pkgver}.tar.gz")
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/kuredoro/scold/archive/v${pkgver}.tar.gz")
 sha256sums=('544d3e0d3ec3a49f14414af0a4e6ac2e9f86d9a2ed94e44d3fbc1095286d5b66')
 
 # With pacman 6 arriving a rebuild of yay will be necessary, if you upgrade pacman without upgrading yay at the same time, yay will not run after.
@@ -24,7 +24,7 @@ build() {
 
   cd "$srcdir/$pkgname-$pkgver"
   mkdir -p build
-  go build -o build/cptest ./cmd/cptest
+  go build -o build/scold ./cmd/scold
 
   # Clean up modules that all have read only permissions because of go.
   go clean -modcache
@@ -34,6 +34,6 @@ build() {
 package() {
   cd "$srcdir/$pkgname-$pkgver"
   mkdir -p $pkgdir/usr/bin
-  mv ./build/cptest $pkgdir/usr/bin
+  mv ./build/scold $pkgdir/usr/bin
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

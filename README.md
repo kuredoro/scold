@@ -1,9 +1,9 @@
-## cptest
-[![Coverage Status](https://coveralls.io/repos/github/kuredoro/cptest/badge.svg?branch=main)](https://coveralls.io/github/kuredoro/cptest?branch=main)
-[![GoReport](https://goreportcard.com/badge/github.com/kuredoro/cptest)](https://goreportcard.com/report/github.com/kuredoro/cptest)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/kuredoro/cptest)](https://pkg.go.dev/github.com/kuredoro/cptest)
-[![Actions Status](https://github.com/kuredoro/cptest/workflows/build/badge.svg)](https://github.com/kuredoro/cptest/actions)
-[![Release](https://img.shields.io/github/release/kuredoro/cptest.svg?style=flat-square)](https://github.com/kuredoro/cptest/releases/latest)
+## scold
+[![Coverage Status](https://coveralls.io/repos/github/kuredoro/scold/badge.svg?branch=main)](https://coveralls.io/github/kuredoro/scold?branch=main)
+[![GoReport](https://goreportcard.com/badge/github.com/kuredoro/scold)](https://goreportcard.com/report/github.com/kuredoro/scold)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/kuredoro/scold)](https://pkg.go.dev/github.com/kuredoro/scold)
+[![Actions Status](https://github.com/kuredoro/scold/workflows/build/badge.svg)](https://github.com/kuredoro/scold/actions)
+[![Release](https://img.shields.io/github/release/kuredoro/scold.svg?style=flat-square)](https://github.com/kuredoro/scold/releases/latest)
 
 A tool to speed up the testing of competitive programming code on multiple inputs. I.e., the purpose is to minimize the number of keypresses between finishing writing code and submitting it, knowing that the code passes on the provided test inputs.
 
@@ -29,7 +29,7 @@ A tool to speed up the testing of competitive programming code on multiple input
 
 ### Windows
 
-On Windows go to the releases page on the right and download the cptest executable for your architecture. Rename it to `cptest.exe`. Additionally, you can create a folder, add it to the PATH and put `cptest.exe` in there to access cptest from the console.
+On Windows go to the releases page on the right and download the scold executable for your architecture. Rename it to `scold.exe`. Additionally, you can create a folder, add it to the PATH and put `scold.exe` in there to access scold from the console.
 
 You can do all of this automatically by using `scoop`. scoop is a minimalistic install helper for Windows that allows you to install, update, and manage various command-line utilities and applications (python, go, node.js) from within the console in just one line. Get it from [scoop.sh](https://scoop.sh). If you're a fan of Linux, you will be pleased that you can install all of the Linux tools via scoop and enjoy your Linux habits on Windows. Also, if you need some app, just `scoop search` to see if you can have it without a hassle.
 
@@ -38,17 +38,17 @@ When you installed scoop, run
 > scoop update
 ```
 
-And then add the bucket with the install script and install cptest.
+And then add the bucket with the install script and install scold.
 ```
 > scoop bucket add kuredoro https://github.com/kuredoro/scoop-bucket
-> scoop install cptest
+> scoop install scold
 ```
 
 ### Linux
 
-You can use AUR on ArchLinux to install cptest. Via `yay` AUR helper it would be:
+You can use AUR on ArchLinux to install scold. Via `yay` AUR helper it would be:
 ```
-$ yay -S cptest
+$ yay -S scold
 ```
 
 Don't forget to star packages on AUR if you liked them (─‿‿─).
@@ -60,10 +60,10 @@ For other distros, you'll have to build it from the source, but don't worry, it'
 ### Command-line interface
 
 ```
-cptest [options] EXECUTABLE [ARGS...]
+scold [options] EXECUTABLE [ARGS...]
 ```
 
-cptest requires an executable to run. Any arguments written after the executable are forwarded to it. This way, one can call `cptest node index` to test a Node.js code. The options related to the cptest are, therefore, specified before the executable.
+scold requires an executable to run. Any arguments written after the executable are forwarded to it. This way, one can call `scold node index` to test a Node.js code. The options related to the scold are, therefore, specified before the executable.
 
 Possible arguments:
 
@@ -92,7 +92,7 @@ line 2  ┘
 ===     (1)
 ```
 
-In other words, your inputs are separated from outputs with `---`, and test cases are separated with `===`. The empty test cases (1) are ignored and allowed. All of the lines in the input and output sections will be newline terminated when parsed by cptest.
+In other words, your inputs are separated from outputs with `---`, and test cases are separated with `===`. The empty test cases (1) are ignored and allowed. All of the lines in the input and output sections will be newline terminated when parsed by scold.
 
 The first test can specify a set of **test suite options** and follows a different format
 ```
@@ -112,7 +112,7 @@ See [Test suite configuration](#test-suite-configuration).
 
 **TL;DR:** The comparison routine is more or less equivalent to a program that reads the program's output from the `stdin` and compares it against correct values.
 
-The key concepts in cptest are the **lexeme** and the **lexeme type**. Lexeme is a string consisting of printable characters or a single newline. The program's output and the test's answer are parsed and turned into a sequence of lexemes while discarding all whitespaces, tabs, etc. between them.
+The key concepts in scold are the **lexeme** and the **lexeme type**. Lexeme is a string consisting of printable characters or a single newline. The program's output and the test's answer are parsed and turned into a sequence of lexemes while discarding all whitespaces, tabs, etc. between them.
 
 Given this sequence, the **lexeme type** is deduced for each lexeme. The lexeme type specifies what type of data the lexeme holds. Currently, there are string, integer and floating-point number types. There is a specialization, or an "is-a", relation between the types. For example, every integer is a string, but not every string is an integer, hence integer specializes string type. In fact, specialization relation is the weak order relation: `>=`, and it follows that: string `>=` floating-point number `>=` integer.
 
@@ -222,7 +222,7 @@ Error:
 executable: fork/exec /home/kuredoro/contest_code/a.out: too many open files
 ```
 
-The internal error is a failed test because cptest could not perform what it was designed to do. The situations when IE pops out are extremely rare but sometimes can occur. In the example above, the problem is that the executable `a.out` was opened too many times simultaneously exceeding the limit Linux allows an executable to be opened at the same time (on the machine in question). The IE can also appear when cptest panics itself, in which case it might be a potential bug. As always, read what the error says and, if anything, ask for help or file a bug on the [issue tracker](https://github.com/kuredoro/cptest/issues).
+The internal error is a failed test because scold could not perform what it was designed to do. The situations when IE pops out are extremely rare but sometimes can occur. In the example above, the problem is that the executable `a.out` was opened too many times simultaneously exceeding the limit Linux allows an executable to be opened at the same time (on the machine in question). The IE can also appear when scold panics itself, in which case it might be a potential bug. As always, read what the error says and, if anything, ask for help or file a bug on the [issue tracker](https://github.com/kuredoro/scold/issues).
 
 ### Test suite configuration
 
@@ -273,11 +273,11 @@ prec = 0
 prec = 12
 ```
 
-The `prec` option specifies how many digits after the decimal point should be considered when comparing floating-point lexemes. The value of 0 tells cptest to ignore the fractional part.
+The `prec` option specifies how many digits after the decimal point should be considered when comparing floating-point lexemes. The value of 0 tells scold to ignore the fractional part.
 
 ## Building
 
-To build `cptest` you'll need an installation of `go`. Installing it should be as simple as installing base-devel package (─‿‿─).
+To build `scold` you'll need an installation of `go`. Installing it should be as simple as installing base-devel package (─‿‿─).
 
 E.g. on Arch:
 ```
@@ -286,14 +286,14 @@ $ sudo pacman -S go
 
 Then clone the repository, and invoke `go build`.
 ```
-$ git clone https://github.com/kuredoro/cptest.git
-$ cd cptest
-$ go build ./cmd/cptest
+$ git clone https://github.com/kuredoro/scold.git
+$ cd scold
+$ go build ./cmd/scold
 ```
 
 Finally, move the executable to a folder accessible from PATH, like
 ```
-$ sudo mv cptest /usr/bin
+$ sudo mv scold /usr/bin
 ```
 
 You're ready to go!

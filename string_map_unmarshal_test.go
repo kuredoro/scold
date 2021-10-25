@@ -1,4 +1,4 @@
-package cptest_test
+package scold_test
 
 import (
 	"reflect"
@@ -8,7 +8,7 @@ import (
 	"unicode"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 	"github.com/maxatome/go-testdeep/td"
 )
 
@@ -23,7 +23,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		sm := map[string]string{} // String Map
 
-		err := cptest.StringMapUnmarshal(sm, &target)
+		err := scold.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 	})
@@ -42,7 +42,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		want := target
 
-		err := cptest.StringMapUnmarshal(sm, &target)
+		err := scold.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, want)
@@ -51,33 +51,33 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 	t.Run("unmarshal only works on structs or pointers to them", func(t *testing.T) {
 		sm := map[string]string{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, 42) }, cptest.ErrNotAStructLike)
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, 42) }, scold.ErrNotAStructLike)
 
 		i := 42
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &i) }, cptest.ErrNotAStructLike)
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, &i) }, scold.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, "foo") }, cptest.ErrNotAStructLike)
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, "foo") }, scold.ErrNotAStructLike)
 
 		str := "foo"
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &str) }, cptest.ErrNotAStructLike)
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, &str) }, scold.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, []int{1, 2, 3}) }, cptest.ErrNotAStructLike)
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, []int{1, 2, 3}) }, scold.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, [...]int{1, 2, 3}) }, cptest.ErrNotAStructLike)
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, [...]int{1, 2, 3}) }, scold.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, sm) }, cptest.ErrNotAStructLike)
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, sm) }, scold.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, func() {}) }, cptest.ErrNotAStructLike)
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, func() {}) }, scold.ErrNotAStructLike)
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, make(chan int)) }, cptest.ErrNotAStructLike)
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, make(chan int)) }, scold.ErrNotAStructLike)
 
 		// ---
 
-		err := cptest.StringMapUnmarshal(sm, struct{}{})
+		err := scold.StringMapUnmarshal(sm, struct{}{})
 		td.CmpNoError(t, err)
 
 		test := struct{}{}
-		err = cptest.StringMapUnmarshal(sm, &test)
+		err = scold.StringMapUnmarshal(sm, &test)
 		td.CmpNoError(t, err)
 	})
 
@@ -90,14 +90,14 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			"AGAIN?": "435",
 		}
 
-		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
+		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.CmpError(t, errs)
 
 		wantErrs := []error{
-			&cptest.FieldError{"Foo", cptest.ErrUnknownField},
-			&cptest.FieldError{"Bar", cptest.ErrUnknownField},
-			&cptest.FieldError{"AGAIN?", cptest.ErrUnknownField},
+			&scold.FieldError{"Foo", scold.ErrUnknownField},
+			&scold.FieldError{"Bar", scold.ErrUnknownField},
+			&scold.FieldError{"AGAIN?", scold.ErrUnknownField},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -135,7 +135,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		want := structType{42, 42, 12, 127, -32000, -2000000000, 18000000000, 255, 65000, 4000000000, 32000000000}
 
-		err := cptest.StringMapUnmarshal(sm, &target)
+		err := scold.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, want)
@@ -173,18 +173,18 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		want := structType{42, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
+		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		wantErrs := []error{
-			&cptest.FieldError{"I8", &cptest.NotValueOfTypeError{reflect.Int8.String(), "-129"}},
-			&cptest.FieldError{"I16", &cptest.NotValueOfTypeError{reflect.Int16.String(), "40000"}},
-			&cptest.FieldError{"I32", &cptest.NotValueOfTypeError{reflect.Int32.String(), "-3000000000"}},
-			&cptest.FieldError{"I64", &cptest.NotValueOfTypeError{reflect.Int64.String(), "10000000000000000000"}},
-			&cptest.FieldError{"Ui", &cptest.NotValueOfTypeError{reflect.Uint.String(), "０"}},
-			&cptest.FieldError{"U8", &cptest.NotValueOfTypeError{reflect.Uint8.String(), "300"}},
-			&cptest.FieldError{"U16", &cptest.NotValueOfTypeError{reflect.Uint16.String(), "67000"}},
-			&cptest.FieldError{"U32", &cptest.NotValueOfTypeError{reflect.Uint32.String(), "5000000000"}},
-			&cptest.FieldError{"U64", &cptest.NotValueOfTypeError{reflect.Uint64.String(), "20000000000000000000"}},
+			&scold.FieldError{"I8", &scold.NotValueOfTypeError{reflect.Int8.String(), "-129"}},
+			&scold.FieldError{"I16", &scold.NotValueOfTypeError{reflect.Int16.String(), "40000"}},
+			&scold.FieldError{"I32", &scold.NotValueOfTypeError{reflect.Int32.String(), "-3000000000"}},
+			&scold.FieldError{"I64", &scold.NotValueOfTypeError{reflect.Int64.String(), "10000000000000000000"}},
+			&scold.FieldError{"Ui", &scold.NotValueOfTypeError{reflect.Uint.String(), "０"}},
+			&scold.FieldError{"U8", &scold.NotValueOfTypeError{reflect.Uint8.String(), "300"}},
+			&scold.FieldError{"U16", &scold.NotValueOfTypeError{reflect.Uint16.String(), "67000"}},
+			&scold.FieldError{"U32", &scold.NotValueOfTypeError{reflect.Uint32.String(), "5000000000"}},
+			&scold.FieldError{"U64", &scold.NotValueOfTypeError{reflect.Uint64.String(), "20000000000000000000"}},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -207,7 +207,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		want := structType{42.0, 0, 1e9}
 
-		err := cptest.StringMapUnmarshal(sm, &target)
+		err := scold.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 		td.Cmp(t, target, want)
@@ -229,11 +229,11 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 		want := structType{1.0, 0, 2.0}
 
-		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
+		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		wantErrs := []error{
-			&cptest.FieldError{"F32", &cptest.NotValueOfTypeError{reflect.Float32.String(), "3.402824E+38"}},
-			&cptest.FieldError{"F64", &cptest.NotValueOfTypeError{reflect.Float64.String(), "-2.7976931348623157E+308"}},
+			&scold.FieldError{"F32", &scold.NotValueOfTypeError{reflect.Float32.String(), "3.402824E+38"}},
+			&scold.FieldError{"F64", &scold.NotValueOfTypeError{reflect.Float64.String(), "-2.7976931348623157E+308"}},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -272,7 +272,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 				"B": step.value,
 			}
 
-			err := cptest.StringMapUnmarshal(sm, &target)
+			err := scold.StringMapUnmarshal(sm, &target)
 			td.CmpNoError(t, err)
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -299,9 +299,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 				"B": step.value,
 			}
 
-			errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
+			errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{
-				&cptest.FieldError{"B", &cptest.NotValueOfTypeError{reflect.Bool.String(), step.value}},
+				&scold.FieldError{"B", &scold.NotValueOfTypeError{reflect.Bool.String(), step.value}},
 			})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -322,9 +322,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 				"B": step.value,
 			}
 
-			errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
+			errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{
-				&cptest.FieldError{"B", &cptest.NotValueOfTypeError{reflect.Bool.String(), step.value}},
+				&scold.FieldError{"B", &scold.NotValueOfTypeError{reflect.Bool.String(), step.value}},
 			})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -339,14 +339,14 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			"":    "えっ？",
 		}
 
-		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
+		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.CmpError(t, errs)
 
 		wantErrs := []error{
-			&cptest.FieldError{"Foo", cptest.ErrUnknownField},
-			&cptest.FieldError{"Bar", cptest.ErrUnknownField},
-			&cptest.FieldError{"", cptest.ErrUnknownField},
+			&scold.FieldError{"Foo", scold.ErrUnknownField},
+			&scold.FieldError{"Bar", scold.ErrUnknownField},
+			&scold.FieldError{"", scold.ErrUnknownField},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -368,7 +368,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			"Zap": "",
 		}
 
-		err := cptest.StringMapUnmarshal(sm, &target)
+		err := scold.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
 
@@ -384,7 +384,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			"Info": "my age is over 9000",
 		}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target1) }, &cptest.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "struct { Age int }"})
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, &target1) }, &scold.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "struct { Age int }"})
 
 		type InfoType struct{ Age int }
 
@@ -392,13 +392,13 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info InfoType
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target2) }, &cptest.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "cptest_test.InfoType"})
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, &target2) }, &scold.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Struct, TypeName: "scold_test.InfoType"})
 
 		target3 := struct {
 			Info *InfoType
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target3) }, &cptest.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Ptr, TypeName: "*cptest_test.InfoType"})
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, &target3) }, &scold.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Ptr, TypeName: "*scold_test.InfoType"})
 
 		type Numbers []int
 
@@ -406,111 +406,111 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			Info Numbers
 		}{}
 
-		td.CmpPanic(t, func() { _ = cptest.StringMapUnmarshal(sm, &target4) }, &cptest.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Slice, TypeName: "cptest_test.Numbers"})
+		td.CmpPanic(t, func() { _ = scold.StringMapUnmarshal(sm, &target4) }, &scold.NotTextUnmarshalableTypeError{Field: "Info", Type: reflect.Slice, TypeName: "scold_test.Numbers"})
 	})
 
 	t.Run("pointer to deserializable type that was allocated", func(t *testing.T) {
 		target := struct {
-			Dur *cptest.PositiveDuration
-		}{&cptest.PositiveDuration{time.Second}}
+			Dur *scold.PositiveDuration
+		}{&scold.PositiveDuration{time.Second}}
 
 		sm := map[string]string{
 			"Dur": "5s",
 		}
 
-		err := cptest.StringMapUnmarshal(sm, &target)
+		err := scold.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, target, struct{ Dur *cptest.PositiveDuration }{&cptest.PositiveDuration{5 * time.Second}})
+		td.Cmp(t, target, struct{ Dur *scold.PositiveDuration }{&scold.PositiveDuration{5 * time.Second}})
 	})
 
 	t.Run("pointer to deserializable type that was NOT allocated should allocate it", func(t *testing.T) {
 		target := struct {
-			Dur *cptest.PositiveDuration
+			Dur *scold.PositiveDuration
 		}{}
 
 		sm := map[string]string{
 			"Dur": "5s",
 		}
 
-		err := cptest.StringMapUnmarshal(sm, &target)
+		err := scold.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, target, struct{ Dur *cptest.PositiveDuration }{&cptest.PositiveDuration{5 * time.Second}})
+		td.Cmp(t, target, struct{ Dur *scold.PositiveDuration }{&scold.PositiveDuration{5 * time.Second}})
 	})
 
 	t.Run("plain deserializable type should be filled anyway", func(t *testing.T) {
 		target := struct {
-			Dur cptest.PositiveDuration
+			Dur scold.PositiveDuration
 		}{}
 
 		sm := map[string]string{
 			"Dur": "5s",
 		}
 
-		err := cptest.StringMapUnmarshal(sm, &target)
+		err := scold.StringMapUnmarshal(sm, &target)
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, target, struct{ Dur cptest.PositiveDuration }{cptest.PositiveDuration{5 * time.Second}})
+		td.Cmp(t, target, struct{ Dur scold.PositiveDuration }{scold.PositiveDuration{5 * time.Second}})
 	})
 
 	t.Run("error if user-defined type failed to parse input (non-pointer version)", func(t *testing.T) {
 		target := struct {
-			Dur cptest.PositiveDuration
+			Dur scold.PositiveDuration
 		}{}
 
 		sm := map[string]string{
 			"Dur": "5sus",
 		}
 
-		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
+		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"PositiveDuration", "5sus"}},
+			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus"}},
 		})
-		td.Cmp(t, target, struct{ Dur cptest.PositiveDuration }{})
+		td.Cmp(t, target, struct{ Dur scold.PositiveDuration }{})
 	})
 
 	t.Run("error if user-defined type failed to parse input (empty pointer version)", func(t *testing.T) {
 		target := struct {
-			Dur *cptest.PositiveDuration
+			Dur *scold.PositiveDuration
 		}{}
 
 		sm := map[string]string{
 			"Dur": "5sus",
 		}
 
-		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
+		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"PositiveDuration", "5sus"}},
+			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus"}},
 		})
-		td.Cmp(t, target, struct{ Dur *cptest.PositiveDuration }{})
+		td.Cmp(t, target, struct{ Dur *scold.PositiveDuration }{})
 	})
 
 	t.Run("error if user-defined type failed to parse input (valid pointer version)", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{time.Second}
+		dur := &scold.PositiveDuration{time.Second}
 		target := struct {
-			Dur *cptest.PositiveDuration
+			Dur *scold.PositiveDuration
 		}{dur}
 
 		sm := map[string]string{
 			"Dur": "5sus",
 		}
 
-		errs := cptest.StringMapUnmarshal(sm, &target).(*multierror.Error)
+		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&cptest.FieldError{"Dur", &cptest.NotValueOfTypeError{"PositiveDuration", "5sus"}},
+			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus"}},
 		})
-		td.Cmp(t, target, struct{ Dur *cptest.PositiveDuration }{dur})
+		td.Cmp(t, target, struct{ Dur *scold.PositiveDuration }{dur})
 	})
 
 	t.Run("optional transform functions", func(t *testing.T) {
 		type TestStruct struct {
 			One            int
 			Aword          string
-			PascalCase     *cptest.PositiveDuration
+			PascalCase     *scold.PositiveDuration
 			ShouldNotMatch uint
 		}
 
@@ -526,7 +526,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		want := TestStruct{
 			One:            1,
 			Aword:          "woah",
-			PascalCase:     &cptest.PositiveDuration{5 * time.Second},
+			PascalCase:     &scold.PositiveDuration{5 * time.Second},
 			ShouldNotMatch: 0,
 		}
 
@@ -612,9 +612,9 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 			return string(r[:out])
 		}
 
-		err := cptest.StringMapUnmarshal(sm, &target, capitalize, capitalizeWithNoUnderscore, toPascalCase).(*multierror.Error)
+		err := scold.StringMapUnmarshal(sm, &target, capitalize, capitalizeWithNoUnderscore, toPascalCase).(*multierror.Error)
 
-		td.Cmp(t, err.Errors, td.Bag(td.Flatten([]error{&cptest.FieldError{"ShouldNotMatch", cptest.ErrUnknownField}})))
+		td.Cmp(t, err.Errors, td.Bag(td.Flatten([]error{&scold.FieldError{"ShouldNotMatch", scold.ErrUnknownField}})))
 		td.Cmp(t, target, want, "correctly deserialized")
 		td.Cmp(t, callCounts, []int{4, 3, 2}, "transformers called sequentially until success")
 	})
@@ -622,14 +622,14 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 func TestPositiveDuration(t *testing.T) {
 	t.Run("empty string", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{}
+		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte(""))
 
 		td.CmpError(t, err)
 	})
 
 	t.Run("zero nanoseconds", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{}
+		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("0ns"))
 
 		td.CmpNoError(t, err)
@@ -637,7 +637,7 @@ func TestPositiveDuration(t *testing.T) {
 	})
 
 	t.Run("one second", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{}
+		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("1s"))
 
 		td.CmpNoError(t, err)
@@ -645,7 +645,7 @@ func TestPositiveDuration(t *testing.T) {
 	})
 
 	t.Run("one second without suffix", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{}
+		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("1"))
 
 		td.CmpNoError(t, err)
@@ -653,7 +653,7 @@ func TestPositiveDuration(t *testing.T) {
 	})
 
 	t.Run("ten seconds", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{}
+		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("10s"))
 
 		td.CmpNoError(t, err)
@@ -661,7 +661,7 @@ func TestPositiveDuration(t *testing.T) {
 	})
 
 	t.Run("ten and half seconds without suffix", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{}
+		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("10.5"))
 
 		td.CmpNoError(t, err)
@@ -669,7 +669,7 @@ func TestPositiveDuration(t *testing.T) {
 	})
 
 	t.Run("1 and half milliseconds", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{}
+		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("1.5ms"))
 
 		td.CmpNoError(t, err)
@@ -677,16 +677,16 @@ func TestPositiveDuration(t *testing.T) {
 	})
 
 	t.Run("negative second is forbidden", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{}
+		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("-1s"))
 
-		td.Cmp(t, err, cptest.ErrNegativePositiveDuration)
+		td.Cmp(t, err, scold.ErrNegativePositiveDuration)
 	})
 
 	t.Run("negative fractional duration is forbidden", func(t *testing.T) {
-		dur := &cptest.PositiveDuration{}
+		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("-42.0us"))
 
-		td.Cmp(t, err, cptest.ErrNegativePositiveDuration)
+		td.Cmp(t, err, scold.ErrNegativePositiveDuration)
 	})
 }
