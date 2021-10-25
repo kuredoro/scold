@@ -1,4 +1,4 @@
-package cptest_test
+package scold_test
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 	"github.com/maxatome/go-testdeep/td"
 )
 
@@ -14,7 +14,7 @@ func TestScanTest(t *testing.T) {
 
 	t.Run("don't trim space",
 		func(t *testing.T) {
-			want := cptest.Test{
+			want := scold.Test{
 				Input:  "\n \n  5\n  1 2 3 4 5\n   \n",
 				Output: "\n  5 4 3 2 1\n\n  \n",
 			}
@@ -31,10 +31,10 @@ func TestScanTest(t *testing.T) {
   
 `
 
-			test, errs := cptest.ScanTest(text)
+			test, errs := scold.ScanTest(text)
 
-			cptest.AssertTest(t, test, want)
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTest(t, test, want)
+			scold.AssertNoErrors(t, errs)
 		})
 
 	t.Run("IO delimeters in wrong places are ignored",
@@ -44,19 +44,19 @@ abc%
 trash%and%trash
 `
 
-			inputText = strings.ReplaceAll(inputText, "%", cptest.IODelim)
+			inputText = strings.ReplaceAll(inputText, "%", scold.IODelim)
 
-			want := cptest.Test{
+			want := scold.Test{
 				Input:  inputText,
 				Output: "correct\n",
 			}
 
-			text := fmt.Sprintf("%s%s\ncorrect", inputText, cptest.IODelim)
+			text := fmt.Sprintf("%s%s\ncorrect", inputText, scold.IODelim)
 
-			test, errs := cptest.ScanTest(text)
+			test, errs := scold.ScanTest(text)
 
-			cptest.AssertTest(t, test, want)
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTest(t, test, want)
+			scold.AssertNoErrors(t, errs)
 		})
 
 	t.Run("second+ IO delimeters are ignored",
@@ -67,15 +67,15 @@ b
 ---
 c`
 
-			want := cptest.Test{
+			want := scold.Test{
 				Input:  "a\n",
 				Output: "b\n---\nc\n",
 			}
 
-			test, errs := cptest.ScanTest(text)
+			test, errs := scold.ScanTest(text)
 
-			cptest.AssertTest(t, test, want)
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTest(t, test, want)
+			scold.AssertNoErrors(t, errs)
 		})
 
 	t.Run("only the prefix of a line should match IO delimeter",
@@ -84,17 +84,17 @@ c`
 				"---this text is discarded\r\n" +
 				"random 12345\r\n"
 
-			inputText = strings.ReplaceAll(inputText, "---", cptest.IODelim)
+			inputText = strings.ReplaceAll(inputText, "---", scold.IODelim)
 
-			want := cptest.Test{
+			want := scold.Test{
 				Input:  "3\n",
 				Output: "random 12345\n",
 			}
 
-			test, errs := cptest.ScanTest(inputText)
+			test, errs := scold.ScanTest(inputText)
 
-			cptest.AssertTest(t, test, want)
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTest(t, test, want)
+			scold.AssertNoErrors(t, errs)
 		})
 
 	t.Run("no IO delimeters result in error",
@@ -105,55 +105,55 @@ dcba
         `
 
 			errsWant := []error{
-				cptest.IOSeparatorMissing,
+				scold.IOSeparatorMissing,
 			}
 
-			test, errs := cptest.ScanTest(text)
+			test, errs := scold.ScanTest(text)
 
-			cptest.AssertTest(t, test, cptest.Test{})
-			cptest.AssertErrors(t, errs, errsWant)
+			scold.AssertTest(t, test, scold.Test{})
+			scold.AssertErrors(t, errs, errsWant)
 		})
 
 	t.Run("empty string returns empty test",
 		func(t *testing.T) {
-			test, errs := cptest.ScanTest("")
+			test, errs := scold.ScanTest("")
 
-			cptest.AssertTest(t, test, cptest.Test{})
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTest(t, test, scold.Test{})
+			scold.AssertNoErrors(t, errs)
 		})
 
 	t.Run("a lonely separator also counts",
 		func(t *testing.T) {
-			test, errs := cptest.ScanTest("---")
+			test, errs := scold.ScanTest("---")
 
-			cptest.AssertTest(t, test, cptest.Test{})
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTest(t, test, scold.Test{})
+			scold.AssertNoErrors(t, errs)
 		})
 
 	t.Run("empty input",
 		func(t *testing.T) {
-			test, errs := cptest.ScanTest("---\ntwo\n")
+			test, errs := scold.ScanTest("---\ntwo\n")
 
-			want := cptest.Test{
+			want := scold.Test{
 				Input:  "",
 				Output: "two\n",
 			}
 
-			cptest.AssertTest(t, test, want)
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTest(t, test, want)
+			scold.AssertNoErrors(t, errs)
 		})
 
 	t.Run("empty output",
 		func(t *testing.T) {
-			test, errs := cptest.ScanTest("one\n---\n")
+			test, errs := scold.ScanTest("one\n---\n")
 
-			want := cptest.Test{
+			want := scold.Test{
 				Input:  "one\n",
 				Output: "",
 			}
 
-			cptest.AssertTest(t, test, want)
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTest(t, test, want)
+			scold.AssertNoErrors(t, errs)
 		})
 }
 
@@ -161,17 +161,17 @@ func TestScanInputs(t *testing.T) {
 
 	t.Run("emtpy returns empty inputs",
 		func(t *testing.T) {
-			inputs, errs := cptest.ScanInputs("")
+			inputs, errs := scold.ScanInputs("")
 
-			cptest.AssertTests(t, inputs.Tests, nil)
-			cptest.AssertNoErrors(t, errs)
-			cptest.AssertDefaultConfig(t, inputs.Config)
+			scold.AssertTests(t, inputs.Tests, nil)
+			scold.AssertNoErrors(t, errs)
+			scold.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("single",
 		func(t *testing.T) {
 
-			testsWant := []cptest.Test{
+			testsWant := []scold.Test{
 				{
 					Input:  "foo\n",
 					Output: "bar\n",
@@ -179,19 +179,19 @@ func TestScanInputs(t *testing.T) {
 			}
 
 			text := "foo\n---\nbar\n"
-			text = strings.ReplaceAll(text, "---", cptest.IODelim)
+			text = strings.ReplaceAll(text, "---", scold.IODelim)
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, testsWant)
-			cptest.AssertNoErrors(t, errs)
-			cptest.AssertDefaultConfig(t, inputs.Config)
+			scold.AssertTests(t, inputs.Tests, testsWant)
+			scold.AssertNoErrors(t, errs)
+			scold.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("multiple",
 		func(t *testing.T) {
 
-			testsWant := []cptest.Test{
+			testsWant := []scold.Test{
 				{
 					Input:  "4\n1 2 3 4\n",
 					Output: "4 3 2 1\n",
@@ -221,20 +221,20 @@ func TestScanInputs(t *testing.T) {
 ---
 1
 `
-			text = strings.ReplaceAll(text, "---", cptest.IODelim)
-			text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+			text = strings.ReplaceAll(text, "---", scold.IODelim)
+			text = strings.ReplaceAll(text, "===", scold.TestDelim)
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, testsWant)
-			cptest.AssertNoErrors(t, errs)
-			cptest.AssertDefaultConfig(t, inputs.Config)
+			scold.AssertTests(t, inputs.Tests, testsWant)
+			scold.AssertNoErrors(t, errs)
+			scold.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("multiple with CRLF",
 		func(t *testing.T) {
 
-			testsWant := []cptest.Test{
+			testsWant := []scold.Test{
 				{
 					Input:  "4\n1 2 3 4\n",
 					Output: "4 3 2 1\n",
@@ -264,20 +264,20 @@ func TestScanInputs(t *testing.T) {
 				"---\r\n" +
 				"1\r\n"
 
-			text = strings.ReplaceAll(text, "---", cptest.IODelim)
-			text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+			text = strings.ReplaceAll(text, "---", scold.IODelim)
+			text = strings.ReplaceAll(text, "===", scold.TestDelim)
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, testsWant)
-			cptest.AssertNoErrors(t, errs)
-			cptest.AssertDefaultConfig(t, inputs.Config)
+			scold.AssertTests(t, inputs.Tests, testsWant)
+			scold.AssertNoErrors(t, errs)
+			scold.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("skip empty tests",
 		func(t *testing.T) {
 
-			testsWant := []cptest.Test{
+			testsWant := []scold.Test{
 				{
 					Input:  "abc\n",
 					Output: "cba\n",
@@ -305,19 +305,19 @@ xyz
 zyx
 ===
 `
-			text = strings.ReplaceAll(text, "---", cptest.IODelim)
-			text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+			text = strings.ReplaceAll(text, "---", scold.IODelim)
+			text = strings.ReplaceAll(text, "===", scold.TestDelim)
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, testsWant)
-			cptest.AssertNoErrors(t, errs)
-			cptest.AssertDefaultConfig(t, inputs.Config)
+			scold.AssertTests(t, inputs.Tests, testsWant)
+			scold.AssertNoErrors(t, errs)
+			scold.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("only line's prefix should match TestDelimeter",
 		func(t *testing.T) {
-			testsWant := []cptest.Test{
+			testsWant := []scold.Test{
 				{
 					Input:  "",
 					Output: "<===\n",
@@ -338,27 +338,27 @@ zyx
 ---
 ===---
 `
-			text = strings.ReplaceAll(text, "---", cptest.IODelim)
-			text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+			text = strings.ReplaceAll(text, "---", scold.IODelim)
+			text = strings.ReplaceAll(text, "===", scold.TestDelim)
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, testsWant)
-			cptest.AssertNoErrors(t, errs)
-			cptest.AssertDefaultConfig(t, inputs.Config)
+			scold.AssertTests(t, inputs.Tests, testsWant)
+			scold.AssertNoErrors(t, errs)
+			scold.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("configs may be listed before first test and once",
 		func(t *testing.T) {
-			testsWant := []cptest.Test{
+			testsWant := []scold.Test{
 				{
 					Input:  "2 2\n",
 					Output: "4\n",
 				},
 			}
 
-			configWant := cptest.InputsConfig{
-				Tl:   cptest.PositiveDuration{2 * time.Second},
+			configWant := scold.InputsConfig{
+				Tl:   scold.PositiveDuration{2 * time.Second},
 				Prec: 16,
 			}
 
@@ -370,32 +370,32 @@ prec= 16
 ---
 4
 `
-			text = strings.ReplaceAll(text, "---", cptest.IODelim)
-			text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+			text = strings.ReplaceAll(text, "---", scold.IODelim)
+			text = strings.ReplaceAll(text, "===", scold.TestDelim)
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, testsWant)
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTests(t, inputs.Tests, testsWant)
+			scold.AssertNoErrors(t, errs)
 			td.Cmp(t, inputs.Config, configWant)
 		})
 
 	t.Run("not listed config keys shall be set to default",
 		func(t *testing.T) {
-			testsWant := []cptest.Test{
+			testsWant := []scold.Test{
 				{
 					Input:  "2 2\n",
 					Output: "4\n",
 				},
 			}
 
-			cptest.DefaultInputsConfig = cptest.InputsConfig{
-				Tl:   cptest.PositiveDuration{24 * time.Second},
+			scold.DefaultInputsConfig = scold.InputsConfig{
+				Tl:   scold.PositiveDuration{24 * time.Second},
 				Prec: 6,
 			}
 
-			configWant := cptest.InputsConfig{
-				Tl:   cptest.DefaultInputsConfig.Tl,
+			configWant := scold.InputsConfig{
+				Tl:   scold.DefaultInputsConfig.Tl,
 				Prec: 16,
 			}
 
@@ -406,19 +406,19 @@ prec =16
 ---
 4
 `
-			text = strings.ReplaceAll(text, "---", cptest.IODelim)
-			text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+			text = strings.ReplaceAll(text, "---", scold.IODelim)
+			text = strings.ReplaceAll(text, "===", scold.TestDelim)
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, testsWant)
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertTests(t, inputs.Tests, testsWant)
+			scold.AssertNoErrors(t, errs)
 			td.Cmp(t, inputs.Config, configWant)
 		})
 
 	t.Run("configs are treated as such only before test 1",
 		func(t *testing.T) {
-			testsWant := []cptest.Test{
+			testsWant := []scold.Test{
 				{
 					Input:  "2 2\n",
 					Output: "4\n",
@@ -434,18 +434,18 @@ prec =16
 tl = 2.0
 foo= bar
         `
-			text = strings.ReplaceAll(text, "---", cptest.IODelim)
-			text = strings.ReplaceAll(text, "===", cptest.TestDelim)
+			text = strings.ReplaceAll(text, "---", scold.IODelim)
+			text = strings.ReplaceAll(text, "===", scold.TestDelim)
 
 			errsWant := []error{
-				cptest.IOSeparatorMissing,
+				scold.IOSeparatorMissing,
 			}
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, testsWant)
-			cptest.AssertErrors(t, errs, errsWant)
-			cptest.AssertDefaultConfig(t, inputs.Config)
+			scold.AssertTests(t, inputs.Tests, testsWant)
+			scold.AssertErrors(t, errs, errsWant)
+			scold.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("errors in config",
@@ -462,21 +462,21 @@ oh = and
 by the way...
 ===`
 
-			cptest.DefaultInputsConfig = cptest.InputsConfig{}
+			scold.DefaultInputsConfig = scold.InputsConfig{}
 
 			errsWant := []error{
-				&cptest.LineRangeError{1, []string{"= foo"}, cptest.KeyMissing},
-				&cptest.LineRangeError{2, []string{"foo= aaa"}, &cptest.FieldError{"foo", cptest.ErrUnknownField}},
-				&cptest.LineRangeError{3, []string{"tl=10.a"}, &cptest.FieldError{"tl", &cptest.NotValueOfTypeError{"PositiveDuration", "10.a"}}},
-				&cptest.LineRangeError{7, []string{"extra=love"}, &cptest.TestError{1, cptest.IOSeparatorMissing}},
-				&cptest.LineRangeError{9, []string{"oh = and", "by the way..."}, &cptest.TestError{2, cptest.IOSeparatorMissing}},
+				&scold.LineRangeError{1, []string{"= foo"}, scold.KeyMissing},
+				&scold.LineRangeError{2, []string{"foo= aaa"}, &scold.FieldError{"foo", scold.ErrUnknownField}},
+				&scold.LineRangeError{3, []string{"tl=10.a"}, &scold.FieldError{"tl", &scold.NotValueOfTypeError{"PositiveDuration", "10.a"}}},
+				&scold.LineRangeError{7, []string{"extra=love"}, &scold.TestError{1, scold.IOSeparatorMissing}},
+				&scold.LineRangeError{9, []string{"oh = and", "by the way..."}, &scold.TestError{2, scold.IOSeparatorMissing}},
 			}
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, nil)
+			scold.AssertTests(t, inputs.Tests, nil)
 			td.Cmp(t, errs, td.Bag(td.Flatten(errsWant)))
-			cptest.AssertDefaultConfig(t, inputs.Config)
+			scold.AssertDefaultConfig(t, inputs.Config)
 		})
 
 	t.Run("wierd (empty inputs)",
@@ -490,11 +490,11 @@ by the way...
 ---
 ===`
 
-			inputs, errs := cptest.ScanInputs(text)
+			inputs, errs := scold.ScanInputs(text)
 
-			cptest.AssertTests(t, inputs.Tests, nil)
-			cptest.AssertNoErrors(t, errs)
-			cptest.AssertDefaultConfig(t, inputs.Config)
+			scold.AssertTests(t, inputs.Tests, nil)
+			scold.AssertNoErrors(t, errs)
+			scold.AssertDefaultConfig(t, inputs.Config)
 		})
 }
 
@@ -508,7 +508,7 @@ foo=bar
   two words   =  is   true   
         `
 
-			gotMap, gotLines, errs := cptest.ScanConfig(text)
+			gotMap, gotLines, errs := scold.ScanConfig(text)
 
 			wantMap := map[string]string{
 				"hello":     "world",
@@ -516,7 +516,7 @@ foo=bar
 				"two words": "is   true",
 			}
 
-			wantLines := map[string]cptest.NumberedLine{
+			wantLines := map[string]scold.NumberedLine{
 				"hello":     {2, "hello = world"},
 				"foo":       {3, "foo=bar"},
 				"two words": {4, "  two words   =  is   true   "},
@@ -524,7 +524,7 @@ foo=bar
 
 			td.Cmp(t, gotMap, wantMap, "config contents")
 			td.Cmp(t, gotLines, wantLines, "key to line mapping")
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertNoErrors(t, errs)
 		})
 
 	t.Run("lines without assignments are keys without values",
@@ -537,7 +537,7 @@ ignore_newline
 this is ok =
         `
 
-			gotMap, gotLines, errs := cptest.ScanConfig(text)
+			gotMap, gotLines, errs := scold.ScanConfig(text)
 
 			wantMap := map[string]string{
 				"hi":               "owww",
@@ -547,7 +547,7 @@ this is ok =
 				"this is ok":       "",
 			}
 
-			wantLines := map[string]cptest.NumberedLine{
+			wantLines := map[string]scold.NumberedLine{
 				"hi":               {1, "hi = owww"},
 				"key assign value": {2, "key assign value"},
 				"zap":              {3, "zap = paz"},
@@ -557,7 +557,7 @@ this is ok =
 
 			td.Cmp(t, gotMap, wantMap, "config contents")
 			td.Cmp(t, gotLines, wantLines, "key to line mapping")
-			cptest.AssertNoErrors(t, errs)
+			scold.AssertNoErrors(t, errs)
 		})
 
 	t.Run("assignments with empty lhs are erroneous",
@@ -570,20 +570,20 @@ foo=
  = 
         `
 
-			gotMap, gotLines, errs := cptest.ScanConfig(text)
+			gotMap, gotLines, errs := scold.ScanConfig(text)
 
 			wantMap := map[string]string{
 				"foo": "",
 			}
 
-			wantLines := map[string]cptest.NumberedLine{
+			wantLines := map[string]scold.NumberedLine{
 				"foo": {4, "foo="},
 			}
 
 			errsWant := []error{
-				&cptest.LineRangeError{3, []string{"=bar"}, cptest.KeyMissing},
-				&cptest.LineRangeError{5, []string{"="}, cptest.KeyMissing},
-				&cptest.LineRangeError{6, []string{" = "}, cptest.KeyMissing},
+				&scold.LineRangeError{3, []string{"=bar"}, scold.KeyMissing},
+				&scold.LineRangeError{5, []string{"="}, scold.KeyMissing},
+				&scold.LineRangeError{6, []string{" = "}, scold.KeyMissing},
 			}
 
 			td.Cmp(t, gotMap, wantMap, "config contents")

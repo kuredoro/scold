@@ -1,11 +1,11 @@
-package cptest_test
+package scold_test
 
 import (
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 )
 
 func TestLexerScan(t *testing.T) {
@@ -14,40 +14,40 @@ func TestLexerScan(t *testing.T) {
 		text := ""
 		var want []string
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 		got := lexer.Scan(text)
 
-		cptest.AssertLexemes(t, got, want)
+		scold.AssertLexemes(t, got, want)
 	})
 
 	t.Run("one word", func(t *testing.T) {
 		text := "foo"
 		want := []string{"foo"}
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 		got := lexer.Scan(text)
 
-		cptest.AssertLexemes(t, got, want)
+		scold.AssertLexemes(t, got, want)
 	})
 
 	t.Run("several words", func(t *testing.T) {
 		text := " foo bar   --> "
 		want := []string{"foo", "bar", "-->"}
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 		got := lexer.Scan(text)
 
-		cptest.AssertLexemes(t, got, want)
+		scold.AssertLexemes(t, got, want)
 	})
 
 	t.Run("newline is treated like a word", func(t *testing.T) {
 		text := "one\ntwo\n\n  three \n"
 		want := []string{"one", "\n", "two", "\n", "\n", "three", "\n"}
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 		got := lexer.Scan(text)
 
-		cptest.AssertLexemes(t, got, want)
+		scold.AssertLexemes(t, got, want)
 	})
 }
 
@@ -56,111 +56,111 @@ func TestLexerCompare(t *testing.T) {
 		target := []string{"x", "xar"}
 		source := []string{"one", "x"}
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 
-		want := []cptest.RichText{
+		want := []scold.RichText{
 			{target[0], lexer.GenMaskForString(target[0], source[0])},
 			{target[1], lexer.GenMaskForString(target[1], source[1])},
 		}
 
-		cptest.AssertDiffFailure(t, ok)
-		cptest.AssertEnrichedLexSequence(t, got, want)
+		scold.AssertDiffFailure(t, ok)
+		scold.AssertEnrichedLexSequence(t, got, want)
 	})
 
 	t.Run("got less than want", func(t *testing.T) {
 		target := []string{"x"}
 		source := []string{"x", "y"}
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 
-		want := []cptest.RichText{
+		want := []scold.RichText{
 			{target[0], lexer.GenMaskForString(target[0], source[0])},
 		}
 
-		cptest.AssertDiffSuccess(t, ok)
-		cptest.AssertEnrichedLexSequence(t, got, want)
+		scold.AssertDiffSuccess(t, ok)
+		scold.AssertEnrichedLexSequence(t, got, want)
 	})
 
 	t.Run("got more than want", func(t *testing.T) {
 		target := []string{"x", "yz"}
 		source := []string{"x"}
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 
-		want := []cptest.RichText{
+		want := []scold.RichText{
 			{target[0], lexer.GenMaskForString(target[0], source[0])},
 			{target[1], []bool{true, true}},
 		}
 
-		cptest.AssertDiffFailure(t, ok)
-		cptest.AssertEnrichedLexSequence(t, got, want)
+		scold.AssertDiffFailure(t, ok)
+		scold.AssertEnrichedLexSequence(t, got, want)
 	})
 
 	t.Run("integers treated differently", func(t *testing.T) {
 		target := []string{"10", "-10", "x", "10"}
 		source := []string{"+10", "10", "10", "y"}
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 
-		want := []cptest.RichText{
+		want := []scold.RichText{
 			{target[0], lexer.GenMaskForInt(target[0], source[0])},
 			{target[1], lexer.GenMaskForInt(target[1], source[1])},
 			{target[2], lexer.GenMaskForString(target[2], source[2])},
 			{target[3], lexer.GenMaskForString(target[3], source[3])},
 		}
 
-		cptest.AssertDiffFailure(t, ok)
-		cptest.AssertEnrichedLexSequence(t, got, want)
+		scold.AssertDiffFailure(t, ok)
+		scold.AssertEnrichedLexSequence(t, got, want)
 	})
 
 	t.Run("spurious LFs are skipped in target", func(t *testing.T) {
 		target := []string{"foo", "\n", "\n", "bar"}
 		source := []string{"foo", "\n", "bar"}
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 
-		want := []cptest.RichText{
+		want := []scold.RichText{
 			{target[0], lexer.GenMaskForString(target[0], source[0])},
 			{target[1], lexer.GenMaskForString(target[1], source[1])},
 			{target[2], []bool{true}},
 			{target[3], lexer.GenMaskForString(target[3], source[2])},
 		}
 
-		cptest.AssertDiffFailure(t, ok)
-		cptest.AssertEnrichedLexSequence(t, got, want)
+		scold.AssertDiffFailure(t, ok)
+		scold.AssertEnrichedLexSequence(t, got, want)
 	})
 
 	t.Run("spurious LFs are skipped in source", func(t *testing.T) {
 		target := []string{"foo", "\n", "bar"}
 		source := []string{"foo", "\n", "\n", "bar"}
 
-		lexer := &cptest.Lexer{}
+		lexer := &scold.Lexer{}
 
 		got, ok := lexer.Compare(target, source)
 
-		want := []cptest.RichText{
+		want := []scold.RichText{
 			{target[0], lexer.GenMaskForString(target[0], source[0])},
 			{target[1], lexer.GenMaskForString(target[1], source[1])},
 			{target[2], lexer.GenMaskForString(target[2], source[3])},
 		}
 
-		cptest.AssertDiffSuccess(t, ok)
-		cptest.AssertEnrichedLexSequence(t, got, want)
+		scold.AssertDiffSuccess(t, ok)
+		scold.AssertEnrichedLexSequence(t, got, want)
 	})
 }
 
 func TestGenMaskForString(t *testing.T) {
-	lexer := &cptest.Lexer{}
+	lexer := &scold.Lexer{}
 
 	t.Run("equal strings", func(t *testing.T) {
 		lexeme := "test"
@@ -169,7 +169,7 @@ func TestGenMaskForString(t *testing.T) {
 		got := lexer.GenMaskForString(lexeme, other)
 		want := []bool{false, false, false, false}
 
-		cptest.AssertRichTextMask(t, got, want)
+		scold.AssertRichTextMask(t, got, want)
 	})
 
 	t.Run("target is shorter", func(t *testing.T) {
@@ -179,7 +179,7 @@ func TestGenMaskForString(t *testing.T) {
 		got := lexer.GenMaskForString(lexeme, other)
 		want := []bool{false, false, false}
 
-		cptest.AssertRichTextMask(t, got, want)
+		scold.AssertRichTextMask(t, got, want)
 	})
 
 	t.Run("target is longer", func(t *testing.T) {
@@ -189,7 +189,7 @@ func TestGenMaskForString(t *testing.T) {
 		got := lexer.GenMaskForString(lexeme, other)
 		want := []bool{false, false, false, true, true}
 
-		cptest.AssertRichTextMask(t, got, want)
+		scold.AssertRichTextMask(t, got, want)
 	})
 
 	t.Run("checkerboard, lengths equal", func(t *testing.T) {
@@ -199,7 +199,7 @@ func TestGenMaskForString(t *testing.T) {
 		got := lexer.GenMaskForString(lexeme, other)
 		want := []bool{false, true, false, true, false}
 
-		cptest.AssertRichTextMask(t, got, want)
+		scold.AssertRichTextMask(t, got, want)
 	})
 }
 
@@ -217,13 +217,13 @@ func TestIsIntLexeme(t *testing.T) {
 		{"10+-", false},
 		{"0", true},
 		{"0xa", false},
-		{strings.Repeat("1", cptest.ValidIntMaxLen), true},
-		{strings.Repeat("1", cptest.ValidIntMaxLen+1), false},
+		{strings.Repeat("1", scold.ValidIntMaxLen), true},
+		{strings.Repeat("1", scold.ValidIntMaxLen+1), false},
 	}
 
 	for _, test := range cases {
 		t.Run(test.Str, func(t *testing.T) {
-			got := cptest.IsIntLexeme(test.Str)
+			got := scold.IsIntLexeme(test.Str)
 
 			if got != test.Want {
 				if test.Want {
@@ -237,7 +237,7 @@ func TestIsIntLexeme(t *testing.T) {
 }
 
 func TestGenMaskForInt(t *testing.T) {
-	lexer := &cptest.Lexer{}
+	lexer := &scold.Lexer{}
 
 	cases := []struct {
 		Target, Source string
@@ -262,7 +262,7 @@ func TestGenMaskForInt(t *testing.T) {
 		t.Run(title, func(t *testing.T) {
 			got := lexer.GenMaskForInt(test.Target, test.Source)
 
-			cptest.AssertRichTextMask(t, got, test.Want)
+			scold.AssertRichTextMask(t, got, test.Want)
 		})
 	}
 }
@@ -288,7 +288,7 @@ func TestIsFloatLexeme(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.Str, func(t *testing.T) {
-			got := cptest.IsFloatLexeme(test.Str)
+			got := scold.IsFloatLexeme(test.Str)
 
 			if got != test.Want {
 				if test.Want {
@@ -302,7 +302,7 @@ func TestIsFloatLexeme(t *testing.T) {
 }
 
 func TestGenMaskForFloat(t *testing.T) {
-	lexer := &cptest.Lexer{
+	lexer := &scold.Lexer{
 		Precision: 2,
 	}
 
@@ -333,7 +333,7 @@ func TestGenMaskForFloat(t *testing.T) {
 		t.Run(title, func(t *testing.T) {
 			got := lexer.GenMaskForFloat(test.Target, test.Source)
 
-			cptest.AssertRichTextMask(t, got, test.Want)
+			scold.AssertRichTextMask(t, got, test.Want)
 		})
 	}
 }

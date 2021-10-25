@@ -1,4 +1,4 @@
-package cptest_test
+package scold_test
 
 import (
 	"sync"
@@ -7,7 +7,7 @@ import (
 
 	"context"
 	"github.com/jonboulle/clockwork"
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 )
 
 func TestConfigurableStopwatcher(t *testing.T) {
@@ -18,7 +18,7 @@ func TestConfigurableStopwatcher(t *testing.T) {
 
 			since := clock.Now().Add(5 * time.Second)
 
-			swatch := &cptest.ConfigurableStopwatcher{
+			swatch := &scold.ConfigurableStopwatcher{
 				TL:    TL,
 				Clock: clock,
 			}
@@ -83,7 +83,7 @@ func TestConfigurableStopwatcher(t *testing.T) {
 
 			since := clock.Now().Add(1 * time.Second)
 
-			swatch := &cptest.ConfigurableStopwatcher{
+			swatch := &scold.ConfigurableStopwatcher{
 				TL:    TL,
 				Clock: clock,
 			}
@@ -145,7 +145,7 @@ func TestConfigurableStopwatcher(t *testing.T) {
 
 			var since time.Time
 
-			swatch := &cptest.ConfigurableStopwatcher{
+			swatch := &scold.ConfigurableStopwatcher{
 				TL:    TL,
 				Clock: clock,
 			}

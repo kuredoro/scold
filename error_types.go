@@ -1,4 +1,4 @@
-package cptest
+package scold
 
 import (
 	"fmt"
@@ -75,7 +75,7 @@ func (e *LineRangeError) Unwrap() error {
 	return e.Err
 }
 
-// TestError is a cptest centric error type that maps a test's index inside
+// TestError is a scold centric error type that maps a test's index inside
 // inputs.txt to a particular error Err.
 type TestError struct {
 	TestNum int

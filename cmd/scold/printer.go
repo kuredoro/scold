@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/atomicgo/cursor"
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 	"github.com/logrusorgru/aurora"
 )
 
@@ -15,18 +15,18 @@ const diffColor = aurora.RedFg
 const missingNewlineColor = aurora.MagentaFg
 
 // Initialized in init()
-var verdictStr map[cptest.Verdict]aurora.Value
+var verdictStr map[scold.Verdict]aurora.Value
 
 // printQueue facilitates synchronized output of the test results, since End
 // callback can be called simultaneously.
 var printQueue = make(chan testResultNotification, 100)
 
 type testResultNotification struct {
-	test  *cptest.Test
-    result *cptest.TestResult
+	test  *scold.Test
+    result *scold.TestResult
 }
 
-func verboseResultPrinter(test *cptest.Test, result *cptest.TestResult) {
+func verboseResultPrinter(test *scold.Test, result *scold.TestResult) {
 	printQueue <- testResultNotification{test, result}
 }
 
@@ -39,7 +39,7 @@ func verboseResultPrinterWorker() {
 func printAlwaysWithNewline(r io.Writer, text string) {
     fmt.Fprint(r, text)
     if text != "" && text[len(text)-1] != '\n' {
-        fmt.Fprint(r, cptest.DumpLexemes([]cptest.RichText{{Str: "\n", Mask: []bool{true}}}, missingNewlineColor))
+        fmt.Fprint(r, scold.DumpLexemes([]scold.RichText{{Str: "\n", Mask: []bool{true}}}, missingNewlineColor))
         fmt.Fprintln(r)
     }
 }
@@ -55,23 +55,23 @@ func printVerboseResult(blob testResultNotification) {
 	seconds := result.Time.Round(time.Millisecond).Seconds()
 	fmt.Fprintf(str, "--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], result.ID, seconds)
 
-	if verdict != cptest.OK {
+	if verdict != scold.OK {
 		fmt.Fprintf(str, "Input:\n%s\n", test.Input)
 
-		fmt.Fprintf(str, "Answer:\n%s\n", cptest.DumpLexemes(result.RichAnswer, diffColor))
+		fmt.Fprintf(str, "Answer:\n%s\n", scold.DumpLexemes(result.RichAnswer, diffColor))
 
-		if verdict == cptest.RE {
+		if verdict == scold.RE {
 			fmt.Fprintf(str, "Exit code: %d\n\n", result.Out.ExitCode)
 			fmt.Fprint(str, "Output:\n")
             printAlwaysWithNewline(str, result.Out.Stdout)
 			fmt.Fprint(str, "Stderr:\n")
             printAlwaysWithNewline(str, result.Out.Stderr)
-		} else if verdict == cptest.WA {
-			fmt.Fprintf(str, "Output:\n%s\n", cptest.DumpLexemes(result.RichOut, diffColor))
+		} else if verdict == scold.WA {
+			fmt.Fprintf(str, "Output:\n%s\n", scold.DumpLexemes(result.RichOut, diffColor))
 			if result.Out.Stderr != "" {
 				fmt.Fprintf(str, "Stderr:\n%s\n", result.Out.Stderr)
 			}
-        } else if verdict == cptest.TL {
+        } else if verdict == scold.TL {
             if result.Out.Stdout != "" {
                 fmt.Fprint(str, "Output:\n")
                 printAlwaysWithNewline(str, result.Out.Stdout)
@@ -81,7 +81,7 @@ func printVerboseResult(blob testResultNotification) {
                 fmt.Fprint(str, "Stderr:\n")
                 printAlwaysWithNewline(str, result.Out.Stderr)
             }
-		} else if verdict == cptest.IE {
+		} else if verdict == scold.IE {
 			fmt.Fprintf(str, "Error:\n%v\n\n", result.Err)
 		}
 	}

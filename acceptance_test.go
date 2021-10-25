@@ -1,10 +1,10 @@
-package cptest_test
+package scold_test
 
 /*
 import (
 	"testing"
 
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 )
 
 func TestAcceptanceSimple(t *testing.T) {
@@ -22,23 +22,23 @@ func TestAcceptanceSimple(t *testing.T) {
 4
     `
 
-	inputs, err := cptest.ScanInputs(inputsText)
+	inputs, err := scold.ScanInputs(inputsText)
 
-	cptest.AssertNoErrors(t, err)
+	scold.AssertNoErrors(t, err)
 
-	proc := cptest.ProcesserFunc(ProcFuncMultiply)
-	swatch := cptest.NewConfigurableStopwatcher(0)
-    pool := cptest.NewThreadPool(3)
+	proc := scold.ProcesserFunc(ProcFuncMultiply)
+	swatch := scold.NewConfigurableStopwatcher(0)
+    pool := scold.NewThreadPool(3)
 
-	batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+	batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 	batch.Run()
 
-	want := map[int]cptest.Verdict{
-		1: cptest.OK,
-		2: cptest.OK,
-		3: cptest.WA,
+	want := map[int]scold.Verdict{
+		1: scold.OK,
+		2: scold.OK,
+		3: scold.WA,
 	}
 
-	cptest.AssertVerdicts(t, batch.Verdicts, want)
+	scold.AssertVerdicts(t, batch.Verdicts, want)
 }
 */

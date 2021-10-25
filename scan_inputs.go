@@ -1,4 +1,4 @@
-package cptest
+package scold
 
 import (
 	"bufio"
@@ -234,7 +234,7 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 		testNum++
 
 		if testErrs != nil {
-			// TODO: add cptest.SplitAndTrim
+			// TODO: add scold.SplitAndTrim
 			testLines := strings.Split(part, "\n")
 			if len(testLines) != 0 && testLines[len(testLines)-1] == "" {
 				testLines = testLines[:len(testLines)-1]

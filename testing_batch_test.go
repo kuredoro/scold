@@ -1,4 +1,4 @@
-package cptest_test
+package scold_test
 
 import (
 	"bytes"
@@ -12,22 +12,22 @@ import (
 	"time"
 
 	"github.com/jonboulle/clockwork"
-	"github.com/kuredoro/cptest"
+	"github.com/kuredoro/scold"
 	"github.com/sanity-io/litter"
 )
 
-func ProcFuncMultiply(ctx context.Context, in io.Reader) (cptest.ExecutionResult, error) {
+func ProcFuncMultiply(ctx context.Context, in io.Reader) (scold.ExecutionResult, error) {
 	var a, b int
 	fmt.Fscan(in, &a, &b)
 
-	return cptest.ExecutionResult{
+	return scold.ExecutionResult{
 		ExitCode: 0,
 		Stdout:   fmt.Sprintln(a * b),
 		Stderr:   "",
 	}, nil
 }
 
-func ProcFuncIntegerSequence(ctx context.Context, in io.Reader) (cptest.ExecutionResult, error) {
+func ProcFuncIntegerSequence(ctx context.Context, in io.Reader) (scold.ExecutionResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
@@ -38,14 +38,14 @@ func ProcFuncIntegerSequence(ctx context.Context, in io.Reader) (cptest.Executio
 
 	fmt.Fprintln(buf)
 
-	return cptest.ExecutionResult{
+	return scold.ExecutionResult{
 		ExitCode: 0,
 		Stdout:   buf.String(),
 		Stderr:   "",
 	}, nil
 }
 
-func ProcFuncBogusFloatingPoint(ctx context.Context, in io.Reader) (cptest.ExecutionResult, error) {
+func ProcFuncBogusFloatingPoint(ctx context.Context, in io.Reader) (scold.ExecutionResult, error) {
 	var n int
 	fmt.Fscan(in, &n)
 
@@ -56,15 +56,15 @@ func ProcFuncBogusFloatingPoint(ctx context.Context, in io.Reader) (cptest.Execu
 		out = "2.345678\n"
 	}
 
-	return cptest.ExecutionResult{
+	return scold.ExecutionResult{
 		ExitCode: 0,
 		Stdout:   out,
 		Stderr:   "",
 	}, nil
 }
 
-func ProcFuncAnswer(ctx context.Context, in io.Reader) (cptest.ExecutionResult, error) {
-	return cptest.ExecutionResult{
+func ProcFuncAnswer(ctx context.Context, in io.Reader) (scold.ExecutionResult, error) {
+	return scold.ExecutionResult{
 		ExitCode: 0,
 		Stdout:   "42",
 		Stderr:   "",
@@ -73,12 +73,12 @@ func ProcFuncAnswer(ctx context.Context, in io.Reader) (cptest.ExecutionResult, 
 
 func TestNewTestingBatch(t *testing.T) {
 	t.Run("no state altering configs", func(t *testing.T) {
-		inputs := cptest.Inputs{
+		inputs := scold.Inputs{
 			Tests:  nil,
-			Config: cptest.InputsConfig{},
+			Config: scold.InputsConfig{},
 		}
 
-		batch := cptest.NewTestingBatch(inputs, nil, nil, nil)
+		batch := scold.NewTestingBatch(inputs, nil, nil, nil)
 
 		if batch.Lx.Precision != 0 {
 			t.Errorf("got lexer precision %d, but want zero", batch.Lx.Precision)
@@ -86,14 +86,14 @@ func TestNewTestingBatch(t *testing.T) {
 	})
 
 	t.Run("prec option", func(t *testing.T) {
-		inputs := cptest.Inputs{
+		inputs := scold.Inputs{
 			Tests: nil,
-			Config: cptest.InputsConfig{
+			Config: scold.InputsConfig{
 				Prec: 22,
 			},
 		}
 
-		batch := cptest.NewTestingBatch(inputs, nil, nil, nil)
+		batch := scold.NewTestingBatch(inputs, nil, nil, nil)
 
 		if batch.Lx.Precision != 22 {
 			t.Errorf("got lexer precision %d, but want 22", batch.Lx.Precision)
@@ -104,8 +104,8 @@ func TestNewTestingBatch(t *testing.T) {
 // IDEA: Add support for presentation errors...
 func TestTestingBatch(t *testing.T) {
 	t.Run("all OK", func(t *testing.T) {
-		inputs := cptest.Inputs{
-			Tests: []cptest.Test{
+		inputs := scold.Inputs{
+			Tests: []scold.Test{
 				{
 					Input:  "2 2\n",
 					Output: "4\n",
@@ -117,30 +117,30 @@ func TestTestingBatch(t *testing.T) {
 			},
 		}
 
-		proc := &cptest.SpyProcesser{
-			Proc: cptest.ProcesserFunc(ProcFuncMultiply),
+		proc := &scold.SpyProcesser{
+			Proc: scold.ProcesserFunc(ProcFuncMultiply),
 		}
 
-		swatch := &cptest.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
-		pool := cptest.NewSpyThreadPool(2)
+		swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
+		pool := scold.NewSpyThreadPool(2)
 
-		batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+		batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 		batch.Run()
 
-		want := map[int]cptest.Verdict{
-			1: cptest.OK,
-			2: cptest.OK,
+		want := map[int]scold.Verdict{
+			1: scold.OK,
+			2: scold.OK,
 		}
 
-		cptest.AssertResultIDInvariant(t, batch)
-		cptest.AssertVerdicts(t, batch.Results, want)
-		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
-		cptest.AssertThreadCount(t, pool, 2)
+		scold.AssertResultIDInvariant(t, batch)
+		scold.AssertVerdicts(t, batch.Results, want)
+		scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+		scold.AssertThreadCount(t, pool, 2)
 	})
 
 	t.Run("outputs are compared lexeme-wise", func(t *testing.T) {
-		inputs := cptest.Inputs{
-			Tests: []cptest.Test{
+		inputs := scold.Inputs{
+			Tests: []scold.Test{
 				{
 					Input:  "2\n",
 					Output: "1  2\n",
@@ -152,25 +152,25 @@ func TestTestingBatch(t *testing.T) {
 			},
 		}
 
-		proc := &cptest.SpyProcesser{
-			Proc: cptest.ProcesserFunc(ProcFuncIntegerSequence),
+		proc := &scold.SpyProcesser{
+			Proc: scold.ProcesserFunc(ProcFuncIntegerSequence),
 		}
 
-		swatch := &cptest.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
-		pool := cptest.NewSpyThreadPool(2)
+		swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
+		pool := scold.NewSpyThreadPool(2)
 
-		batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+		batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 		batch.Run()
 
-		want := map[int]cptest.Verdict{
-			1: cptest.OK,
-			2: cptest.OK,
+		want := map[int]scold.Verdict{
+			1: scold.OK,
+			2: scold.OK,
 		}
 
-		cptest.AssertResultIDInvariant(t, batch)
-		cptest.AssertVerdicts(t, batch.Results, want)
-		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
-		cptest.AssertThreadCount(t, pool, 2)
+		scold.AssertResultIDInvariant(t, batch)
+		scold.AssertVerdicts(t, batch.Results, want)
+		scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+		scold.AssertThreadCount(t, pool, 2)
 
 		if len(batch.Results[1].RichAnswer) != 3 || len(batch.Results[2].RichAnswer) != 4 {
 			t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.Results))
@@ -182,8 +182,8 @@ func TestTestingBatch(t *testing.T) {
 	})
 
 	t.Run("floating point values are compared correctly", func(t *testing.T) {
-		inputs := cptest.Inputs{
-			Tests: []cptest.Test{
+		inputs := scold.Inputs{
+			Tests: []scold.Test{
 				{
 					Input:  "1\n",
 					Output: "1.25\n",
@@ -193,36 +193,36 @@ func TestTestingBatch(t *testing.T) {
 					Output: "2.5\n",
 				},
 			},
-			Config: cptest.InputsConfig{
+			Config: scold.InputsConfig{
 				Prec: 1,
 			},
 		}
 
-		proc := &cptest.SpyProcesser{
-			Proc: cptest.ProcesserFunc(ProcFuncBogusFloatingPoint),
+		proc := &scold.SpyProcesser{
+			Proc: scold.ProcesserFunc(ProcFuncBogusFloatingPoint),
 		}
 
-		swatch := &cptest.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
-		pool := cptest.NewSpyThreadPool(2)
+		swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
+		pool := scold.NewSpyThreadPool(2)
 
-		batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+		batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 		batch.Run()
 
-		want := map[int]cptest.Verdict{
-			1: cptest.OK,
-			2: cptest.WA,
+		want := map[int]scold.Verdict{
+			1: scold.OK,
+			2: scold.WA,
 		}
 
-		cptest.AssertResultIDInvariant(t, batch)
-		cptest.AssertVerdicts(t, batch.Results, want)
-		cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
-		cptest.AssertThreadCount(t, pool, 2)
+		scold.AssertResultIDInvariant(t, batch)
+		scold.AssertVerdicts(t, batch.Results, want)
+		scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+		scold.AssertThreadCount(t, pool, 2)
 	})
 
 	t.Run("all WA",
 		func(t *testing.T) {
-			inputs := cptest.Inputs{
-				Tests: []cptest.Test{
+			inputs := scold.Inputs{
+				Tests: []scold.Test{
 					{
 						Input:  "4\n1 2 3 4\n",
 						Output: "2 3 4 5\n",
@@ -234,31 +234,31 @@ func TestTestingBatch(t *testing.T) {
 				},
 			}
 
-			proc := &cptest.SpyProcesser{
-				Proc: cptest.ProcesserFunc(ProcFuncAnswer),
+			proc := &scold.SpyProcesser{
+				Proc: scold.ProcesserFunc(ProcFuncAnswer),
 			}
 
-			swatch := &cptest.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
-			pool := cptest.NewSpyThreadPool(2)
+			swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
+			pool := scold.NewSpyThreadPool(2)
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 			batch.Run()
 
-			want := map[int]cptest.Verdict{
-				1: cptest.WA,
-				2: cptest.WA,
+			want := map[int]scold.Verdict{
+				1: scold.WA,
+				2: scold.WA,
 			}
 
-			cptest.AssertResultIDInvariant(t, batch)
-			cptest.AssertVerdicts(t, batch.Results, want)
-			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
-			cptest.AssertThreadCount(t, pool, 2)
+			scold.AssertResultIDInvariant(t, batch)
+			scold.AssertVerdicts(t, batch.Results, want)
+			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+			scold.AssertThreadCount(t, pool, 2)
 		})
 
 	t.Run("runtime error and internal error",
 		func(t *testing.T) {
-			inputs := cptest.Inputs{
-				Tests: []cptest.Test{
+			inputs := scold.Inputs{
+				Tests: []scold.Test{
 					{
 						Input:  "1\n",
 						Output: "1\n",
@@ -282,14 +282,14 @@ func TestTestingBatch(t *testing.T) {
 				},
 			}
 
-			proc := &cptest.SpyProcesser{
-				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
+			proc := &scold.SpyProcesser{
+				Proc: scold.ProcesserFunc(
+					func(ctx context.Context, r io.Reader) (scold.ExecutionResult, error) {
 						var num int
 						fmt.Fscan(r, &num)
 
 						if num == 3 {
-							return cptest.ExecutionResult{
+							return scold.ExecutionResult{
 								ExitCode: 1,
 								Stdout:   "",
 								Stderr:   "segfault. (core dumped)",
@@ -300,7 +300,7 @@ func TestTestingBatch(t *testing.T) {
 							panic("brrrr")
 						}
 
-						return cptest.ExecutionResult{
+						return scold.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "1\n",
 							Stderr:   "",
@@ -308,24 +308,24 @@ func TestTestingBatch(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
-			pool := cptest.NewSpyThreadPool(3)
+			swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
+			pool := scold.NewSpyThreadPool(3)
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 			batch.Run()
 
-			want := map[int]cptest.Verdict{
-				1: cptest.OK,
-				2: cptest.WA,
-				3: cptest.RE,
-				4: cptest.WA,
-				5: cptest.IE,
+			want := map[int]scold.Verdict{
+				1: scold.OK,
+				2: scold.WA,
+				3: scold.RE,
+				4: scold.WA,
+				5: scold.IE,
 			}
 
-			cptest.AssertResultIDInvariant(t, batch)
-			cptest.AssertVerdicts(t, batch.Results, want)
-			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 5)
-			cptest.AssertThreadCount(t, pool, 3)
+			scold.AssertResultIDInvariant(t, batch)
+			scold.AssertVerdicts(t, batch.Results, want)
+			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 5)
+			scold.AssertThreadCount(t, pool, 3)
 
 			if len(batch.Results[3].RichAnswer) == 0 || len(batch.Results[5].RichAnswer) == 0 {
 				t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.Results))
@@ -334,8 +334,8 @@ func TestTestingBatch(t *testing.T) {
 
 	t.Run("single TL (proc doesn't run because it didn't have time to dispatch)",
 		func(t *testing.T) {
-			inputs := cptest.Inputs{
-				Tests: []cptest.Test{
+			inputs := scold.Inputs{
+				Tests: []scold.Test{
 					{"\n", "bar\n"},
 				},
 			}
@@ -344,13 +344,13 @@ func TestTestingBatch(t *testing.T) {
 
 			killCount := 0
 
-			proc := &cptest.SpyProcesser{
-				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
+			proc := &scold.SpyProcesser{
+				Proc: scold.ProcesserFunc(
+					func(ctx context.Context, r io.Reader) (scold.ExecutionResult, error) {
 						<-ctx.Done()
 						killCount++
 
-						return cptest.ExecutionResult{
+						return scold.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "",
 							Stderr:   "",
@@ -358,13 +358,13 @@ func TestTestingBatch(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.ConfigurableStopwatcher{
+			swatch := &scold.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
-			pool := cptest.NewSpyThreadPool(1)
+			pool := scold.NewSpyThreadPool(1)
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -378,28 +378,28 @@ func TestTestingBatch(t *testing.T) {
 
 			wg.Wait()
 
-			testsWant := map[int]cptest.Verdict{
-				1: cptest.TL,
+			testsWant := map[int]scold.Verdict{
+				1: scold.TL,
 			}
 
 			timesWant := map[int]time.Duration{
 				1: 3 * time.Second,
 			}
 
-			cptest.AssertResultIDInvariant(t, batch)
-			cptest.AssertVerdicts(t, batch.Results, testsWant)
-			cptest.AssertThreadCount(t, pool, 1)
+			scold.AssertResultIDInvariant(t, batch)
+			scold.AssertVerdicts(t, batch.Results, testsWant)
+			scold.AssertThreadCount(t, pool, 1)
 
 			// Should be too fast for anyone to be killed.
-			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 0)
-			cptest.AssertCallCount(t, "process cancel", killCount, 0)
-			cptest.AssertTimes(t, batch.Results, timesWant)
+			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 0)
+			scold.AssertCallCount(t, "process cancel", killCount, 0)
+			scold.AssertTimes(t, batch.Results, timesWant)
 		})
 
 	t.Run("single TL (proc runs)",
 		func(t *testing.T) {
-			inputs := cptest.Inputs{
-				Tests: []cptest.Test{
+			inputs := scold.Inputs{
+				Tests: []scold.Test{
 					{"\n", "bar\n"},
 				},
 			}
@@ -408,21 +408,21 @@ func TestTestingBatch(t *testing.T) {
 
 			killCount := 0
 
-			proc := &cptest.SpyProcesser{
-				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
+			proc := &scold.SpyProcesser{
+				Proc: scold.ProcesserFunc(
+					func(ctx context.Context, r io.Reader) (scold.ExecutionResult, error) {
 						select {
 						case <-clock.After(5 * time.Second):
 						case <-ctx.Done():
 							killCount++
-							return cptest.ExecutionResult{
+							return scold.ExecutionResult{
 								ExitCode: 0,
 								Stdout:   "",
 								Stderr:   "",
-							}, cptest.TLError
+							}, scold.TLError
 						}
 
-						return cptest.ExecutionResult{
+						return scold.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "",
 							Stderr:   "",
@@ -431,13 +431,13 @@ func TestTestingBatch(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.ConfigurableStopwatcher{
+			swatch := &scold.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
-			pool := cptest.NewSpyThreadPool(1)
+			pool := scold.NewSpyThreadPool(1)
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -451,27 +451,27 @@ func TestTestingBatch(t *testing.T) {
 
 			wg.Wait()
 
-			testsWant := map[int]cptest.Verdict{
-				1: cptest.TL,
+			testsWant := map[int]scold.Verdict{
+				1: scold.TL,
 			}
 
 			timesWant := map[int]time.Duration{
 				1: 3 * time.Second,
 			}
 
-			cptest.AssertResultIDInvariant(t, batch)
-			cptest.AssertVerdicts(t, batch.Results, testsWant)
-			cptest.AssertThreadCount(t, pool, 1)
+			scold.AssertResultIDInvariant(t, batch)
+			scold.AssertVerdicts(t, batch.Results, testsWant)
+			scold.AssertThreadCount(t, pool, 1)
 
-			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 1)
-			cptest.AssertCallCount(t, "process cancel", killCount, 1)
-			cptest.AssertTimes(t, batch.Results, timesWant)
+			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 1)
+			scold.AssertCallCount(t, "process cancel", killCount, 1)
+			scold.AssertTimes(t, batch.Results, timesWant)
 		})
 
 	t.Run("two TL, thread count 1",
 		func(t *testing.T) {
-			inputs := cptest.Inputs{
-				Tests: []cptest.Test{
+			inputs := scold.Inputs{
+				Tests: []scold.Test{
 					{"\n", "bar\n"},
 					{"\n", "bar\n"},
 				},
@@ -481,21 +481,21 @@ func TestTestingBatch(t *testing.T) {
 
 			killCount := 0
 
-			proc := &cptest.SpyProcesser{
-				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
+			proc := &scold.SpyProcesser{
+				Proc: scold.ProcesserFunc(
+					func(ctx context.Context, r io.Reader) (scold.ExecutionResult, error) {
 						select {
 						case <-clock.After(5 * time.Second):
 						case <-ctx.Done():
 							killCount++
-							return cptest.ExecutionResult{
+							return scold.ExecutionResult{
 								ExitCode: 0,
 								Stdout:   "",
 								Stderr:   "",
-							}, cptest.TLError
+							}, scold.TLError
 						}
 
-						return cptest.ExecutionResult{
+						return scold.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "",
 							Stderr:   "",
@@ -504,13 +504,13 @@ func TestTestingBatch(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.ConfigurableStopwatcher{
+			swatch := &scold.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
-			pool := cptest.NewSpyThreadPool(1)
+			pool := scold.NewSpyThreadPool(1)
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -526,9 +526,9 @@ func TestTestingBatch(t *testing.T) {
 
 			wg.Wait()
 
-			testsWant := map[int]cptest.Verdict{
-				1: cptest.TL,
-				2: cptest.TL,
+			testsWant := map[int]scold.Verdict{
+				1: scold.TL,
+				2: scold.TL,
 			}
 
 			timesWant := map[int]time.Duration{
@@ -536,19 +536,19 @@ func TestTestingBatch(t *testing.T) {
 				2: 3 * time.Second,
 			}
 
-			cptest.AssertResultIDInvariant(t, batch)
-			cptest.AssertVerdicts(t, batch.Results, testsWant)
-			cptest.AssertThreadCount(t, pool, 1)
+			scold.AssertResultIDInvariant(t, batch)
+			scold.AssertVerdicts(t, batch.Results, testsWant)
+			scold.AssertThreadCount(t, pool, 1)
 
-			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
-			cptest.AssertCallCount(t, "process cancel", killCount, 2)
-			cptest.AssertTimes(t, batch.Results, timesWant)
+			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+			scold.AssertCallCount(t, "process cancel", killCount, 2)
+			scold.AssertTimes(t, batch.Results, timesWant)
 		})
 
 	t.Run("two TL, thread count 2",
 		func(t *testing.T) {
-			inputs := cptest.Inputs{
-				Tests: []cptest.Test{
+			inputs := scold.Inputs{
+				Tests: []scold.Test{
 					{"\n", "bar\n"},
 					{"\n", "bar\n"},
 				},
@@ -559,23 +559,23 @@ func TestTestingBatch(t *testing.T) {
 			var mu sync.Mutex
 			killCount := 0
 
-			proc := &cptest.SpyProcesser{
-				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
+			proc := &scold.SpyProcesser{
+				Proc: scold.ProcesserFunc(
+					func(ctx context.Context, r io.Reader) (scold.ExecutionResult, error) {
 						select {
 						case <-clock.After(5 * time.Second):
 						case <-ctx.Done():
 							mu.Lock()
 							killCount++
 							mu.Unlock()
-							return cptest.ExecutionResult{
+							return scold.ExecutionResult{
 								ExitCode: 0,
 								Stdout:   "",
 								Stderr:   "",
-							}, cptest.TLError
+							}, scold.TLError
 						}
 
-						return cptest.ExecutionResult{
+						return scold.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   "",
 							Stderr:   "",
@@ -584,13 +584,13 @@ func TestTestingBatch(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.ConfigurableStopwatcher{
+			swatch := &scold.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
-			pool := cptest.NewSpyThreadPool(2)
+			pool := scold.NewSpyThreadPool(2)
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -604,9 +604,9 @@ func TestTestingBatch(t *testing.T) {
 
 			wg.Wait()
 
-			testsWant := map[int]cptest.Verdict{
-				1: cptest.TL,
-				2: cptest.TL,
+			testsWant := map[int]scold.Verdict{
+				1: scold.TL,
+				2: scold.TL,
 			}
 
 			timesWant := map[int]time.Duration{
@@ -614,19 +614,19 @@ func TestTestingBatch(t *testing.T) {
 				2: 3 * time.Second,
 			}
 
-			cptest.AssertResultIDInvariant(t, batch)
-			cptest.AssertVerdicts(t, batch.Results, testsWant)
-			cptest.AssertThreadCount(t, pool, 2)
+			scold.AssertResultIDInvariant(t, batch)
+			scold.AssertVerdicts(t, batch.Results, testsWant)
+			scold.AssertThreadCount(t, pool, 2)
 
-			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
-			cptest.AssertCallCount(t, "process cancel", killCount, 2)
-			cptest.AssertTimes(t, batch.Results, timesWant)
+			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
+			scold.AssertCallCount(t, "process cancel", killCount, 2)
+			scold.AssertTimes(t, batch.Results, timesWant)
 		})
 
 	t.Run("two TL two OK, thread count 2",
 		func(t *testing.T) {
-			inputs := cptest.Inputs{
-				Tests: []cptest.Test{
+			inputs := scold.Inputs{
+				Tests: []scold.Test{
 					{"2\n", "2\n"},
 					{"5\n", "5\n"},
 					{"2\n", "2\n"},
@@ -639,9 +639,9 @@ func TestTestingBatch(t *testing.T) {
 			var mu sync.Mutex
 			killCount := 0
 
-			proc := &cptest.SpyProcesser{
-				Proc: cptest.ProcesserFunc(
-					func(ctx context.Context, r io.Reader) (cptest.ExecutionResult, error) {
+			proc := &scold.SpyProcesser{
+				Proc: scold.ProcesserFunc(
+					func(ctx context.Context, r io.Reader) (scold.ExecutionResult, error) {
 						line, _ := ioutil.ReadAll(r)
 
 						var num int
@@ -657,14 +657,14 @@ func TestTestingBatch(t *testing.T) {
 							mu.Lock()
 							killCount++
 							mu.Unlock()
-							return cptest.ExecutionResult{
+							return scold.ExecutionResult{
 								ExitCode: 0,
 								Stdout:   "",
 								Stderr:   "",
 							}, nil
 						}
 
-						return cptest.ExecutionResult{
+						return scold.ExecutionResult{
 							ExitCode: 0,
 							Stdout:   string(line),
 							Stderr:   "",
@@ -673,18 +673,18 @@ func TestTestingBatch(t *testing.T) {
 					}),
 			}
 
-			swatch := &cptest.ConfigurableStopwatcher{
+			swatch := &scold.ConfigurableStopwatcher{
 				Clock: clock,
 				TL:    3 * time.Second,
 			}
-			pool := cptest.NewSpyThreadPool(2)
+			pool := scold.NewSpyThreadPool(2)
 
 			doneCh := make(chan struct{}, 1)
-			done := func(*cptest.Test, *cptest.TestResult) {
+			done := func(*scold.Test, *scold.TestResult) {
 				doneCh <- (struct{}{})
 			}
 
-			batch := cptest.NewTestingBatch(inputs, proc, swatch, pool)
+			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
 			batch.TestEndCallback = done
 
 			var wg sync.WaitGroup
@@ -717,11 +717,11 @@ func TestTestingBatch(t *testing.T) {
 
 			wg.Wait()
 
-			testsWant := map[int]cptest.Verdict{
-				1: cptest.OK,
-				2: cptest.TL,
-				3: cptest.OK,
-				4: cptest.TL,
+			testsWant := map[int]scold.Verdict{
+				1: scold.OK,
+				2: scold.TL,
+				3: scold.OK,
+				4: scold.TL,
 			}
 
 			timesWant := map[int]time.Duration{
@@ -731,12 +731,12 @@ func TestTestingBatch(t *testing.T) {
 				4: 3 * time.Second,
 			}
 
-			cptest.AssertResultIDInvariant(t, batch)
-			cptest.AssertVerdicts(t, batch.Results, testsWant)
-			cptest.AssertThreadCount(t, pool, 2)
+			scold.AssertResultIDInvariant(t, batch)
+			scold.AssertVerdicts(t, batch.Results, testsWant)
+			scold.AssertThreadCount(t, pool, 2)
 
-			cptest.AssertCallCount(t, "proc.Run()", proc.CallCount(), 4)
-			cptest.AssertCallCount(t, "process cancel", killCount, 2)
-			cptest.AssertTimes(t, batch.Results, timesWant)
+			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 4)
+			scold.AssertCallCount(t, "process cancel", killCount, 2)
+			scold.AssertTimes(t, batch.Results, timesWant)
 		})
 }
