@@ -40,31 +40,31 @@ jobs:
         env:
           GOOS: windows
           GOARCH: "386"
-        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.windows-386.exe ./cmd/cptest
+        run: go build -o bin/scold.${{ needs.latest-tag.outputs.tag }}.windows-386.exe ./cmd/scold
       - name: Build Windows x86_64
         env:
           GOOS: windows
           GOARCH: amd64
-        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.windows-amd64.exe ./cmd/cptest
+        run: go build -o bin/scold.${{ needs.latest-tag.outputs.tag }}.windows-amd64.exe ./cmd/scold
       - name: Build Linux x86
         env:
           GOOS: linux
           GOARCH: "386"
-        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.linux-386 ./cmd/cptest
+        run: go build -o bin/scold.${{ needs.latest-tag.outputs.tag }}.linux-386 ./cmd/scold
       - name: Build Linux x86_64
         env:
           GOOS: linux
           GOARCH: amd64
-        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.linux-amd64 ./cmd/cptest
+        run: go build -o bin/scold.${{ needs.latest-tag.outputs.tag }}.linux-amd64 ./cmd/scold
       - name: Build Mac OS X
         env:
           GOOS: darwin
           GOARCH: amd64
-        run: go build -o bin/cptest.${{ needs.latest-tag.outputs.tag }}.darwin-amd64 ./cmd/cptest
+        run: go build -o bin/scold.${{ needs.latest-tag.outputs.tag }}.darwin-amd64 ./cmd/scold
       - name: Upload artifacts to job
         uses: actions/upload-artifact@v2
         with:
-          name: cptest-bin
+          name: scold-bin
           path: bin/
       - name: Create release
         uses: Roang-zero1/github-create-release-action@master
