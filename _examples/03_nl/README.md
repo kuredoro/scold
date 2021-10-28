@@ -8,8 +8,8 @@ This example demonstrates how `scold` handles newline discrepancies.
 
 Run the example like so:
 ```
-$ g++ main.cpp -o re
-$ scold re
+$ g++ main.cpp -o nl
+$ scold nl
 ```
 
 This example just prints a line, so it can be recreated without any need to compile `main.cpp`. If you have ver2.01a and above:
@@ -26,4 +26,4 @@ The output will look like this:
 
 ![scold's output for example 3](output.png)
 
-Things to note: according to the lexing rules employed by `scold`, a lone newline is a single lexeme. But, yet, `scold` correctly recognizes that the first `5` in the expected output exists in the program's output, just *after* these excessive newlines. Hence, it is seen that *only* the excessive newlines were highlighted, and the actual meaningful content was matched correctly.
+Things to note: according to the lexing rules employed by `scold`, a lone newline is a single lexeme. But yet, `scold` correctly recognizes that the first `5` in the expected output exists in the program's output, just *after* these excessive newlines. Hence, it is seen that *only* the excessive newlines are highlighted, and the actual meaningful content is matched correctly.
