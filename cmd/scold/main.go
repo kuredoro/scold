@@ -48,12 +48,14 @@ func (jc *JobCount) UnmarshalText(b []byte) error {
 }
 
 type appArgs struct {
-	Inputs     string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
-	NoColors   bool     `arg:"--no-colors" help:"disable colored output"`
-	NoProgress bool     `arg:"--no-progress" help:"disable progress bar"`
-	Jobs       JobCount `arg:"-j" default:"CPU_COUNT" placeholder:"COUNT" help:"Number of tests to run concurrently"`
-	Executable string   `arg:"positional,required"`
-	Args       []string `arg:"positional" placeholder:"ARG"`
+	Inputs        string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
+	NoColors      bool     `arg:"--no-colors" help:"disable colored output"`
+    ForceColors   bool     `arg:"--force-colors" help:"print colors even in non-tty contexts"`
+	NoProgress    bool     `arg:"--no-progress" help:"disable progress bar"`
+    ForceProgress bool     `arg:"--force-progress" help:"print progress bar even in non-tty contexts"`
+	Jobs          JobCount `arg:"-j" default:"CPU_COUNT" placeholder:"COUNT" help:"Number of tests to run concurrently"`
+	Executable    string   `arg:"positional,required"`
+	Args          []string `arg:"positional" placeholder:"ARG"`
 }
 
 var args appArgs
@@ -103,6 +105,14 @@ func mustParse(dest *appArgs) {
 
 func init() {
 	mustParse(&args)
+
+	if args.NoColors && args.ForceColors {
+        fmt.Printf("warning: colors are forced and disabled at the same time. --no-colors is always preferred.")
+	}
+
+	if args.NoProgress && args.ForceProgress {
+        fmt.Printf("warning: progress bar is forced and disabled at the same time. --no-progress is always preferred.")
+	}
 
 	if args.NoColors {
 		scold.Au = aurora.NewAurora(false)
