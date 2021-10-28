@@ -19,6 +19,7 @@ The output will look like this:
 
 ![scold's output for example 1](output.png)
 
+Things to note:
 1. Note that in the first test case there is a mismatch between 10 and 11, and, even though, the first characters (`'1'`) match, the numbers are highlighted fully.
 2. In the second test case, there is a mismatch between 20 and -20, but only the *sign* is highlighted.
 3. scold intentionally ignores presentation differences. The +0 and 00 seem different as strings, but truly *are* zeros, so no mismatch is found.
