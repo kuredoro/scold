@@ -1,8 +1,8 @@
 ## Example 2. Runtime error
 
-This example demonstrates how scold handles runtime errors.
+This example demonstrates how `scold` handles runtime errors.
 
-`main.cpp` describes a program that reads an integers, prints it to the `stderr`, and returns non-zero code when the integer is 4.
+`main.cpp` describes a program that reads an integer, prints it to the `stderr`, and returns non-zero code when the integer is 4.
 
 The `inputs.txt`, however, expects that the program prints the integer it read.
 
