@@ -685,7 +685,7 @@ func TestTestingBatch(t *testing.T) {
 			}
 
 			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
-			batch.TestEndCallback = done
+			batch.Listener = scold.TestFinishedCallback(done)
 
 			var wg sync.WaitGroup
 			wg.Add(1)
