@@ -16,9 +16,10 @@ import (
 	"github.com/atomicgo/cursor"
 	"github.com/jonboulle/clockwork"
 	"github.com/kuredoro/scold"
+	"github.com/kuredoro/scold/printers"
 	"github.com/logrusorgru/aurora"
 	"github.com/mattn/go-colorable"
-    "github.com/mattn/go-isatty"
+	"github.com/mattn/go-isatty"
 )
 
 var progressBar *ProgressBar
@@ -219,7 +220,7 @@ func main() {
 	fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
 	fmt.Printf("job count: %d\n", args.Jobs)
 
-	batch.TestEndCallback = verboseResultPrinter
+	batch.Listener = &printers.PrettyPrinter{}
 
 	testingHeader := scold.Au.Bold("    Testing").Cyan().String()
 
