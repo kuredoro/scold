@@ -87,9 +87,9 @@ func printVerboseResult(blob testResultNotification) {
 	}
 
 	if !args.NoProgress {
-		progressBar.Current++
+		//progressBar.Current++
 
-		fmt.Fprint(str, progressBar.String())
+		//fmt.Fprint(str, progressBar.String())
 
 		cursor.ClearLine()
 	}

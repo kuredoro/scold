@@ -22,7 +22,7 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-var progressBar *ProgressBar
+//var progressBar *ProgressBar
 
 var stdout = colorable.NewColorableStdout()
 
@@ -220,18 +220,20 @@ func main() {
 	fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
 	fmt.Printf("job count: %d\n", args.Jobs)
 
-	batch.Listener = &printers.PrettyPrinter{}
+	batch.Listener = printers.NewPrettyPrinter()
 
-	testingHeader := scold.Au.Bold("    Testing").Cyan().String()
+	//testingHeader := scold.Au.Bold("    Testing").Cyan().String()
 
+    /*
 	progressBar = &ProgressBar{
 		Total:  len(inputs.Tests),
 		Width:  20,
 		Header: testingHeader,
 	}
+    */
 
 	if !args.NoProgress {
-		fmt.Fprint(stdout, progressBar.String())
+		//fmt.Fprint(stdout, progressBar.String())
 		cursor.StartOfLine()
 	}
 
