@@ -18,6 +18,7 @@ import (
 	"github.com/kuredoro/scold"
 	"github.com/logrusorgru/aurora"
 	"github.com/mattn/go-colorable"
+    "github.com/mattn/go-isatty"
 )
 
 var progressBar *ProgressBar
@@ -113,6 +114,17 @@ func init() {
 	if args.NoProgress && args.ForceProgress {
         fmt.Printf("warning: progress bar is forced and disabled at the same time. --no-progress is always preferred.")
 	}
+
+    fd := os.Stdout.Fd()
+    istty := isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
+
+    if !args.ForceColors && !istty {
+        args.NoColors = true
+    }
+
+    if !args.ForceProgress && !istty {
+        args.NoProgress = true
+    }
 
 	if args.NoColors {
 		scold.Au = aurora.NewAurora(false)
