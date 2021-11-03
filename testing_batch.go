@@ -32,19 +32,22 @@ const TLError StringError = "Time limit exceeded"
 
 // TestingEventListener provides a way for users of scold to subscribe
 // to the events produced by TestingBatch and to operate in a reactive fashion.
+// The functions will stall the TestingBatch event loop, and thus could be not
+// thread-safe.
 type TestingEventListener interface {
-    // TestStarted is a function to be called after a test
-    // case was launched. It accepts the id of the test case.
+    // TestStarted will be called upon test case lounch.
     TestStarted(id int)
 
-    // TestFinished represents a function to be called when a test
-    // case finishes execution. Usually, one would like to print the test case
-    // result information.
+    // TestFinished is called when a test case finishes execution. Usually,
+    // one would like to print the test case result information.
     //
     // It accepts a pointer to the contents of the Test and a pointer to the
     // test case result that contains id of the test, its verdict, time, and
     // other useful information related to the executable's execution.
     TestFinished(*Test, *TestResult)
+
+    // SuiteFinished is called when all test cases have finished.
+    SuiteFinished()
 }
 
 // TestingEventsListenerStub implements TestingEventsListener, but does
@@ -57,17 +60,24 @@ func (*TestingEventsListenerStub) TestStarted(int) {}
 // TestFinished is a stub that does nothing.
 func (*TestingEventsListenerStub) TestFinished(*Test, *TestResult) {}
 
+// SuiteFinished is a stub that does nothing.
+func (*TestingEventsListenerStub) SuiteFinished() {}
+
 // TestFinishedCallback allows to use a simple function in places where
 // TestingEventLister is needed, to handle the TestFinished event.
 type TestFinishedCallback func(*Test, *TestResult)
 
-// TestStarted is a stub, it does nothing.
+// TestStarted is a stub that does nothing.
 func (cb TestFinishedCallback) TestStarted(int) {}
 
 // TestFinished will call the underlying function with its arguments.
 func (cb TestFinishedCallback) TestFinished(test *Test, result *TestResult) {
     cb(test, result)
 }
+
+// SuiteFinished is a stub that does nothing
+func (cb TestFinishedCallback) SuiteFinished() {}
+
 // TestExecutionResult carries an output of the process together with the
 // corresponding test ID and a TestingBatch related error if any (panics,
 // etc.).
