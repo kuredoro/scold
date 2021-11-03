@@ -124,7 +124,10 @@ func TestTestingBatch(t *testing.T) {
 		swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
 		pool := scold.NewSpyThreadPool(2)
 
+        listener := &scold.SpyTestEventListener{}
+
 		batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
+        batch.Listener = listener
 		batch.Run()
 
 		want := map[int]scold.Verdict{
@@ -136,6 +139,7 @@ func TestTestingBatch(t *testing.T) {
 		scold.AssertVerdicts(t, batch.Results, want)
 		scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		scold.AssertThreadCount(t, pool, 2)
+        scold.AssertListenerNotified(t, listener, 2)
 	})
 
 	t.Run("outputs are compared lexeme-wise", func(t *testing.T) {
@@ -158,8 +162,10 @@ func TestTestingBatch(t *testing.T) {
 
 		swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
 		pool := scold.NewSpyThreadPool(2)
+        listener := &scold.SpyTestEventListener{}
 
 		batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
+        batch.Listener = listener
 		batch.Run()
 
 		want := map[int]scold.Verdict{
@@ -171,6 +177,7 @@ func TestTestingBatch(t *testing.T) {
 		scold.AssertVerdicts(t, batch.Results, want)
 		scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		scold.AssertThreadCount(t, pool, 2)
+        scold.AssertListenerNotified(t, listener, 2)
 
 		if len(batch.Results[1].RichAnswer) != 3 || len(batch.Results[2].RichAnswer) != 4 {
 			t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.Results))
@@ -204,8 +211,10 @@ func TestTestingBatch(t *testing.T) {
 
 		swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
 		pool := scold.NewSpyThreadPool(2)
+        listener := &scold.SpyTestEventListener{}
 
 		batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
+        batch.Listener = listener
 		batch.Run()
 
 		want := map[int]scold.Verdict{
@@ -217,6 +226,7 @@ func TestTestingBatch(t *testing.T) {
 		scold.AssertVerdicts(t, batch.Results, want)
 		scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 		scold.AssertThreadCount(t, pool, 2)
+        scold.AssertListenerNotified(t, listener, 2)
 	})
 
 	t.Run("all WA",
@@ -240,8 +250,10 @@ func TestTestingBatch(t *testing.T) {
 
 			swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
 			pool := scold.NewSpyThreadPool(2)
+            listener := &scold.SpyTestEventListener{}
 
 			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
+            batch.Listener = listener
 			batch.Run()
 
 			want := map[int]scold.Verdict{
@@ -253,6 +265,7 @@ func TestTestingBatch(t *testing.T) {
 			scold.AssertVerdicts(t, batch.Results, want)
 			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 			scold.AssertThreadCount(t, pool, 2)
+            scold.AssertListenerNotified(t, listener, 2)
 		})
 
 	t.Run("runtime error and internal error",
@@ -310,8 +323,10 @@ func TestTestingBatch(t *testing.T) {
 
 			swatch := &scold.ConfigurableStopwatcher{Clock: clockwork.NewFakeClock()}
 			pool := scold.NewSpyThreadPool(3)
+            listener := &scold.SpyTestEventListener{}
 
 			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
+            batch.Listener = listener
 			batch.Run()
 
 			want := map[int]scold.Verdict{
@@ -326,6 +341,7 @@ func TestTestingBatch(t *testing.T) {
 			scold.AssertVerdicts(t, batch.Results, want)
 			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 5)
 			scold.AssertThreadCount(t, pool, 3)
+            scold.AssertListenerNotified(t, listener, 5)
 
 			if len(batch.Results[3].RichAnswer) == 0 || len(batch.Results[5].RichAnswer) == 0 {
 				t.Errorf("got wrong rich answers, %s", litter.Sdump(batch.Results))
@@ -363,8 +379,10 @@ func TestTestingBatch(t *testing.T) {
 				TL:    3 * time.Second,
 			}
 			pool := scold.NewSpyThreadPool(1)
+            listener := &scold.SpyTestEventListener{}
 
 			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
+            batch.Listener = listener
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -393,6 +411,7 @@ func TestTestingBatch(t *testing.T) {
 			// Should be too fast for anyone to be killed.
 			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 0)
 			scold.AssertCallCount(t, "process cancel", killCount, 0)
+            scold.AssertListenerNotified(t, listener, 1)
 			scold.AssertTimes(t, batch.Results, timesWant)
 		})
 
@@ -436,8 +455,10 @@ func TestTestingBatch(t *testing.T) {
 				TL:    3 * time.Second,
 			}
 			pool := scold.NewSpyThreadPool(1)
+            listener := &scold.SpyTestEventListener{}
 
 			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
+            batch.Listener = listener
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -465,6 +486,7 @@ func TestTestingBatch(t *testing.T) {
 
 			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 1)
 			scold.AssertCallCount(t, "process cancel", killCount, 1)
+            scold.AssertListenerNotified(t, listener, 1)
 			scold.AssertTimes(t, batch.Results, timesWant)
 		})
 
@@ -509,8 +531,10 @@ func TestTestingBatch(t *testing.T) {
 				TL:    3 * time.Second,
 			}
 			pool := scold.NewSpyThreadPool(1)
+            listener := &scold.SpyTestEventListener{}
 
 			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
+            batch.Listener = listener
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -542,6 +566,7 @@ func TestTestingBatch(t *testing.T) {
 
 			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 			scold.AssertCallCount(t, "process cancel", killCount, 2)
+            scold.AssertListenerNotified(t, listener, 2)
 			scold.AssertTimes(t, batch.Results, timesWant)
 		})
 
@@ -589,8 +614,10 @@ func TestTestingBatch(t *testing.T) {
 				TL:    3 * time.Second,
 			}
 			pool := scold.NewSpyThreadPool(2)
+            listener := &scold.SpyTestEventListener{}
 
 			batch := scold.NewTestingBatch(inputs, proc, swatch, pool)
+            batch.Listener = listener
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -620,6 +647,7 @@ func TestTestingBatch(t *testing.T) {
 
 			scold.AssertCallCount(t, "proc.Run()", proc.CallCount(), 2)
 			scold.AssertCallCount(t, "process cancel", killCount, 2)
+            scold.AssertListenerNotified(t, listener, 2)
 			scold.AssertTimes(t, batch.Results, timesWant)
 		})
 

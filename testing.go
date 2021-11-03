@@ -234,3 +234,17 @@ func AssertResultIDInvariant(t *testing.T, b *TestingBatch) {
         }
     }
 }
+
+func AssertListenerNotified(t *testing.T, listener *SpyTestEventListener, testCount int) {
+    expectedIDs := make([]int, testCount)
+    for i := range expectedIDs {
+        expectedIDs[i] = i + 1
+    }
+
+    td.Cmp(t, listener.StartedTests, expectedIDs, fmt.Sprintf("%d tests started", testCount))
+    td.Cmp(t, listener.FinishedTests, td.Bag(td.Flatten(expectedIDs)), fmt.Sprintf("%d tests finished", testCount))
+
+    if !listener.Finished {
+        t.Error("event listener has not received a suite completion event, want one")
+    }
+}
