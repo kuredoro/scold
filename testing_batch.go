@@ -47,21 +47,22 @@ type TestingEventListener interface {
     TestFinished(*Test, *TestResult)
 
     // SuiteFinished is called when all test cases have finished.
-    SuiteFinished()
+    // Accessing testingBatch at this point is safe.
+    SuiteFinished(*TestingBatch)
 }
 
-// TestingEventsListenerStub implements TestingEventsListener, but does
+// StubTestingEventsListener implements TestingEventsListener, but does
 // nothing. It is used when constructing TestingBatch.
-type TestingEventsListenerStub struct {}
+type StubTestingEventsListener struct {}
 
 // TestStarted is a stub that does nothing.
-func (*TestingEventsListenerStub) TestStarted(int) {}
+func (*StubTestingEventsListener) TestStarted(int) {}
 
 // TestFinished is a stub that does nothing.
-func (*TestingEventsListenerStub) TestFinished(*Test, *TestResult) {}
+func (*StubTestingEventsListener) TestFinished(*Test, *TestResult) {}
 
 // SuiteFinished is a stub that does nothing.
-func (*TestingEventsListenerStub) SuiteFinished() {}
+func (*StubTestingEventsListener) SuiteFinished(*TestingBatch) {}
 
 // TestFinishedCallback allows to use a simple function in places where
 // TestingEventLister is needed, to handle the TestFinished event.
@@ -76,7 +77,25 @@ func (cb TestFinishedCallback) TestFinished(test *Test, result *TestResult) {
 }
 
 // SuiteFinished is a stub that does nothing
-func (cb TestFinishedCallback) SuiteFinished() {}
+func (cb TestFinishedCallback) SuiteFinished(*TestingBatch) {}
+
+type SpyTestEventListener struct {
+    StartedTests []int
+    FinishedTests []int
+    Finished bool
+}
+
+func (l *SpyTestEventListener) TestStarted(id int) {
+    l.StartedTests = append(l.StartedTests, id)
+}
+
+func (l *SpyTestEventListener) TestFinished(test *Test, result *TestResult) {
+    l.FinishedTests = append(l.FinishedTests, result.ID)
+}
+
+func (l *SpyTestEventListener) SuiteFinished(*TestingBatch) {
+    l.Finished = true
+}
 
 // TestExecutionResult carries an output of the process together with the
 // corresponding test ID and a TestingBatch related error if any (panics,
@@ -146,7 +165,7 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher, pool Wor
 
 		Swatch: swatch,
 
-        Listener: &TestingEventsListenerStub{},
+        Listener: &StubTestingEventsListener{},
 	}
 }
 
@@ -295,4 +314,6 @@ func (b *TestingBatch) Run() {
 		b.Results[id] = result
 		b.Listener.TestFinished(&b.inputs.Tests[id-1], result)
 	}
+
+    b.Listener.SuiteFinished(b)
 }
