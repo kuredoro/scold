@@ -1,14 +1,11 @@
 package scold
 
 import (
-	"fmt"
-	"runtime"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/shettyh/threadpool"
+	"github.com/kuredoro/scold/util"
 )
 
 // Runnable represents a callable object. It allows representing the closure
@@ -82,26 +79,13 @@ func NewSpyThreadPool(threadCount int) *SpyThreadPool {
 	}
 }
 
-// Borrowed from: https://gist.github.com/metafeather/3615b23097836bc36579100dac376906
-func goid() int {
-	var buf [64]byte
-	n := runtime.Stack(buf[:], false)
-	idField := strings.Fields(string(buf[:n]))[1]
-	id, err := strconv.Atoi(idField)
-	if err != nil {
-		panic(fmt.Sprintf("cannot get gorountine id: %v", err))
-	}
-
-	return id
-}
-
 // Execute tries to find a worker to assign the task to. If it doesn't find
 // one, it may or may NOT give an error. When error is returned is unspecified,
 // but it shouldn't happen within general usage.
 func (p *SpyThreadPool) Execute(task Runnable) error {
 	return p.threadPool.Execute(RunnableFunc(func() {
 		p.mu.Lock()
-		p.DirtyThreads[goid()] = struct{}{}
+		p.DirtyThreads[util.Goid()] = struct{}{}
 		p.mu.Unlock()
 
 		time.Sleep(5 * time.Millisecond)
