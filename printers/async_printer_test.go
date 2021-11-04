@@ -7,6 +7,7 @@ import (
 
 	"github.com/kuredoro/scold"
 	"github.com/kuredoro/scold/printers"
+	"github.com/maxatome/go-testdeep/td"
 )
 
 type blockingForwarder struct {
@@ -103,4 +104,33 @@ func TestAsyncEventForwarder(t *testing.T) {
 
 		scold.AssertListenerNotified(t, spy, tests)
 	})
+
+    t.Run("wait blocks until all events are processed", func(t *testing.T) {
+        spy := &scold.SpyPrinter{}
+        tests := []scold.Test{
+            {Input: "1", Output: "1"},
+        }
+
+        var spyWG printers.SpyWaitGroup
+        asyncF := printers.NewAsyncEventForwarder(spy, 100, &spyWG)
+
+        asyncF.TestStarted(1)
+        asyncF.TestFinished(&tests[0], testResultWithID(1))
+        asyncF.SuiteFinished(nil)
+
+        asyncF.Wait()
+
+        td.Cmp(t, spyWG.Deltas, []int{1, -1})
+        td.CmpTrue(t, spyWG.Awaited)
+
+        if len(spyWG.Deltas) >= 2 && spyWG.DeltaGoids[0] == spyWG.DeltaGoids[1] {
+            t.Errorf("WaitGroup Add() and Done() are called from the same goroutine, want different")
+        }
+
+        if len(spyWG.Deltas) >= 1 && spyWG.DeltaGoids[0] != spyWG.AwaitedByGoid {
+            t.Errorf("WaitGroup Add() and Wait() are not called from the same goroutine, want the same")
+        }
+
+        scold.AssertListenerNotified(t, spy, tests)
+    })
 }
