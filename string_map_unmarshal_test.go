@@ -665,7 +665,7 @@ func TestPositiveDuration(t *testing.T) {
 		err := dur.UnmarshalText([]byte("10.5"))
 
 		td.CmpNoError(t, err)
-		td.Cmp(t, dur.Duration, 10500 * time.Millisecond)
+		td.Cmp(t, dur.Duration, 10500*time.Millisecond)
 	})
 
 	t.Run("1 and half milliseconds", func(t *testing.T) {
