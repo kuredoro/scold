@@ -52,18 +52,18 @@ type TestingEventListener interface {
 	SuiteFinished(*TestingBatch)
 }
 
-// StubTestingEventsListener implements TestingEventsListener, but does
+// StubTestingEventListener implements TestingEventsListener, but does
 // nothing. It is used when constructing TestingBatch.
-type StubTestingEventsListener struct{}
+type StubTestingEventListener struct{}
 
 // TestStarted is a stub that does nothing.
-func (*StubTestingEventsListener) TestStarted(int) {}
+func (*StubTestingEventListener) TestStarted(int) {}
 
 // TestFinished is a stub that does nothing.
-func (*StubTestingEventsListener) TestFinished(*Test, *TestResult) {}
+func (*StubTestingEventListener) TestFinished(*Test, *TestResult) {}
 
 // SuiteFinished is a stub that does nothing.
-func (*StubTestingEventsListener) SuiteFinished(*TestingBatch) {}
+func (*StubTestingEventListener) SuiteFinished(*TestingBatch) {}
 
 // TestFinishedCallback allows to use a simple function in places where
 // TestingEventLister is needed, to handle the TestFinished event.
@@ -168,7 +168,7 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher, pool Wor
 
 		Swatch: swatch,
 
-		Listener: &StubTestingEventsListener{},
+		Listener: &StubTestingEventListener{},
 	}
 }
 
