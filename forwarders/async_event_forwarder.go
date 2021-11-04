@@ -33,12 +33,22 @@ func (e *testingEvent) suiteFinished() *scold.TestingBatch {
 	return e.b
 }
 
+// AsyncEventForwarder provides the ability to asynchronously process testing
+// events. It can be used by users to make their own TestingEventListers
+// asynchronous and prevent them from stalling the TestingBatch's event loop.
 type AsyncEventForwarder struct {
 	receiver    scold.TestingEventListener
 	resultQueue chan testingEvent
 	wg          util.WaitGroup
 }
 
+// NewAsyncEventForwarder will create an instance of AsyncEventForwarder that
+// will forward events to the receiver. The internal queue will be of size
+// queueSize. If the receiver cannot process events fast enough and queueSize
+// is quite small, the AsyncEventForwarder will stall TestingBatch.
+//
+// Additional struct implementing util.WaitGroup can be also passed. It will be
+// used instead of sync.WaitGroup.
 func NewAsyncEventForwarder(receiver scold.TestingEventListener, queueSize int, args ...util.WaitGroup) *AsyncEventForwarder {
 	var wg util.WaitGroup = &sync.WaitGroup{}
 
@@ -58,14 +68,18 @@ func NewAsyncEventForwarder(receiver scold.TestingEventListener, queueSize int, 
 	return asyncF
 }
 
+// TestStarted pushes event to the internal queue and exits immediately.
 func (f *AsyncEventForwarder) TestStarted(id int) {
 	f.resultQueue <- testingEvent{eventType: testStartedEventType, id: id}
 }
 
+// TestFinished pushes event to the internal queue and exits immediately.
 func (f *AsyncEventForwarder) TestFinished(test *scold.Test, result *scold.TestResult) {
 	f.resultQueue <- testingEvent{eventType: testFinishedEventType, test: test, result: result}
 }
 
+// SuiteFinished pushes event to the internal queue, closes it and exits
+// immediately.
 func (f *AsyncEventForwarder) SuiteFinished(b *scold.TestingBatch) {
 	f.resultQueue <- testingEvent{eventType: suiteFinishedEventType, b: b}
 
@@ -87,6 +101,7 @@ func (f *AsyncEventForwarder) asyncPrinter() {
 	f.wg.Done()
 }
 
+// Wait will block until all events have been processed.
 func (f *AsyncEventForwarder) Wait() {
 	f.wg.Wait()
 }
