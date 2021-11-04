@@ -80,6 +80,9 @@ func (cb TestFinishedCallback) TestFinished(test *Test, result *TestResult) {
 // SuiteFinished is a stub that does nothing
 func (cb TestFinishedCallback) SuiteFinished(*TestingBatch) {}
 
+// SpyPrinter implements TestingEventListener and is only concerned
+// with storing the information received from the callbacks, so that
+// its correctness can be assessed later.
 type SpyPrinter struct {
 	StartedIDs    []int
 	FinishedIDs   []int
@@ -87,15 +90,19 @@ type SpyPrinter struct {
 	Finished      bool
 }
 
+// TestStarted amends the ID of the test to StartedIDs
 func (l *SpyPrinter) TestStarted(id int) {
 	l.StartedIDs = append(l.StartedIDs, id)
 }
 
+// TestFinished amends the test and the ID of the test to
+// FinishedTests and FinishedIDs respectively.
 func (l *SpyPrinter) TestFinished(test *Test, result *TestResult) {
 	l.FinishedIDs = append(l.FinishedIDs, result.ID)
 	l.FinishedTests = append(l.FinishedTests, test)
 }
 
+// SutieFinished turn Finished true.
 func (l *SpyPrinter) SuiteFinished(*TestingBatch) {
 	l.Finished = true
 }
