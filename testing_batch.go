@@ -35,25 +35,25 @@ const TLError StringError = "Time limit exceeded"
 // The functions will stall the TestingBatch event loop, and thus could be not
 // thread-safe.
 type TestingEventListener interface {
-    // TestStarted will be called upon test case lounch.
-    TestStarted(id int)
+	// TestStarted will be called upon test case lounch.
+	TestStarted(id int)
 
-    // TestFinished is called when a test case finishes execution. Usually,
-    // one would like to print the test case result information.
-    //
-    // It accepts a pointer to the contents of the Test and a pointer to the
-    // test case result that contains id of the test, its verdict, time, and
-    // other useful information related to the executable's execution.
-    TestFinished(*Test, *TestResult)
+	// TestFinished is called when a test case finishes execution. Usually,
+	// one would like to print the test case result information.
+	//
+	// It accepts a pointer to the contents of the Test and a pointer to the
+	// test case result that contains id of the test, its verdict, time, and
+	// other useful information related to the executable's execution.
+	TestFinished(*Test, *TestResult)
 
-    // SuiteFinished is called when all test cases have finished.
-    // Accessing testingBatch at this point is safe.
-    SuiteFinished(*TestingBatch)
+	// SuiteFinished is called when all test cases have finished.
+	// Accessing testingBatch at this point is safe.
+	SuiteFinished(*TestingBatch)
 }
 
 // StubTestingEventsListener implements TestingEventsListener, but does
 // nothing. It is used when constructing TestingBatch.
-type StubTestingEventsListener struct {}
+type StubTestingEventsListener struct{}
 
 // TestStarted is a stub that does nothing.
 func (*StubTestingEventsListener) TestStarted(int) {}
@@ -73,28 +73,30 @@ func (cb TestFinishedCallback) TestStarted(int) {}
 
 // TestFinished will call the underlying function with its arguments.
 func (cb TestFinishedCallback) TestFinished(test *Test, result *TestResult) {
-    cb(test, result)
+	cb(test, result)
 }
 
 // SuiteFinished is a stub that does nothing
 func (cb TestFinishedCallback) SuiteFinished(*TestingBatch) {}
 
-type SpyTestEventListener struct {
-    StartedTests []int
-    FinishedTests []int
-    Finished bool
+type SpyPrinter struct {
+	StartedIDs    []int
+	FinishedIDs   []int
+	FinishedTests []*Test
+	Finished      bool
 }
 
-func (l *SpyTestEventListener) TestStarted(id int) {
-    l.StartedTests = append(l.StartedTests, id)
+func (l *SpyPrinter) TestStarted(id int) {
+	l.StartedIDs = append(l.StartedIDs, id)
 }
 
-func (l *SpyTestEventListener) TestFinished(test *Test, result *TestResult) {
-    l.FinishedTests = append(l.FinishedTests, result.ID)
+func (l *SpyPrinter) TestFinished(test *Test, result *TestResult) {
+	l.FinishedIDs = append(l.FinishedIDs, result.ID)
+    l.FinishedTests = append(l.FinishedTests, test)
 }
 
-func (l *SpyTestEventListener) SuiteFinished(*TestingBatch) {
-    l.Finished = true
+func (l *SpyPrinter) SuiteFinished(*TestingBatch) {
+	l.Finished = true
 }
 
 // TestExecutionResult carries an output of the process together with the
@@ -140,7 +142,7 @@ type TestingBatch struct {
 
 	Swatch Stopwatcher
 
-    Listener TestingEventListener
+	Listener TestingEventListener
 }
 
 // NewTestingBatch will initialize channels and maps inside TestingBatch and
@@ -165,7 +167,7 @@ func NewTestingBatch(inputs Inputs, proc Processer, swatch Stopwatcher, pool Wor
 
 		Swatch: swatch,
 
-        Listener: &StubTestingEventsListener{},
+		Listener: &StubTestingEventsListener{},
 	}
 }
 
@@ -315,5 +317,5 @@ func (b *TestingBatch) Run() {
 		b.Listener.TestFinished(&b.inputs.Tests[id-1], result)
 	}
 
-    b.Listener.SuiteFinished(b)
+	b.Listener.SuiteFinished(b)
 }
