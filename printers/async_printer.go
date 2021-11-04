@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/kuredoro/scold"
+	"github.com/kuredoro/scold/util"
 )
 
 const (
@@ -32,16 +33,61 @@ func (e *testingEvent) suiteFinished() *scold.TestingBatch {
 	return e.b
 }
 
+type Latch interface {
+	Add(int)
+	Done()
+	Wait()
+}
+
+type SpyWaitGroup struct {
+	mx sync.Mutex
+	wg sync.WaitGroup
+
+	Deltas        []int
+	DeltaGoids    []int
+	Awaited       bool
+	AwaitedByGoid int
+}
+
+func (wg *SpyWaitGroup) Add(delta int) {
+	wg.mx.Lock()
+	wg.Deltas = append(wg.Deltas, delta)
+    wg.DeltaGoids = append(wg.DeltaGoids, util.Goid())
+	wg.mx.Unlock()
+
+	wg.wg.Add(delta)
+}
+
+func (wg *SpyWaitGroup) Done() {
+	wg.Add(-1)
+}
+
+func (wg *SpyWaitGroup) Wait() {
+	wg.mx.Lock()
+	wg.Awaited = true
+    wg.AwaitedByGoid = util.Goid()
+	wg.mx.Unlock()
+
+	wg.wg.Wait()
+}
+
 type AsyncEventForwarder struct {
 	receiver    scold.TestingEventListener
 	resultQueue chan testingEvent
-	wg          sync.WaitGroup
+	wg          Latch
 }
 
-func NewAsyncEventForwarder(receiver scold.TestingEventListener, queueSize int) *AsyncEventForwarder {
+func NewAsyncEventForwarder(receiver scold.TestingEventListener, queueSize int, args ...Latch) *AsyncEventForwarder {
+	var wg Latch = &sync.WaitGroup{}
+
+	if len(args) != 0 {
+		wg = args[0].(Latch)
+	}
+
 	asyncF := &AsyncEventForwarder{
 		receiver:    receiver,
 		resultQueue: make(chan testingEvent, queueSize),
+		wg:          wg,
 	}
 
 	asyncF.wg.Add(1)
@@ -50,88 +96,35 @@ func NewAsyncEventForwarder(receiver scold.TestingEventListener, queueSize int) 
 	return asyncF
 }
 
-func (p *AsyncEventForwarder) TestStarted(id int) {
-	p.resultQueue <- testingEvent{eventType: testStartedEventType, id: id}
+func (f *AsyncEventForwarder) TestStarted(id int) {
+	f.resultQueue <- testingEvent{eventType: testStartedEventType, id: id}
 }
 
-func (p *AsyncEventForwarder) TestFinished(test *scold.Test, result *scold.TestResult) {
-	p.resultQueue <- testingEvent{eventType: testFinishedEventType, test: test, result: result}
+func (f *AsyncEventForwarder) TestFinished(test *scold.Test, result *scold.TestResult) {
+	f.resultQueue <- testingEvent{eventType: testFinishedEventType, test: test, result: result}
 }
 
-func (p *AsyncEventForwarder) SuiteFinished(b *scold.TestingBatch) {
-	p.resultQueue <- testingEvent{eventType: suiteFinishedEventType, b: b}
+func (f *AsyncEventForwarder) SuiteFinished(b *scold.TestingBatch) {
+	f.resultQueue <- testingEvent{eventType: suiteFinishedEventType, b: b}
 
-	close(p.resultQueue)
+	close(f.resultQueue)
 }
 
-func (p *AsyncEventForwarder) asyncPrinter() {
-	for event := range p.resultQueue {
+func (f *AsyncEventForwarder) asyncPrinter() {
+	for event := range f.resultQueue {
 		switch event.eventType {
 		case testStartedEventType:
-			p.receiver.TestStarted(event.testStarted())
+			f.receiver.TestStarted(event.testStarted())
 		case testFinishedEventType:
-			p.receiver.TestFinished(event.testFinished())
+			f.receiver.TestFinished(event.testFinished())
 		case suiteFinishedEventType:
-			p.receiver.SuiteFinished(event.suiteFinished())
+			f.receiver.SuiteFinished(event.suiteFinished())
 		}
 	}
 
-	p.wg.Done()
+	f.wg.Done()
 }
 
-func (p *AsyncEventForwarder) Wait() {
-	p.wg.Wait()
+func (f *AsyncEventForwarder) Wait() {
+	f.wg.Wait()
 }
-
-/*
-type AsyncEventForwarder struct {
-    receiver scold.TestingEventListener
-    resultQueue chan testingEvent
-    asyncPrinterStarted bool
-    wg sync.WaitGroup
-}
-
-func NewAsyncEventForwarder(receiver scold.TestingEventListener, queueSize int) *AsyncEventForwarder {
-    return &AsyncEventForwarder{
-        receiver: receiver,
-        resultQueue: make(chan testingEvent, queueSize),
-    }
-}
-
-func (p *AsyncEventForwarder) TestStarted(id int) {
-    if !p.asyncPrinterStarted {
-        p.wg.Add(1)
-        p.asyncPrinterStarted = true
-
-        go p.asyncPrinter()
-    }
-
-    p.resultQueue <- testingEvent{eventType: testStartedEventType, id: id}
-}
-
-func (p *AsyncEventForwarder) TestFinished(test *scold.Test, result *scold.TestResult) {
-    p.resultQueue <- testingEvent{eventType: testFinishedEventType, test: test, result: result}
-}
-
-func (p *AsyncEventForwarder) SuiteFinished(b *scold.TestingBatch) {
-    p.resultQueue <- testingEvent{eventType: suiteFinishedEventType, b: b}
-
-    close(p.resultQueue)
-    p.wg.Wait()
-}
-
-func (p *AsyncEventForwarder) asyncPrinter() {
-    for event := range p.resultQueue {
-        switch event.eventType {
-        case testStartedEventType:
-            p.receiver.TestStarted(event.testStarted())
-        case testFinishedEventType:
-            p.receiver.TestFinished(event.testFinished())
-        case suiteFinishedEventType:
-            p.receiver.SuiteFinished(event.suiteFinished())
-        }
-    }
-
-    p.wg.Done()
-}
-*/
