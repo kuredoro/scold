@@ -9,20 +9,16 @@ import (
 	"runtime"
 	"sort"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/alexflint/go-arg"
-	"github.com/atomicgo/cursor"
 	"github.com/jonboulle/clockwork"
 	"github.com/kuredoro/scold"
-	"github.com/kuredoro/scold/printers"
+	"github.com/kuredoro/scold/forwarders"
 	"github.com/logrusorgru/aurora"
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
 )
-
-//var progressBar *ProgressBar
 
 var stdout = colorable.NewColorableStdout()
 
@@ -52,9 +48,9 @@ func (jc *JobCount) UnmarshalText(b []byte) error {
 type appArgs struct {
 	Inputs        string   `arg:"-i" default:"inputs.txt" help:"file with tests"`
 	NoColors      bool     `arg:"--no-colors" help:"disable colored output"`
-    ForceColors   bool     `arg:"--force-colors" help:"print colors even in non-tty contexts"`
+	ForceColors   bool     `arg:"--force-colors" help:"print colors even in non-tty contexts"`
 	NoProgress    bool     `arg:"--no-progress" help:"disable progress bar"`
-    ForceProgress bool     `arg:"--force-progress" help:"print progress bar even in non-tty contexts"`
+	ForceProgress bool     `arg:"--force-progress" help:"print progress bar even in non-tty contexts"`
 	Jobs          JobCount `arg:"-j" default:"CPU_COUNT" placeholder:"COUNT" help:"Number of tests to run concurrently"`
 	Executable    string   `arg:"positional,required"`
 	Args          []string `arg:"positional" placeholder:"ARG"`
@@ -116,16 +112,16 @@ func init() {
         fmt.Println("warning: progress bar is forced and disabled at the same time. --no-progress is always preferred.")
 	}
 
-    fd := os.Stdout.Fd()
-    istty := isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
+	fd := os.Stdout.Fd()
+	istty := isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
 
-    if !args.ForceColors && !istty {
-        args.NoColors = true
-    }
+	if !args.ForceColors && !istty {
+		args.NoColors = true
+	}
 
-    if !args.ForceProgress && !istty {
-        args.NoProgress = true
-    }
+	if !args.ForceProgress && !istty {
+		args.NoProgress = true
+	}
 
 	if args.NoColors {
 		scold.Au = aurora.NewAurora(false)
@@ -220,54 +216,23 @@ func main() {
 	fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
 	fmt.Printf("job count: %d\n", args.Jobs)
 
-	batch.Listener = printers.NewPrettyPrinter()
+    var progressBar *ProgressBar
+    if !args.NoProgress {
+        testingHeader := scold.Au.Bold("    Testing").Cyan().String()
+		progressBar = &ProgressBar{
+			Total:  len(inputs.Tests),
+			Width:  20,
+			Header: testingHeader,
+		}
+    }
 
-	//testingHeader := scold.Au.Bold("    Testing").Cyan().String()
-
-    /*
-	progressBar = &ProgressBar{
-		Total:  len(inputs.Tests),
-		Width:  20,
-		Header: testingHeader,
+	cliPrinter := &PrettyPrinter{
+        Bar: progressBar,
 	}
-    */
-
-	if !args.NoProgress {
-		//fmt.Fprint(stdout, progressBar.String())
-		cursor.StartOfLine()
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		verboseResultPrinterWorker()
-		wg.Done()
-	}()
+	asyncF := forwarders.NewAsyncEventForwarder(cliPrinter, 100)
+	batch.Listener = asyncF
 
 	batch.Run()
 
-	close(printQueue)
-	wg.Wait()
-
-	if !args.NoProgress {
-		cursor.ClearLine()
-		// wtf knows what's the behavior of the cursor packaage
-		// Why it's outputting everything fine in verbose printer but here,
-		// it clears the line but doesn't move the cursor???
-		cursor.StartOfLine()
-	}
-
-	passCount := 0
-	for _, r := range batch.Results {
-		if r.Verdict == scold.OK {
-			passCount++
-		}
-	}
-
-	if passCount == len(batch.Results) {
-		fmt.Fprintln(stdout, scold.Au.Bold("OK").Green())
-	} else {
-		fmt.Fprintln(stdout, scold.Au.Bold("FAIL").Red())
-		fmt.Fprintf(stdout, "%d/%d passed\n", passCount, len(batch.Results))
-	}
+	asyncF.Wait()
 }
