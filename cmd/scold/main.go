@@ -208,17 +208,17 @@ func main() {
 	fmt.Printf("floating point precision: %d digit(s)\n", batch.Lx.Precision)
 	fmt.Printf("job count: %d\n", args.Jobs)
 
-    var progressBar *ProgressBar
-    if !args.NoProgress {
-        testingHeader := scold.Au.Bold("    Testing").Cyan().String()
+	var progressBar *ProgressBar
+	if !args.NoProgress {
+		testingHeader := scold.Au.Bold("    Testing").Cyan().String()
 		progressBar = &ProgressBar{
 			Total:  len(inputs.Tests),
 			Width:  20,
 			Header: testingHeader,
 		}
-    }
+	}
 
-    cliPrinter := NewPrettyPrinter(scold.Au)
+	cliPrinter := NewPrettyPrinter(scold.Au)
 	cliPrinter.Bar = progressBar
 
 	asyncF := forwarders.NewAsyncEventForwarder(cliPrinter, 100)

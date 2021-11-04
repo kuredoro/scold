@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-    "time"
-    "strings"
-    "io"
+	"io"
+	"strings"
+	"time"
 
 	"github.com/atomicgo/cursor"
 	"github.com/kuredoro/scold"
@@ -15,12 +15,12 @@ const diffColor = aurora.RedFg
 const missingNewlineColor = aurora.MagentaFg
 
 type PrettyPrinter struct {
-	Bar *ProgressBar
-    verdictStr map[scold.Verdict]aurora.Value
+	Bar        *ProgressBar
+	verdictStr map[scold.Verdict]aurora.Value
 }
 
 func NewPrettyPrinter(au aurora.Aurora) *PrettyPrinter {
-    p := &PrettyPrinter{}
+	p := &PrettyPrinter{}
 
 	p.verdictStr = map[scold.Verdict]aurora.Value{
 		scold.OK: au.Bold("OK").Green(),
@@ -30,7 +30,7 @@ func NewPrettyPrinter(au aurora.Aurora) *PrettyPrinter {
 		scold.TL: au.Bold("TL").Yellow(),
 	}
 
-    return p
+	return p
 }
 
 func (p *PrettyPrinter) TestStarted(id int) {
@@ -56,24 +56,24 @@ func (p *PrettyPrinter) TestFinished(test *scold.Test, result *scold.TestResult)
 		if verdict == scold.RE {
 			fmt.Fprintf(str, "Exit code: %d\n\n", result.Out.ExitCode)
 			fmt.Fprint(str, "Output:\n")
-            printAlwaysWithNewline(str, result.Out.Stdout)
+			printAlwaysWithNewline(str, result.Out.Stdout)
 			fmt.Fprint(str, "Stderr:\n")
-            printAlwaysWithNewline(str, result.Out.Stderr)
+			printAlwaysWithNewline(str, result.Out.Stderr)
 		} else if verdict == scold.WA {
 			fmt.Fprintf(str, "Output:\n%s\n", scold.DumpLexemes(result.RichOut, diffColor))
 			if result.Out.Stderr != "" {
 				fmt.Fprintf(str, "Stderr:\n%s\n", result.Out.Stderr)
 			}
-        } else if verdict == scold.TL {
-            if result.Out.Stdout != "" {
-                fmt.Fprint(str, "Output:\n")
-                printAlwaysWithNewline(str, result.Out.Stdout)
-            }
+		} else if verdict == scold.TL {
+			if result.Out.Stdout != "" {
+				fmt.Fprint(str, "Output:\n")
+				printAlwaysWithNewline(str, result.Out.Stdout)
+			}
 
-            if result.Out.Stderr != "" {
-                fmt.Fprint(str, "Stderr:\n")
-                printAlwaysWithNewline(str, result.Out.Stderr)
-            }
+			if result.Out.Stderr != "" {
+				fmt.Fprint(str, "Stderr:\n")
+				printAlwaysWithNewline(str, result.Out.Stderr)
+			}
 		} else if verdict == scold.IE {
 			fmt.Fprintf(str, "Error:\n%v\n\n", result.Err)
 		}
@@ -119,10 +119,9 @@ func (p *PrettyPrinter) SuiteFinished(b *scold.TestingBatch) {
 }
 
 func printAlwaysWithNewline(r io.Writer, text string) {
-    fmt.Fprint(r, text)
-    if text != "" && text[len(text)-1] != '\n' {
-        fmt.Fprint(r, scold.DumpLexemes([]scold.RichText{{Str: "\n", Mask: []bool{true}}}, missingNewlineColor))
-        fmt.Fprintln(r)
-    }
+	fmt.Fprint(r, text)
+	if text != "" && text[len(text)-1] != '\n' {
+		fmt.Fprint(r, scold.DumpLexemes([]scold.RichText{{Str: "\n", Mask: []bool{true}}}, missingNewlineColor))
+		fmt.Fprintln(r)
+	}
 }
-

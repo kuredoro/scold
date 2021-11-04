@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shettyh/threadpool"
 	"github.com/kuredoro/scold/util"
+	"github.com/shettyh/threadpool"
 )
 
 // Runnable represents a callable object. It allows representing the closure

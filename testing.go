@@ -236,23 +236,23 @@ func AssertResultIDInvariant(t *testing.T, b *TestingBatch) {
 }
 
 func AssertListenerNotified(t *testing.T, listener *SpyPrinter, wantTests []Test) {
-    testCount := len(wantTests)
+	testCount := len(wantTests)
 	expectedIDs := make([]int, testCount)
 	for i := range expectedIDs {
 		expectedIDs[i] = i + 1
 	}
 
-    wantTestPtrs := make([]*Test, testCount)
-    for i := range wantTestPtrs {
-        wantTestPtrs[i] = &wantTests[i]
-    }
+	wantTestPtrs := make([]*Test, testCount)
+	for i := range wantTestPtrs {
+		wantTestPtrs[i] = &wantTests[i]
+	}
 
 	td.Cmp(t, listener.StartedIDs, expectedIDs, fmt.Sprintf("%d tests started", testCount))
 	td.Cmp(t, listener.FinishedIDs, td.Bag(td.Flatten(expectedIDs)), fmt.Sprintf("%d tests finished", testCount))
 
-    for i, id := range listener.FinishedIDs {
-        td.Cmp(t, listener.FinishedTests[i], wantTestPtrs[id-1], fmt.Sprintf("%d ID corresponds to test #%d", id, id))
-    }
+	for i, id := range listener.FinishedIDs {
+		td.Cmp(t, listener.FinishedTests[i], wantTestPtrs[id-1], fmt.Sprintf("%d ID corresponds to test #%d", id, id))
+	}
 
 	if !listener.Finished {
 		t.Error("event listener has not received a suite completion event, want one")
