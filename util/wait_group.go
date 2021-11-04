@@ -1,7 +1,7 @@
 package util
 
 import (
-    "sync"
+	"sync"
 )
 
 type WaitGroup interface {
@@ -23,7 +23,7 @@ type SpyWaitGroup struct {
 func (wg *SpyWaitGroup) Add(delta int) {
 	wg.mx.Lock()
 	wg.Deltas = append(wg.Deltas, delta)
-    wg.DeltaGoids = append(wg.DeltaGoids, Goid())
+	wg.DeltaGoids = append(wg.DeltaGoids, Goid())
 	wg.mx.Unlock()
 
 	wg.wg.Add(delta)
@@ -36,9 +36,8 @@ func (wg *SpyWaitGroup) Done() {
 func (wg *SpyWaitGroup) Wait() {
 	wg.mx.Lock()
 	wg.Awaited = true
-    wg.AwaitedByGoid = Goid()
+	wg.AwaitedByGoid = Goid()
 	wg.mx.Unlock()
 
 	wg.wg.Wait()
 }
-
