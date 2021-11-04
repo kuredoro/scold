@@ -8,7 +8,6 @@ import (
 	"github.com/kuredoro/scold"
 	"github.com/kuredoro/scold/forwarders"
 	"github.com/kuredoro/scold/util"
-	"github.com/maxatome/go-testdeep/td"
 )
 
 type blockingForwarder struct {
@@ -106,84 +105,74 @@ func TestAsyncEventForwarder(t *testing.T) {
 		scold.AssertListenerNotified(t, spy, tests)
 	})
 
-    t.Run("wait blocks until all events are processed", func(t *testing.T) {
-        spy := &scold.SpyPrinter{}
-        tests := []scold.Test{
-            {Input: "1", Output: "1"},
-        }
+	t.Run("wait blocks until all events are processed", func(t *testing.T) {
+		spy := &scold.SpyPrinter{}
+		tests := []scold.Test{
+			{Input: "1", Output: "1"},
+		}
 
-        var spyWG util.SpyWaitGroup
-        asyncF := forwarders.NewAsyncEventForwarder(spy, 100, &spyWG)
+		var spyWG util.SpyWaitGroup
+		asyncF := forwarders.NewAsyncEventForwarder(spy, 100, &spyWG)
 
-        asyncF.TestStarted(1)
-        asyncF.TestFinished(&tests[0], testResultWithID(1))
-        asyncF.SuiteFinished(nil)
+		asyncF.TestStarted(1)
+		asyncF.TestFinished(&tests[0], testResultWithID(1))
+		asyncF.SuiteFinished(nil)
 
-        asyncF.Wait()
+		asyncF.Wait()
 
-        td.Cmp(t, spyWG.Deltas, []int{1, -1})
-        td.CmpTrue(t, spyWG.Awaited)
+		util.AssertSpyWaitGroupNormalUsage(t, &spyWG, 1)
+		scold.AssertListenerNotified(t, spy, tests)
+	})
 
-        if len(spyWG.Deltas) >= 2 && spyWG.DeltaGoids[0] == spyWG.DeltaGoids[1] {
-            t.Errorf("WaitGroup Add() and Done() are called from the same goroutine, want different")
-        }
+	t.Run("events after SuiteFinished cause panic", func(t *testing.T) {
+		spy := &scold.SpyPrinter{}
+		tests := []scold.Test{
+			{Input: "1", Output: "1"},
+		}
 
-        if len(spyWG.Deltas) >= 1 && spyWG.DeltaGoids[0] != spyWG.AwaitedByGoid {
-            t.Errorf("WaitGroup Add() and Wait() are not called from the same goroutine, want the same")
-        }
+		defer func(spy *scold.SpyPrinter, tests []scold.Test) {
+			recover()
 
-        scold.AssertListenerNotified(t, spy, tests)
-    })
+			scold.AssertListenerNotified(t, spy, tests)
+		}(spy, tests)
 
-    t.Run("events after SuiteFinished cause panic", func(t *testing.T) {
-        spy := &scold.SpyPrinter{}
-        tests := []scold.Test{
-            {Input: "1", Output: "1"},
-        }
+		asyncF := forwarders.NewAsyncEventForwarder(spy, 100)
 
-        defer func(spy *scold.SpyPrinter, tests []scold.Test) {
-            recover()
+		asyncF.TestStarted(1)
+		asyncF.TestFinished(&tests[0], testResultWithID(1))
+		asyncF.SuiteFinished(nil)
 
-            scold.AssertListenerNotified(t, spy, tests)
-        }(spy, tests)
+		asyncF.Wait()
 
-        asyncF := forwarders.NewAsyncEventForwarder(spy, 100)
+		asyncF.TestStarted(2)
 
-        asyncF.TestStarted(1)
-        asyncF.TestFinished(&tests[0], testResultWithID(1))
-        asyncF.SuiteFinished(nil)
+		t.Error("got no panic, want one")
+		panic("WoW")
+	})
 
-        asyncF.Wait()
+	t.Run("lots of events", func(t *testing.T) {
+		spy := &scold.SpyPrinter{}
+		tests := []scold.Test{
+			{Input: "1", Output: "1"},
+			{Input: "2", Output: "2"},
+			{Input: "3", Output: "3"},
+			{Input: "4", Output: "4"},
+		}
 
-        asyncF.TestStarted(2)
+		asyncF := forwarders.NewAsyncEventForwarder(spy, 100)
 
-        t.Error("got no panic, want one")
-        panic("WoW")
-    })
+		asyncF.TestStarted(1)
+		asyncF.TestStarted(2)
+		asyncF.TestFinished(&tests[0], testResultWithID(1))
+		asyncF.TestStarted(3)
+		asyncF.TestStarted(4)
+		asyncF.TestFinished(&tests[1], testResultWithID(2))
+		asyncF.TestFinished(&tests[2], testResultWithID(3))
+		asyncF.TestFinished(&tests[3], testResultWithID(4))
+		asyncF.SuiteFinished(nil)
 
-    t.Run("lots of events", func(t *testing.T) {
-        spy := &scold.SpyPrinter{}
-        tests := []scold.Test{
-            {Input: "1", Output: "1"},
-            {Input: "2", Output: "2"},
-            {Input: "3", Output: "3"},
-            {Input: "4", Output: "4"},
-        }
+		asyncF.Wait()
 
-        asyncF := forwarders.NewAsyncEventForwarder(spy, 100)
-
-        asyncF.TestStarted(1)
-        asyncF.TestStarted(2)
-        asyncF.TestFinished(&tests[0], testResultWithID(1))
-        asyncF.TestStarted(3)
-        asyncF.TestStarted(4)
-        asyncF.TestFinished(&tests[1], testResultWithID(2))
-        asyncF.TestFinished(&tests[2], testResultWithID(3))
-        asyncF.TestFinished(&tests[3], testResultWithID(4))
-        asyncF.SuiteFinished(nil)
-
-        asyncF.Wait()
-
-        scold.AssertListenerNotified(t, spy, tests)
-    })
+		scold.AssertListenerNotified(t, spy, tests)
+	})
 }

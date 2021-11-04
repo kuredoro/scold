@@ -1,10 +1,10 @@
 package util
 
 import (
-    "runtime"
-    "strings"
-    "strconv"
-    "fmt"
+	"fmt"
+	"runtime"
+	"strconv"
+	"strings"
 )
 
 // Borrowed from: https://gist.github.com/metafeather/3615b23097836bc36579100dac376906
@@ -19,4 +19,3 @@ func Goid() int {
 
 	return id
 }
-
