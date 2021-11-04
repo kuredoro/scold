@@ -1,4 +1,4 @@
-package printers_test
+package forwarders_test
 
 import (
 	"sync"
@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/kuredoro/scold"
-	"github.com/kuredoro/scold/printers"
+	"github.com/kuredoro/scold/forwarders"
+	"github.com/kuredoro/scold/util"
 	"github.com/maxatome/go-testdeep/td"
 )
 
@@ -66,7 +67,7 @@ func TestAsyncEventForwarder(t *testing.T) {
 			{Input: "1", Output: "1"},
 		}
 
-		asyncF := printers.NewAsyncEventForwarder(blockingF, 100)
+		asyncF := forwarders.NewAsyncEventForwarder(blockingF, 100)
 
 		eventSent := make(chan struct{})
 
@@ -111,8 +112,8 @@ func TestAsyncEventForwarder(t *testing.T) {
             {Input: "1", Output: "1"},
         }
 
-        var spyWG printers.SpyWaitGroup
-        asyncF := printers.NewAsyncEventForwarder(spy, 100, &spyWG)
+        var spyWG util.SpyWaitGroup
+        asyncF := forwarders.NewAsyncEventForwarder(spy, 100, &spyWG)
 
         asyncF.TestStarted(1)
         asyncF.TestFinished(&tests[0], testResultWithID(1))
@@ -146,7 +147,7 @@ func TestAsyncEventForwarder(t *testing.T) {
             scold.AssertListenerNotified(t, spy, tests)
         }(spy, tests)
 
-        asyncF := printers.NewAsyncEventForwarder(spy, 100)
+        asyncF := forwarders.NewAsyncEventForwarder(spy, 100)
 
         asyncF.TestStarted(1)
         asyncF.TestFinished(&tests[0], testResultWithID(1))
@@ -158,5 +159,31 @@ func TestAsyncEventForwarder(t *testing.T) {
 
         t.Error("got no panic, want one")
         panic("WoW")
+    })
+
+    t.Run("lots of events", func(t *testing.T) {
+        spy := &scold.SpyPrinter{}
+        tests := []scold.Test{
+            {Input: "1", Output: "1"},
+            {Input: "2", Output: "2"},
+            {Input: "3", Output: "3"},
+            {Input: "4", Output: "4"},
+        }
+
+        asyncF := forwarders.NewAsyncEventForwarder(spy, 100)
+
+        asyncF.TestStarted(1)
+        asyncF.TestStarted(2)
+        asyncF.TestFinished(&tests[0], testResultWithID(1))
+        asyncF.TestStarted(3)
+        asyncF.TestStarted(4)
+        asyncF.TestFinished(&tests[1], testResultWithID(2))
+        asyncF.TestFinished(&tests[2], testResultWithID(3))
+        asyncF.TestFinished(&tests[3], testResultWithID(4))
+        asyncF.SuiteFinished(nil)
+
+        asyncF.Wait()
+
+        scold.AssertListenerNotified(t, spy, tests)
     })
 }
