@@ -1,4 +1,4 @@
-package printers
+package forwarders
 
 import (
 	"sync"
@@ -33,55 +33,17 @@ func (e *testingEvent) suiteFinished() *scold.TestingBatch {
 	return e.b
 }
 
-type Latch interface {
-	Add(int)
-	Done()
-	Wait()
-}
-
-type SpyWaitGroup struct {
-	mx sync.Mutex
-	wg sync.WaitGroup
-
-	Deltas        []int
-	DeltaGoids    []int
-	Awaited       bool
-	AwaitedByGoid int
-}
-
-func (wg *SpyWaitGroup) Add(delta int) {
-	wg.mx.Lock()
-	wg.Deltas = append(wg.Deltas, delta)
-    wg.DeltaGoids = append(wg.DeltaGoids, util.Goid())
-	wg.mx.Unlock()
-
-	wg.wg.Add(delta)
-}
-
-func (wg *SpyWaitGroup) Done() {
-	wg.Add(-1)
-}
-
-func (wg *SpyWaitGroup) Wait() {
-	wg.mx.Lock()
-	wg.Awaited = true
-    wg.AwaitedByGoid = util.Goid()
-	wg.mx.Unlock()
-
-	wg.wg.Wait()
-}
-
 type AsyncEventForwarder struct {
 	receiver    scold.TestingEventListener
 	resultQueue chan testingEvent
-	wg          Latch
+	wg          util.WaitGroup
 }
 
-func NewAsyncEventForwarder(receiver scold.TestingEventListener, queueSize int, args ...Latch) *AsyncEventForwarder {
-	var wg Latch = &sync.WaitGroup{}
+func NewAsyncEventForwarder(receiver scold.TestingEventListener, queueSize int, args ...util.WaitGroup) *AsyncEventForwarder {
+	var wg util.WaitGroup = &sync.WaitGroup{}
 
 	if len(args) != 0 {
-		wg = args[0].(Latch)
+		wg = args[0].(util.WaitGroup)
 	}
 
 	asyncF := &AsyncEventForwarder{
