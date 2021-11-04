@@ -103,10 +103,10 @@ func AssertDefaultConfig(t *testing.T, got InputsConfig) {
 // AssertTimes check whether the received and expected timestampts for the
 // test cases both exist and are equal.
 func AssertTimes(t *testing.T, got map[int]*TestResult, want map[int]time.Duration) {
-    gotTimes := map[int]time.Duration{}
-    for k, v := range got {
-        gotTimes[k] = v.Time
-    }
+	gotTimes := map[int]time.Duration{}
+	for k, v := range got {
+		gotTimes[k] = v.Time
+	}
 
 	if len(gotTimes) != len(want) {
 		t.Errorf("got %d timestamps, want %d\ngot %v\nwant %v\n",
@@ -228,23 +228,33 @@ func AssertThreadCount(t *testing.T, pool *SpyThreadPool, want int) {
 // AssertResultIDInvariant checks that each key in TestingBatch.Results
 // equals to the its value`s ID field.
 func AssertResultIDInvariant(t *testing.T, b *TestingBatch) {
-    for k, v := range b.Results {
-        if k != v.ID {
-            t.Errorf("invariant violation: %d != Results[%d].ID (which is %d)", k, k, v.ID)
-        }
-    }
+	for k, v := range b.Results {
+		if k != v.ID {
+			t.Errorf("invariant violation: %d != Results[%d].ID (which is %d)", k, k, v.ID)
+		}
+	}
 }
 
-func AssertListenerNotified(t *testing.T, listener *SpyTestEventListener, testCount int) {
-    expectedIDs := make([]int, testCount)
-    for i := range expectedIDs {
-        expectedIDs[i] = i + 1
+func AssertListenerNotified(t *testing.T, listener *SpyPrinter, wantTests []Test) {
+    testCount := len(wantTests)
+	expectedIDs := make([]int, testCount)
+	for i := range expectedIDs {
+		expectedIDs[i] = i + 1
+	}
+
+    wantTestPtrs := make([]*Test, testCount)
+    for i := range wantTestPtrs {
+        wantTestPtrs[i] = &wantTests[i]
     }
 
-    td.Cmp(t, listener.StartedTests, expectedIDs, fmt.Sprintf("%d tests started", testCount))
-    td.Cmp(t, listener.FinishedTests, td.Bag(td.Flatten(expectedIDs)), fmt.Sprintf("%d tests finished", testCount))
+	td.Cmp(t, listener.StartedIDs, expectedIDs, fmt.Sprintf("%d tests started", testCount))
+	td.Cmp(t, listener.FinishedIDs, td.Bag(td.Flatten(expectedIDs)), fmt.Sprintf("%d tests finished", testCount))
 
-    if !listener.Finished {
-        t.Error("event listener has not received a suite completion event, want one")
+    for i, id := range listener.FinishedIDs {
+        td.Cmp(t, listener.FinishedTests[i], wantTestPtrs[id-1], fmt.Sprintf("%d ID corresponds to test #%d", id, id))
     }
+
+	if !listener.Finished {
+		t.Error("event listener has not received a suite completion event, want one")
+	}
 }
