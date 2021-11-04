@@ -38,8 +38,8 @@ jobs:
 
       - name: Run Unit tests.
         run: |
-          go test -coverprofile=coverage.out.tmp
-          cat coverage.out.tmp | grep -v "testing.go" > coverage.out # Remove testing.go that contains testing helpers from the coverage
+          go test -race -coverprofile=coverage.out.tmp ./...
+          cat coverage.out.tmp | grep -v "testing.go" > coverage.out # Remove testing.go that contains testing helpers from the coverage, they cannot be tested.
 
       - name: Convert gcov to lcov
         uses: jandelgado/gcov2lcov-action@v1.0.5
