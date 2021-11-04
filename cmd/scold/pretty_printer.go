@@ -14,11 +14,23 @@ import (
 const diffColor = aurora.RedFg
 const missingNewlineColor = aurora.MagentaFg
 
-// Initialized in init()
-var verdictStr map[scold.Verdict]aurora.Value
-
 type PrettyPrinter struct {
 	Bar *ProgressBar
+    verdictStr map[scold.Verdict]aurora.Value
+}
+
+func NewPrettyPrinter(au aurora.Aurora) *PrettyPrinter {
+    p := &PrettyPrinter{}
+
+	p.verdictStr = map[scold.Verdict]aurora.Value{
+		scold.OK: au.Bold("OK").Green(),
+		scold.IE: au.Bold("IE").Bold(),
+		scold.WA: au.Bold("WA").BrightRed(),
+		scold.RE: au.Bold("RE").Magenta(),
+		scold.TL: au.Bold("TL").Yellow(),
+	}
+
+    return p
 }
 
 func (p *PrettyPrinter) TestStarted(id int) {
@@ -34,7 +46,7 @@ func (p *PrettyPrinter) TestFinished(test *scold.Test, result *scold.TestResult)
 	verdict := result.Verdict
 
 	seconds := result.Time.Round(time.Millisecond).Seconds()
-	fmt.Fprintf(str, "--- %s:\tTest %d (%.3fs)\n", verdictStr[verdict], result.ID, seconds)
+	fmt.Fprintf(str, "--- %s:\tTest %d (%.3fs)\n", p.verdictStr[verdict], result.ID, seconds)
 
 	if verdict != scold.OK {
 		fmt.Fprintf(str, "Input:\n%s\n", test.Input)
@@ -86,7 +98,7 @@ func (p *PrettyPrinter) SuiteFinished(b *scold.TestingBatch) {
 	if p.Bar != nil {
 		cursor.ClearLine()
 		// wtf knows what's the behavior of the cursor packaage
-		// Why it's outputting everything fine in verbose printer but here,
+		// Why it's outputting everything fine in TestFinished but here,
 		// it clears the line but doesn't move the cursor???
 		cursor.StartOfLine()
 	}

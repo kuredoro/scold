@@ -127,14 +127,6 @@ func init() {
 		scold.Au = aurora.NewAurora(false)
 	}
 
-	verdictStr = map[scold.Verdict]aurora.Value{
-		scold.OK: scold.Au.Bold("OK").Green(),
-		scold.IE: scold.Au.Bold("IE").Bold(),
-		scold.WA: scold.Au.Bold("WA").BrightRed(),
-		scold.RE: scold.Au.Bold("RE").Magenta(),
-		scold.TL: scold.Au.Bold("TL").Yellow(),
-	}
-
 	errorLabel = scold.Au.Bold("error").BrightRed()
 
 	type duration scold.PositiveDuration
@@ -226,9 +218,9 @@ func main() {
 		}
     }
 
-	cliPrinter := &PrettyPrinter{
-        Bar: progressBar,
-	}
+    cliPrinter := NewPrettyPrinter(scold.Au)
+	cliPrinter.Bar = progressBar
+
 	asyncF := forwarders.NewAsyncEventForwarder(cliPrinter, 100)
 	batch.Listener = asyncF
 
