@@ -47,7 +47,8 @@ type TestingEventListener interface {
 	TestFinished(*Test, *TestResult)
 
 	// SuiteFinished is called when all test cases have finished.
-	// Accessing testingBatch at this point is safe.
+	// Accessing testingBatch at this point is safe, and no events will
+    // be sent to TestingEventListener after this event.
 	SuiteFinished(*TestingBatch)
 }
 
