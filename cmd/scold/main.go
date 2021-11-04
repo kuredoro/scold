@@ -108,11 +108,11 @@ func init() {
 	mustParse(&args)
 
 	if args.NoColors && args.ForceColors {
-        fmt.Printf("warning: colors are forced and disabled at the same time. --no-colors is always preferred.")
+        fmt.Println("warning: colors are forced and disabled at the same time. --no-colors is always preferred.")
 	}
 
 	if args.NoProgress && args.ForceProgress {
-        fmt.Printf("warning: progress bar is forced and disabled at the same time. --no-progress is always preferred.")
+        fmt.Println("warning: progress bar is forced and disabled at the same time. --no-progress is always preferred.")
 	}
 
     fd := os.Stdout.Fd()
