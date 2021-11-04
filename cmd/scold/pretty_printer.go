@@ -57,7 +57,7 @@ func (p *PrettyPrinter) TestFinished(test *scold.Test, result *scold.TestResult)
 		if verdict == scold.RE {
             if util.IsPossiblyNegative(result.Out.ExitCode) {
                 fmt.Fprintf(str, "Exit code: %d (unsigned: %d)\n\n", int32(result.Out.ExitCode),
-                    result.Out.ExitCode)
+                    uint64(result.Out.ExitCode))
             } else {
                 fmt.Fprintf(str, "Exit code: %d\n\n", result.Out.ExitCode)
             }
