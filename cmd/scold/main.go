@@ -140,7 +140,7 @@ func main() {
 	inputsPath, err := filepath.Abs(args.Inputs)
 	if err != nil {
 		fmt.Printf("%v: retreive inputs absolute path: %v\n", errorLabel, err)
-		return
+        os.Exit(1)
 	}
 
 	inputs, scanErrs := readInputs(inputsPath)
@@ -148,7 +148,7 @@ func main() {
 		var lineRangeErrorType *scold.LineRangeError
 		if len(scanErrs) == 1 && !errors.As(scanErrs[0], &lineRangeErrorType) {
 			fmt.Printf("%v: %v\n", errorLabel, scanErrs[0])
-			return
+            os.Exit(1)
 		}
 
 		lineErrs := make([]*scold.LineRangeError, len(scanErrs))
@@ -167,24 +167,24 @@ func main() {
 			fmt.Printf("%s:%d: %s: %v\n%s", args.Inputs, err.Begin, errorLabel, err.Err, err.CodeSnippet())
 		}
 
-		return
+        os.Exit(1)
 	}
 
 	execPath, err := findFile(args.Executable)
 	if err != nil {
 		fmt.Printf("%v: find executable: %v\n", errorLabel, err)
-		return
+        os.Exit(1)
 	}
 
 	execStat, err := os.Stat(execPath)
 	if err != nil {
 		fmt.Printf("%v: read executable's properties: %v\n", errorLabel, err)
-		return
+        os.Exit(1)
 	}
 
 	if execStat.IsDir() {
 		fmt.Printf("%v: provided executable %s is a directory\n", errorLabel, args.Executable)
-		return
+        os.Exit(1)
 	}
 
 	proc := &Executable{
@@ -227,4 +227,16 @@ func main() {
 	batch.Run()
 
 	asyncF.Wait()
+
+    allOK := true
+    for i := range batch.Results {
+        if batch.Results[i].Verdict != scold.OK {
+            allOK = false
+            break
+        }
+    }
+
+    if !allOK {
+        os.Exit(1)
+    }
 }
