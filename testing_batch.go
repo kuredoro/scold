@@ -48,7 +48,7 @@ type TestingEventListener interface {
 
 	// SuiteFinished is called when all test cases have finished.
 	// Accessing testingBatch at this point is safe, and no events will
-    // be sent to TestingEventListener after this event.
+	// be sent to TestingEventListener after this event.
 	SuiteFinished(*TestingBatch)
 }
 
@@ -93,7 +93,7 @@ func (l *SpyPrinter) TestStarted(id int) {
 
 func (l *SpyPrinter) TestFinished(test *Test, result *TestResult) {
 	l.FinishedIDs = append(l.FinishedIDs, result.ID)
-    l.FinishedTests = append(l.FinishedTests, test)
+	l.FinishedTests = append(l.FinishedTests, test)
 }
 
 func (l *SpyPrinter) SuiteFinished(*TestingBatch) {

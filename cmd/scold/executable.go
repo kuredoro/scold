@@ -46,10 +46,10 @@ func (e *Executable) Run(ctx context.Context, r io.Reader) (scold.ExecutionResul
 		case <-ctx.Done():
 			// When process is killed the pipes are closed. the listenPipes
 			// will receive EOF and return nil.
-            err = cmd.Process.Kill()
-            if err != nil {
-                return scold.ExecutionResult{}, fmt.Errorf("executable: kill: %v", err)
-            }
+			err = cmd.Process.Kill()
+			if err != nil {
+				return scold.ExecutionResult{}, fmt.Errorf("executable: kill: %v", err)
+			}
 		case err := <-stdoutComplete:
 			if err != nil {
 				return scold.ExecutionResult{}, fmt.Errorf("executable: stdout: %v", err)
