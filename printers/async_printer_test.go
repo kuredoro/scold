@@ -133,4 +133,30 @@ func TestAsyncEventForwarder(t *testing.T) {
 
         scold.AssertListenerNotified(t, spy, tests)
     })
+
+    t.Run("events after SuiteFinished cause panic", func(t *testing.T) {
+        spy := &scold.SpyPrinter{}
+        tests := []scold.Test{
+            {Input: "1", Output: "1"},
+        }
+
+        defer func(spy *scold.SpyPrinter, tests []scold.Test) {
+            recover()
+
+            scold.AssertListenerNotified(t, spy, tests)
+        }(spy, tests)
+
+        asyncF := printers.NewAsyncEventForwarder(spy, 100)
+
+        asyncF.TestStarted(1)
+        asyncF.TestFinished(&tests[0], testResultWithID(1))
+        asyncF.SuiteFinished(nil)
+
+        asyncF.Wait()
+
+        asyncF.TestStarted(2)
+
+        t.Error("got no panic, want one")
+        panic("WoW")
+    })
 }
