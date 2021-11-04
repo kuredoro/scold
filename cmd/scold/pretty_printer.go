@@ -8,6 +8,7 @@ import (
 
 	"github.com/atomicgo/cursor"
 	"github.com/kuredoro/scold"
+	"github.com/kuredoro/scold/util"
 	"github.com/logrusorgru/aurora"
 )
 
@@ -54,7 +55,12 @@ func (p *PrettyPrinter) TestFinished(test *scold.Test, result *scold.TestResult)
 		fmt.Fprintf(str, "Answer:\n%s\n", scold.DumpLexemes(result.RichAnswer, diffColor))
 
 		if verdict == scold.RE {
-			fmt.Fprintf(str, "Exit code: %d\n\n", result.Out.ExitCode)
+            if util.IsPossiblyNegative(result.Out.ExitCode) {
+                fmt.Fprintf(str, "Exit code: %d (unsigned: %d)\n\n", int32(result.Out.ExitCode),
+                    result.Out.ExitCode)
+            } else {
+                fmt.Fprintf(str, "Exit code: %d\n\n", result.Out.ExitCode)
+            }
 			fmt.Fprint(str, "Output:\n")
 			printAlwaysWithNewline(str, result.Out.Stdout)
 			fmt.Fprint(str, "Stderr:\n")
