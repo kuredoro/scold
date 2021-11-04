@@ -1,4 +1,4 @@
-package printers
+package main
 
 import (
 	"fmt"
