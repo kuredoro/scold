@@ -101,6 +101,14 @@ func mustParse(dest *appArgs) {
 	}
 }
 
+func errorPrintf(format string, args ...any) {
+    printArgs := make([]any, len(args) + 1)
+    printArgs[0] = errorLabel
+    copy(printArgs[1:], args)
+
+    fmt.Fprintf(stdout, "%v: " + format + "\n", printArgs...)
+}
+
 func init() {
 	mustParse(&args)
 
@@ -139,7 +147,7 @@ func init() {
 func main() {
 	inputsPath, err := filepath.Abs(args.Inputs)
 	if err != nil {
-		fmt.Printf("%v: retreive inputs absolute path: %v\n", errorLabel, err)
+		errorPrintf("retreive inputs absolute path: %v", err)
         os.Exit(1)
 	}
 
@@ -147,7 +155,7 @@ func main() {
 	if scanErrs != nil {
 		var lineRangeErrorType *scold.LineRangeError
 		if len(scanErrs) == 1 && !errors.As(scanErrs[0], &lineRangeErrorType) {
-            fmt.Printf("%v: load tests: %v\n", errorLabel, scanErrs[0])
+            errorPrintf("load tests: %v", scanErrs[0])
             os.Exit(1)
 		}
 
@@ -164,7 +172,7 @@ func main() {
 		})
 
 		for _, err := range lineErrs {
-			fmt.Printf("%s:%d: %s: %v\n%s", args.Inputs, err.Begin, errorLabel, err.Err, err.CodeSnippet())
+			errorPrintf("%s:%d: %v\n%s", args.Inputs, err.Begin, err.Err, err.CodeSnippet())
 		}
 
         os.Exit(1)
@@ -172,18 +180,18 @@ func main() {
 
 	execPath, err := findFile(args.Executable)
 	if err != nil {
-		fmt.Printf("%v: find executable: %v\n", errorLabel, err)
+		errorPrintf("find executable: %v", err)
         os.Exit(1)
 	}
 
 	execStat, err := os.Stat(execPath)
 	if err != nil {
-		fmt.Printf("%v: read executable's properties: %v\n", errorLabel, err)
+		errorPrintf("read executable's properties: %v", err)
         os.Exit(1)
 	}
 
 	if execStat.IsDir() {
-		fmt.Printf("%v: provided executable %s is a directory\n", errorLabel, args.Executable)
+		errorPrintf("provided executable %s is a directory", args.Executable)
         os.Exit(1)
 	}
 
