@@ -53,7 +53,7 @@ func NewAsyncEventForwarder(receiver scold.TestingEventListener, queueSize int, 
 	var wg util.WaitGroup = &sync.WaitGroup{}
 
 	if len(args) != 0 {
-		wg = args[0].(util.WaitGroup)
+		wg = args[0]
 	}
 
 	asyncF := &AsyncEventForwarder{

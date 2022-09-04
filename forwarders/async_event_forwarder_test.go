@@ -23,25 +23,18 @@ func newBlockingForwarder(receiver scold.TestingEventListener) *blockingForwarde
 }
 
 func (f *blockingForwarder) TestStarted(id int) {
-	select {
-	case <-f.stopBlocking:
-		f.receiver.TestStarted(id)
-	}
+    <-f.stopBlocking
+    f.receiver.TestStarted(id)
 }
 
 func (f *blockingForwarder) TestFinished(test *scold.Test, result *scold.TestResult) {
-	select {
-	case <-f.stopBlocking:
-		f.receiver.TestFinished(test, result)
-	}
-
+    <-f.stopBlocking
+    f.receiver.TestFinished(test, result)
 }
 
 func (f *blockingForwarder) SuiteFinished(b *scold.TestingBatch) {
-	select {
-	case <-f.stopBlocking:
-		f.receiver.SuiteFinished(b)
-	}
+	<-f.stopBlocking
+    f.receiver.SuiteFinished(b)
 }
 
 func (f *blockingForwarder) StopBlocking() {
