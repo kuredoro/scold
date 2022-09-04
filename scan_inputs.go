@@ -191,7 +191,7 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 		// Instead of incrementing lineNum at the code flow graph's each leaf,
 		// we'll do it once at the beginning.
 		if partNum != 0 {
-			// A part is a string between two lines that start with a specified
+			// A part is a string between two lines that starts with a specified
 			// prefix. We need to add excluded line with prefix to keep line number
 			// correct.
 			lineNum += strings.Count(parts[partNum-1], "\n") + 1
@@ -205,7 +205,7 @@ func ScanInputs(text string) (inputs Inputs, errs []error) {
 
 			if configErrs != nil {
 				errs = append(errs, configErrs...)
-				// We don't continue because ScanConfig gathers only correct
+				// We don't stop because ScanConfig gathers only correct
 				// key-value pairs.
 			}
 

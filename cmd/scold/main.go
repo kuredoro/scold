@@ -148,7 +148,7 @@ func init() {
 
 	scold.DefaultInputsConfig = scold.InputsConfig{
 		Tl:   scold.NewPositiveDuration(6 * time.Second),
-		Prec: 6,
+		Prec: 8,
 	}
 }
 
