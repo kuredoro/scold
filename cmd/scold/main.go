@@ -137,7 +137,6 @@ func init() {
 
 	errorLabel = scold.Au.Bold("error").BrightRed()
 
-	type duration scold.PositiveDuration
 	scold.DefaultInputsConfig = scold.InputsConfig{
 		Tl:   scold.NewPositiveDuration(6 * time.Second),
 		Prec: 6,
@@ -163,7 +162,7 @@ func main() {
 		for i, scanErr := range scanErrs {
 			ok := errors.As(scanErr, &lineErrs[i])
 			if !ok {
-				panic(fmt.Sprintf("internal bug: some parse errors don't have line information"))
+                panic(fmt.Sprintf("internal bug: some parse errors don't have line information (%v)", scanErr))
 			}
 		}
 
