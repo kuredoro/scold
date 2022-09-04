@@ -79,20 +79,27 @@ func NewPositiveDuration(dur time.Duration) PositiveDuration {
 // reject negative durations.
 func (d *PositiveDuration) UnmarshalText(b []byte) error {
 	dur, err := time.ParseDuration(string(b))
+
+	if err != nil {
+		num, err := strconv.ParseFloat(string(b), 64)
+        if err != nil {
+            return ErrDurationBadSyntax
+        }
+
+        if num < 0 {
+            return ErrNegativePositiveDuration
+        }
+
+        *d = PositiveDuration{time.Duration(num * float64(time.Second))}
+        return ErrDurationWithoutSuffix
+	}
+
 	if dur.Nanoseconds() < 0 {
 		return ErrNegativePositiveDuration
 	}
 
-	if err != nil {
-		num, err := strconv.ParseFloat(string(b), 64)
-		if err == nil {
-			*d = PositiveDuration{time.Duration(num * float64(time.Second))}
-			return ErrDurationWithoutSuffix
-		}
-	}
-
 	*d = PositiveDuration{dur}
-	return err
+	return nil
 }
 
 // StringMapUnmarshal accepts a string map and for each key-value pair tries
