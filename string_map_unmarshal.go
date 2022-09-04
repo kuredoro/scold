@@ -18,7 +18,7 @@ const (
 
 	// ErrUnknownField is issued when the deserialization destination cannot be
 	// found in a struct-like via reflection.
-	ErrUnknownField = StringError("unknown field")
+	ErrUnknownField = StringWarning("unknown field")
 
 	// ErrNegativePositiveDuration is issued when PositiveDuration is attempted
 	// to be initialized with negative value.
