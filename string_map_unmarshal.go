@@ -24,12 +24,12 @@ const (
 	// to be initialized with negative value.
 	ErrNegativePositiveDuration = StringError("PositiveDuration accepts only positive durations")
 
-	// ErrNegativePositiveDuration is issued when PositiveDuration is attempted
-	// to be initialized with negative value.
+	// ErrDurationWithoutSuffix is issued when PositiveDuration is unmarshalled
+    // with a value that doesn't have a unit suffix.
 	ErrDurationWithoutSuffix = StringWarning("durations without a unit suffix like \"s\" or \"us\" are deprecated and discouraged. Please, specify the unit explicitly, like \"10.0s\" for 10 seconds")
 
-	// ErrNegativePositiveDuration is issued when PositiveDuration is attempted
-	// to be initialized with negative value.
+	// ErrDurationBadSyntax is issued when PositiveDuration is unmarshalled
+	// with a value that cannot be interpreted as a duration.
 	ErrDurationBadSyntax = StringError("bad syntax. Correct values could be \"1s\" or \"12.3ms\"")
 )
 
