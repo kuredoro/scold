@@ -147,7 +147,7 @@ func main() {
 	if scanErrs != nil {
 		var lineRangeErrorType *scold.LineRangeError
 		if len(scanErrs) == 1 && !errors.As(scanErrs[0], &lineRangeErrorType) {
-			fmt.Printf("%v: %v\n", errorLabel, scanErrs[0])
+            fmt.Printf("%v: load tests: %v\n", errorLabel, scanErrs[0])
             os.Exit(1)
 		}
 
