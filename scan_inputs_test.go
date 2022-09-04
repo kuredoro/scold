@@ -452,7 +452,7 @@ foo= bar
 		func(t *testing.T) {
 			text := `= foo
 foo= aaa
-tl=10.a
+tl=-10.0
 ===
 
 ===
@@ -467,7 +467,7 @@ by the way...
 			errsWant := []error{
 				&scold.LineRangeError{1, []string{"= foo"}, scold.KeyMissing},
 				&scold.LineRangeError{2, []string{"foo= aaa"}, &scold.FieldError{"foo", scold.ErrUnknownField}},
-				&scold.LineRangeError{3, []string{"tl=10.a"}, &scold.FieldError{"tl", &scold.NotValueOfTypeError{"PositiveDuration", "10.a", nil}}},
+				&scold.LineRangeError{3, []string{"tl=-10.0"}, &scold.FieldError{"tl", &scold.NotValueOfTypeError{"PositiveDuration", "-10.0", scold.ErrNegativePositiveDuration}}},
 				&scold.LineRangeError{7, []string{"extra=love"}, &scold.TestError{1, scold.IOSeparatorMissing}},
 				&scold.LineRangeError{9, []string{"oh = and", "by the way..."}, &scold.TestError{2, scold.IOSeparatorMissing}},
 			}

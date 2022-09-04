@@ -131,6 +131,10 @@ type NotValueOfTypeError struct {
 // Error prints a human-readable message describing what value doesn't match
 // what type.
 func (e *NotValueOfTypeError) Error() string {
+    if e.Err != nil {
+        return fmt.Sprintf("value %q doesn't match %v type: %v", e.Value, e.Type, e.Err)
+    }
+
 	return fmt.Sprintf("value %q doesn't match %v type", e.Value, e.Type)
 }
 
@@ -142,7 +146,7 @@ func (e *NotValueOfTypeError) Unwrap() error {
 // Equal is used to define equality on the pointers of NotValueOfTypeError.
 // Used by go-testdeep.
 func (e *NotValueOfTypeError) Equal(other *NotValueOfTypeError) bool {
-	return e.Type == other.Type && e.Value == other.Value
+	return e.Type == other.Type && e.Value == other.Value && e.Err == other.Err
 }
 
 // NotTextUnmarshalableTypeError is a panic error. Value of this type is
