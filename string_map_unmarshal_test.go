@@ -466,7 +466,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus", nil}},
+			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus", scold.ErrDurationBadSyntax}},
 		})
 		td.Cmp(t, target, struct{ Dur scold.PositiveDuration }{})
 	})
@@ -483,7 +483,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus", nil}},
+			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus", scold.ErrDurationBadSyntax}},
 		})
 		td.Cmp(t, target, struct{ Dur *scold.PositiveDuration }{})
 	})
@@ -501,7 +501,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus", nil}},
+			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus", scold.ErrDurationBadSyntax}},
 		})
 		td.Cmp(t, target, struct{ Dur *scold.PositiveDuration }{dur})
 	})
