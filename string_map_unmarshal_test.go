@@ -648,7 +648,7 @@ func TestPositiveDuration(t *testing.T) {
 		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("1"))
 
-		td.CmpError(t, err, scold.ErrDurationWithoutSuffix)
+		td.Cmp(t, err, scold.ErrDurationWithoutSuffix)
 		td.Cmp(t, dur.Duration, time.Second)
 	})
 
@@ -664,7 +664,7 @@ func TestPositiveDuration(t *testing.T) {
 		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("10.5"))
 
-		td.CmpError(t, err, scold.ErrDurationWithoutSuffix)
+		td.Cmp(t, err, scold.ErrDurationWithoutSuffix)
 		td.Cmp(t, dur.Duration, 10500*time.Millisecond)
 	})
 
@@ -683,10 +683,24 @@ func TestPositiveDuration(t *testing.T) {
 		td.Cmp(t, err, scold.ErrNegativePositiveDuration)
 	})
 
+	t.Run("minus ten and half seconds without suffix", func(t *testing.T) {
+		dur := &scold.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("-10.5"))
+
+		td.Cmp(t, err, scold.ErrNegativePositiveDuration)
+	})
+
 	t.Run("negative fractional duration is forbidden", func(t *testing.T) {
 		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("-42.0us"))
 
 		td.Cmp(t, err, scold.ErrNegativePositiveDuration)
+	})
+
+	t.Run("jibberish is forbidden", func(t *testing.T) {
+		dur := &scold.PositiveDuration{}
+		err := dur.UnmarshalText([]byte("ko-hi-"))
+
+		td.Cmp(t, err, scold.ErrDurationBadSyntax)
 	})
 }
