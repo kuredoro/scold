@@ -16,6 +16,15 @@ func (e StringError) Error() string {
 	return string(e)
 }
 
+// StringWarning is same as StringError except it allows users to differentiate
+// warnings using errors.As
+type StringWarning string
+
+// Error prints the warning message.
+func (w StringWarning) Error() string {
+    return string(w)
+}
+
 // LineRangeError is used to amend information about the location of the error
 // within the source code. The source code lines in
 // question are stored in Lines (for printing purposes).
