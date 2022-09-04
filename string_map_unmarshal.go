@@ -23,6 +23,10 @@ const (
 	// ErrNegativePositiveDuration is issued when PositiveDuration is attempted
 	// to be initialized with negative value.
 	ErrNegativePositiveDuration = StringError("PositiveDuration accepts only positive durations")
+
+	// ErrNegativePositiveDuration is issued when PositiveDuration is attempted
+	// to be initialized with negative value.
+	ErrPositiveDurationWithoutSuffix = StringError("durations without a unit suffix like \"s\" or \"us\" are deprecated and discouraged. Please, specify the unit explicitly")
 )
 
 var intParsers = map[reflect.Kind]int{
@@ -79,7 +83,7 @@ func (d *PositiveDuration) UnmarshalText(b []byte) error {
 		num, err := strconv.ParseFloat(string(b), 64)
 		if err == nil {
 			*d = PositiveDuration{time.Duration(num * float64(time.Second))}
-			return nil
+			return nil // ErrPositiveDurationWithoutSuffix
 		}
 	}
 
@@ -185,7 +189,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 					typeName = field.Type().Name()
 				}
 
-				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{typeName, v}})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{typeName, v, nil}})
 
 				if wasNil {
 					field.Set(reflect.Zero(field.Type()))
@@ -197,7 +201,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 		if bitSize, found := intParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseInt(v, 10, bitSize)
 			if err != nil {
-				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v}})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v, nil}})
 				continue
 			}
 
@@ -216,7 +220,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 		} else if bitSize, found := uintParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseUint(v, 10, bitSize)
 			if err != nil {
-				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v}})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v, nil}})
 				continue
 			}
 
@@ -234,7 +238,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 		} else if bitSize, found := floatParsers[field.Kind()]; found {
 			parsed, err := strconv.ParseFloat(v, bitSize)
 			if err != nil {
-				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v}})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v, nil}})
 				continue
 			}
 
@@ -248,7 +252,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 		} else if field.Kind() == reflect.Bool {
 			parsed, err := strconv.ParseBool(v)
 			if err != nil {
-				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v}})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{field.Kind().String(), v, nil}})
 				continue
 			}
 

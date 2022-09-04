@@ -176,15 +176,15 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		wantErrs := []error{
-			&scold.FieldError{"I8", &scold.NotValueOfTypeError{reflect.Int8.String(), "-129"}},
-			&scold.FieldError{"I16", &scold.NotValueOfTypeError{reflect.Int16.String(), "40000"}},
-			&scold.FieldError{"I32", &scold.NotValueOfTypeError{reflect.Int32.String(), "-3000000000"}},
-			&scold.FieldError{"I64", &scold.NotValueOfTypeError{reflect.Int64.String(), "10000000000000000000"}},
-			&scold.FieldError{"Ui", &scold.NotValueOfTypeError{reflect.Uint.String(), "０"}},
-			&scold.FieldError{"U8", &scold.NotValueOfTypeError{reflect.Uint8.String(), "300"}},
-			&scold.FieldError{"U16", &scold.NotValueOfTypeError{reflect.Uint16.String(), "67000"}},
-			&scold.FieldError{"U32", &scold.NotValueOfTypeError{reflect.Uint32.String(), "5000000000"}},
-			&scold.FieldError{"U64", &scold.NotValueOfTypeError{reflect.Uint64.String(), "20000000000000000000"}},
+			&scold.FieldError{"I8", &scold.NotValueOfTypeError{reflect.Int8.String(), "-129", nil}},
+			&scold.FieldError{"I16", &scold.NotValueOfTypeError{reflect.Int16.String(), "40000", nil}},
+			&scold.FieldError{"I32", &scold.NotValueOfTypeError{reflect.Int32.String(), "-3000000000", nil}},
+			&scold.FieldError{"I64", &scold.NotValueOfTypeError{reflect.Int64.String(), "10000000000000000000", nil}},
+			&scold.FieldError{"Ui", &scold.NotValueOfTypeError{reflect.Uint.String(), "０", nil}},
+			&scold.FieldError{"U8", &scold.NotValueOfTypeError{reflect.Uint8.String(), "300", nil}},
+			&scold.FieldError{"U16", &scold.NotValueOfTypeError{reflect.Uint16.String(), "67000", nil}},
+			&scold.FieldError{"U32", &scold.NotValueOfTypeError{reflect.Uint32.String(), "5000000000", nil}},
+			&scold.FieldError{"U64", &scold.NotValueOfTypeError{reflect.Uint64.String(), "20000000000000000000", nil}},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -232,8 +232,8 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		wantErrs := []error{
-			&scold.FieldError{"F32", &scold.NotValueOfTypeError{reflect.Float32.String(), "3.402824E+38"}},
-			&scold.FieldError{"F64", &scold.NotValueOfTypeError{reflect.Float64.String(), "-2.7976931348623157E+308"}},
+			&scold.FieldError{"F32", &scold.NotValueOfTypeError{reflect.Float32.String(), "3.402824E+38", nil}},
+			&scold.FieldError{"F64", &scold.NotValueOfTypeError{reflect.Float64.String(), "-2.7976931348623157E+308", nil}},
 		}
 
 		td.Cmp(t, errs.Errors, td.Bag(td.Flatten(wantErrs)))
@@ -301,7 +301,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 			errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{
-				&scold.FieldError{"B", &scold.NotValueOfTypeError{reflect.Bool.String(), step.value}},
+				&scold.FieldError{"B", &scold.NotValueOfTypeError{reflect.Bool.String(), step.value, nil}},
 			})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -324,7 +324,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 
 			errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 			td.Cmp(t, errs.Errors, []error{
-				&scold.FieldError{"B", &scold.NotValueOfTypeError{reflect.Bool.String(), step.value}},
+				&scold.FieldError{"B", &scold.NotValueOfTypeError{reflect.Bool.String(), step.value, nil}},
 			})
 			td.Cmp(t, target, step.want, "for value %q", step.value)
 		}
@@ -466,7 +466,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus"}},
+			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus", nil}},
 		})
 		td.Cmp(t, target, struct{ Dur scold.PositiveDuration }{})
 	})
@@ -483,7 +483,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus"}},
+			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus", nil}},
 		})
 		td.Cmp(t, target, struct{ Dur *scold.PositiveDuration }{})
 	})
@@ -501,7 +501,7 @@ func TestStringAttributesUnmarshal(t *testing.T) {
 		errs := scold.StringMapUnmarshal(sm, &target).(*multierror.Error)
 
 		td.Cmp(t, errs.Errors, []error{
-			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus"}},
+			&scold.FieldError{"Dur", &scold.NotValueOfTypeError{"PositiveDuration", "5sus", nil}},
 		})
 		td.Cmp(t, target, struct{ Dur *scold.PositiveDuration }{dur})
 	})
