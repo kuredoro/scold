@@ -125,12 +125,18 @@ func (e *FieldError) Unwrap() error {
 type NotValueOfTypeError struct {
 	Type  string
 	Value string
+    Err error
 }
 
 // Error prints a human-readable message describing what value doesn't match
 // what type.
 func (e *NotValueOfTypeError) Error() string {
 	return fmt.Sprintf("value %q doesn't match %v type", e.Value, e.Type)
+}
+
+// Unwrap returns the reason for the error, if available.
+func (e *NotValueOfTypeError) Unwrap() error {
+    return e.Err
 }
 
 // Equal is used to define equality on the pointers of NotValueOfTypeError.
