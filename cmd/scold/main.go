@@ -22,7 +22,7 @@ import (
 
 var stdout = colorable.NewColorableStdout()
 
-var errorLabel aurora.Value
+var errorLabel, warningLabel aurora.Value
 
 type JobCount int
 
@@ -109,6 +109,14 @@ func errorPrintf(format string, args ...any) {
     fmt.Fprintf(stdout, "%v: " + format + "\n", printArgs...)
 }
 
+func warningPrintf(format string, args ...any) {
+    printArgs := make([]any, len(args) + 1)
+    printArgs[0] = warningLabel
+    copy(printArgs[1:], args)
+
+    fmt.Fprintf(stdout, "%v: " + format + "\n", printArgs...)
+}
+
 func init() {
 	mustParse(&args)
 
@@ -136,6 +144,7 @@ func init() {
 	}
 
 	errorLabel = scold.Au.Bold("error").BrightRed()
+	warningLabel = scold.Au.Bold("warning").BrightYellow()
 
 	scold.DefaultInputsConfig = scold.InputsConfig{
 		Tl:   scold.NewPositiveDuration(6 * time.Second),
@@ -170,11 +179,19 @@ func main() {
 			return lineErrs[i].Begin < lineErrs[j].Begin
 		})
 
+        hadErrors := false
 		for _, err := range lineErrs {
-			errorPrintf("%s:%d: %v\n%s", args.Inputs, err.Begin, err.Err, err.CodeSnippet())
+            if w := scold.StringWarning(""); errors.As(err, &w) {
+                warningPrintf("%s:%d: %v\n%s", args.Inputs, err.Begin, err.Err, err.CodeSnippet())
+            } else {
+                errorPrintf("%s:%d: %v\n%s", args.Inputs, err.Begin, err.Err, err.CodeSnippet())
+                hadErrors = true
+            }
 		}
 
-        os.Exit(1)
+        if hadErrors {
+            os.Exit(1)
+        }
 	}
 
 	execPath, err := findFile(args.Executable)
