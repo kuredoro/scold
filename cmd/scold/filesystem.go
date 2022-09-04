@@ -80,7 +80,7 @@ func readInputs(inputsPath string) (scold.Inputs, []error) {
 		for i, err := range errs {
 			errs[i] = fmt.Errorf("parse scold inputs file: %w", err)
 		}
-		return scold.Inputs{}, errs
+		return inputs, errs
 	}
 
 	return inputs, nil
