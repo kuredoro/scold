@@ -648,7 +648,7 @@ func TestPositiveDuration(t *testing.T) {
 		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("1"))
 
-		td.CmpNoError(t, err)
+		td.CmpError(t, err, scold.ErrDurationWithoutSuffix)
 		td.Cmp(t, dur.Duration, time.Second)
 	})
 
@@ -664,7 +664,7 @@ func TestPositiveDuration(t *testing.T) {
 		dur := &scold.PositiveDuration{}
 		err := dur.UnmarshalText([]byte("10.5"))
 
-		td.CmpNoError(t, err)
+		td.CmpError(t, err, scold.ErrDurationWithoutSuffix)
 		td.Cmp(t, dur.Duration, 10500*time.Millisecond)
 	})
 

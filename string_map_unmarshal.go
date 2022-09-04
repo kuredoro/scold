@@ -26,7 +26,11 @@ const (
 
 	// ErrNegativePositiveDuration is issued when PositiveDuration is attempted
 	// to be initialized with negative value.
-	ErrPositiveDurationWithoutSuffix = StringError("durations without a unit suffix like \"s\" or \"us\" are deprecated and discouraged. Please, specify the unit explicitly")
+	ErrDurationWithoutSuffix = StringWarning("durations without a unit suffix like \"s\" or \"us\" are deprecated and discouraged. Please, specify the unit explicitly, like \"10.0s\" for 10 seconds")
+
+	// ErrNegativePositiveDuration is issued when PositiveDuration is attempted
+	// to be initialized with negative value.
+	ErrDurationBadSyntax = StringError("bad syntax. Correct values could be \"1s\" or \"12.3ms\"")
 )
 
 var intParsers = map[reflect.Kind]int{
@@ -83,7 +87,7 @@ func (d *PositiveDuration) UnmarshalText(b []byte) error {
 		num, err := strconv.ParseFloat(string(b), 64)
 		if err == nil {
 			*d = PositiveDuration{time.Duration(num * float64(time.Second))}
-			return nil // ErrPositiveDurationWithoutSuffix
+			return ErrDurationWithoutSuffix
 		}
 	}
 
@@ -189,7 +193,7 @@ func StringMapUnmarshal(kvm map[string]string, data interface{}, transformers ..
 					typeName = field.Type().Name()
 				}
 
-				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{typeName, v, nil}})
+				errs = multierror.Append(errs, &FieldError{k, &NotValueOfTypeError{typeName, v, err}})
 
 				if wasNil {
 					field.Set(reflect.Zero(field.Type()))
